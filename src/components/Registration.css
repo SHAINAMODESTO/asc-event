@@ -1,0 +1,99 @@
+
+ .consent-modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  z-index: 60;
+  padding: 1.5rem;
+}
+
+.consent-modal {
+ width: 90vw;
+  max-width: 1800px;
+  min-width: 900px;
+  max-height: 85vh;
+}
+
+.consent-modal .consent-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.consent-modal h2 {
+  margin: 1.5rem 0 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 1.5rem;
+  text-align: center;
+  color: #ffff;
+  background-color: #059669;
+}
+
+.consent-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 740px) {
+  .consent-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.consent-card {
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e6eef8;
+}
+
+.consent-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}
+
+.consent-btn {
+  padding: 0.7rem 1.2rem;
+  border-radius: 0.6rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+.consent-btn.cancel {
+  background: white;
+  border: 1px solid #e6eef8;
+  color: #0f172a;
+}
+
+.consent-btn.accept {
+  background: #059669;
+  color: white;
+}
+
+.consent-text {
+  font-size: 0.95rem;
+  color: #0f172a;
+  line-height: 1.5;
+}
+.submit{
+    background: #059669;
+  color: white;
+  width: 30%;
+  height: 2.5rem;
+}
+.cancel{
+    background: #f3f4f6;
+  color: #0f172a;
+  width: 30%;
+  height: 2.5rem;
+  margin-left: 0.5rem;
+  
+}

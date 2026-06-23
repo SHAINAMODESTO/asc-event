@@ -1,0 +1,1 @@
+const fs=require('fs');const lines=fs.readFileSync('src/components/Registration.jsx','utf8').split('\n');let depth=0;for(let i=0;i<lines.length;i++){const line=lines[i];for(let ch of line){ if(ch==='{') depth++; if(ch==='}') depth--; } console.log((i+1)+': depth='+depth+' | '+line.trim());} console.log('final depth',depth);

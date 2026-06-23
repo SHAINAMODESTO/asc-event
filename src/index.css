@@ -1,0 +1,109 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Inter, system-ui, Arial, sans-serif;
+}
+
+/* Page background */
+body {
+  background: #FFFFFF ;
+  color:#0f172a;
+  min-height: 100vh;
+}
+
+
+
+/* Center app */
+#root {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Form container enhancement */
+form {
+  width: 100%;
+}
+
+/* Inputs */ 
+input:not([type="radio"]):not([type="checkbox"]) {
+  width: 50%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #297bee;
+  color: #000000;
+  transition: 0.2s ease;
+}
+input[type="radio"] {
+  width: auto;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  margin: 0;
+  margin-left: 20px;
+}
+
+input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+/* Labels */
+label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #297bee;
+}
+
+/* Legend */
+legend {
+  font-size: 13px;
+  font-weight: 500;
+  color: #297bee;
+}
+
+/* Fieldset */
+fieldset {
+  border: 1px solid #297bee;
+  border-radius: 10px;
+  width: 50%;
+}
+
+/* Buttons */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 10px;
+  transition: 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+/* Card feel improvement (your form wrapper) */
+.bg-white {
+  background: rgba(255, 255, 255, 0.06) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Headings */
+h1 {
+  letter-spacing: 0.5px;
+}
+
+/* Checkbox */
+input[type="checkbox"] {
+  width: auto;
+  transform: scale(1.1);
+}
