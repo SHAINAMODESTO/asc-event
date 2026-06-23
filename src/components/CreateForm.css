@@ -8,6 +8,7 @@
   overflow-y: auto;
 }
 
+/* Titles */
 .form-title {
   font-size: 1.25rem;
   font-weight: 800;
@@ -21,9 +22,11 @@
   color: #1d4ed8;
 }
 
+/* Inputs (FIXED RESPONSIVENESS) */
 .form-input,
 .form-select {
-  width: 70%;
+  width: 100%;              /* ✅ FIX: full width by default */
+  max-width: 600px;         /* prevents being too wide on desktop */
   min-width: 0;
   background: #f8fafc;
   border: 1px solid #cbd5e1;
@@ -40,6 +43,7 @@
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
 }
 
+/* Banner */
 .banner-preview {
   width: 100%;
   max-height: 260px;
@@ -48,6 +52,7 @@
   border: 1px solid #e2e8f0;
 }
 
+/* Cards */
 .field-card,
 .menu-card {
   display: flex;
@@ -57,27 +62,32 @@
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 1rem;
+  flex-wrap: wrap; /* ✅ allows stacking on small screens */
 }
 
+/* Input inside cards */
 .field-card .form-input,
 .menu-card .form-input {
   background: transparent;
   border-color: transparent;
   padding: 0.75rem 0.85rem;
- 
+  flex: 1; /* ✅ takes available space */
+  width: auto;
 }
 
+/* Checkbox */
 .checkbox-group {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   color: #334155;
   font-weight: 500;
+  flex-wrap: wrap;
 }
 
+/* Buttons base */
 .delete-btn,
-.primary-btn
-{
+.primary-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -85,30 +95,34 @@
   font-weight: 700;
   border-radius: 0.85rem;
   border: none;
+  cursor: pointer;
 }
+
+/* Actions layout (FIXED RESPONSIVE STACKING) */
 .template-actions {
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
+  flex-wrap: wrap; /* ✅ allows wrap on small screens */
 }
 
-.draft-btn {
-  gap: 0.5rem;
-  padding: 0.85rem 1rem;
-  font-weight: 700;
-  background-color: #e4e4e4;
-  border-radius: 0.85rem;
-  border: none;
-  width: 150px;
-}
+/* Buttons */
+.draft-btn,
 .generate-btn {
   gap: 0.5rem;
   padding: 0.85rem 1rem;
   font-weight: 700;
-  background-color: #52ba67;
   border-radius: 0.85rem;
   border: none;
   width: 150px;
+}
+
+.draft-btn {
+  background-color: #e4e4e4;
+}
+
+.generate-btn {
+  background-color: #52ba67;
 }
 
 .primary-btn {
@@ -120,6 +134,7 @@
   background: #1d4ed8;
 }
 
+/* Save button */
 .save-btn {
   width: 100%;
   justify-content: center;
@@ -132,6 +147,7 @@
   background: #0f172a;
 }
 
+/* Delete */
 .delete-btn {
   background: transparent;
   color: #ef4444;
@@ -141,4 +157,56 @@
 
 .delete-btn:hover {
   background: rgba(239, 68, 68, 0.08);
+}
+
+/* =========================
+   📱 RESPONSIVE BREAKPOINTS
+   ========================= */
+
+@media (max-width: 1024px) {
+  .form-container {
+    padding: 1.25rem;
+  }
+
+  .form-input,
+  .form-select {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-container {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+
+  .form-title {
+    font-size: 1.1rem;
+  }
+
+  .template-actions {
+    justify-content: center;
+  }
+
+  .draft-btn,
+  .generate-btn {
+    width: 100%; /* full width buttons on mobile */
+  }
+
+  .field-card,
+  .menu-card {
+    flex-direction: column; /* stack content */
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-container {
+    padding: 0.75rem;
+  }
+
+  .form-input,
+  .form-select {
+    padding: 0.75rem;
+  }
 }

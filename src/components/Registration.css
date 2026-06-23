@@ -1,50 +1,65 @@
-
- .consent-modal-overlay {
-  position: fixed;
+.consent-modal-overlay {
+  position: flex;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   background: white;
   z-index: 60;
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
-.consent-modal {
- width: 90vw;
-  max-width: 1800px;
-  min-width: 900px;
-  max-height: 85vh;
+/* MODAL CONTAINER (FIXED RESPONSIVENESS) */
+
+ .consent-modal {
+  width: 90vw;
+  max-width: 600px;
+  max-height: 90vh;
+  border-radius: 1rem;
+}
+.consent-grid-two {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
 }
 
+.consent-grid-two .consent-card {
+  flex: 1;
+}
+
+/* optional responsive fix */
+@media (max-width: 768px) {
+  .consent-grid-two {
+    flex-direction: column;
+  }
+}
+/* Header */
 .consent-modal .consent-header {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
 }
 
+/* Title */
 .consent-modal h2 {
-  margin: 1.5rem 0 0.75rem;
+  margin: 1rem 0;
   padding: 0.75rem 1rem;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   text-align: center;
-  color: #ffff;
+  color: #ffffff;
   background-color: #059669;
+  border-radius: 0.75rem;
 }
 
+/* GRID (already good, just improved spacing) */
 .consent-grid {
   display: grid;
-  gap: 1rem;
+  gap: 2rem;
   margin-top: 1rem;
   grid-template-columns: repeat(2, 1fr);
 }
 
-@media (max-width: 740px) {
-  .consent-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
+/* Cards */
 .consent-card {
   background: #f8fafc;
   border-radius: 0.75rem;
@@ -52,13 +67,16 @@
   border: 1px solid #e6eef8;
 }
 
+/* ACTIONS */
 .consent-actions {
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
   margin-top: 1.25rem;
+  flex-wrap: wrap; 
 }
 
+/* Buttons */
 .consent-btn {
   padding: 0.7rem 1.2rem;
   border-radius: 0.6rem;
@@ -78,22 +96,66 @@
   color: white;
 }
 
+/* TEXT */
 .consent-text {
   font-size: 0.95rem;
   color: #0f172a;
   line-height: 1.5;
 }
-.submit{
-    background: #059669;
-  color: white;
-  width: 30%;
+
+/* BUTTONS (FIXED RESPONSIVE WIDTH ISSUE) */
+.submit,
+.cancel {
+  width: auto;          
+  min-width: 120px;
   height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: 0.5rem;
 }
-.cancel{
-    background: #f3f4f6;
+
+/* Submit */
+.submit {
+  background: #059669;
+  color: white;
+}
+
+/* Cancel */
+.cancel {
+  background: #f3f4f6;
   color: #0f172a;
-  width: 30%;
-  height: 2.5rem;
-  margin-left: 0.5rem;
-  
+}
+
+/* =========================
+   📱 RESPONSIVE BREAKPOINTS
+   ========================= */
+
+@media (max-width: 1024px) {
+  .consent-modal {
+    width: 200vw;
+    max-width: 95vw;
+    max-height: 90vh;
+  }
+
+  .consent-grid {
+    grid-template-columns: 1fr; /* stack cards */
+  }
+
+  .consent-actions {
+    justify-content: center;
+  }
+
+  .submit,
+  .cancel {
+    width: 100%; /* full width buttons */
+  }
+}
+
+@media (max-width: 480px) {
+  .consent-modal {
+    padding: 0.5rem;
+  }
+
+  .consent-modal h2 {
+    font-size: 1.1rem;
+  }
 }
