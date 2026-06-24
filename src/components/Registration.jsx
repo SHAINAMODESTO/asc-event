@@ -24,6 +24,7 @@ const Register = () => {
     eventConsentMessage = `By signing this Event Consent form, I willingly authorize its Organizers to process my personal data for the sole purpose of achieving the objectives of this event dubbed "${eventName}".`,
     eventFormInstructions = "Please fill out all required information",
     eventDescription = "Please fill out all required information",
+    banner = "",
   } = location.state || {};
 
   const navigateHome = () => navigate("/", { replace: true });
@@ -34,21 +35,35 @@ const Register = () => {
       : eventFormInstructions;
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-5xl bg-white border-2 border-green-500 rounded-xl shadow-lg p-8">
+    <div className="registration-page">
+      <div className="modal-container">
 
         <hr className="my-6 border-green-300" />
 
-        {/* ✅ ONLY SHOW AFTER CONSENT */}
+        {/* ================= AFTER CONSENT ================= */}
         {consentAccepted && (
           <div className="text-center mb-8">
+
+            {/* ✅ BANNER ADDED HERE */}
+            {banner && (
+              <div className="mb-4">
+                <img
+                  src={banner}
+                  alt="Event Banner"
+                  className="w-full max-h-[250px] object-cover rounded-lg"
+                />
+              </div>
+            )}
+
             <h1 className="text-3xl font-bold text-gray-800">
               {eventName + " Registration Form"}
             </h1>
+
             <p className="text-gray-500 mt-2">{headerText}</p>
 
             <div className="mt-4 text-sm text-slate-600">
               {eventVenue && <p>Venue: {eventVenue}</p>}
+
               {(eventStart || eventEnd) && (
                 <p>
                   Date:{" "}
@@ -76,26 +91,26 @@ const Register = () => {
                 </p>
               </div>
 
-             <div className="consent-grid-two">
-  <div className="consent-card">
-    <p className="text-sm font-semibold">Event Venue</p>
-    <p className="consent-text mt-2">
-      {eventVenue || "No venue set"}
-    </p>
-  </div>
+              <div className="consent-grid-two">
+                <div className="consent-card">
+                  <p className="text-sm font-semibold">Event Venue</p>
+                  <p className="consent-text mt-2">
+                    {eventVenue || "No venue set"}
+                  </p>
+                </div>
 
-  <div className="consent-card">
-    <p className="text-sm font-semibold">Date & Time</p>
-    <p className="consent-text mt-2">
-      {eventStart
-        ? new Date(eventStart).toLocaleString()
-        : "TBD"}
-      {eventEnd
-        ? ` — ${new Date(eventEnd).toLocaleString()}`
-        : ""}
-    </p>
-  </div>
-</div>
+                <div className="consent-card">
+                  <p className="text-sm font-semibold">Date & Time</p>
+                  <p className="consent-text mt-2">
+                    {eventStart
+                      ? new Date(eventStart).toLocaleString()
+                      : "TBD"}
+                    {eventEnd
+                      ? ` — ${new Date(eventEnd).toLocaleString()}`
+                      : ""}
+                  </p>
+                </div>
+              </div>
 
               <div className="consent-card" style={{ marginTop: 12 }}>
                 <p className="text-sm font-semibold">Inquiry Contact</p>
@@ -132,7 +147,7 @@ const Register = () => {
           </div>
         ) : (
           /* ================= REGISTRATION FORM ================= */
-          <form className="space-y-6">
+          <form className="reg-form" onSubmit={(e) => e.preventDefault()}>
 
             {fields.map((field, index) => (
               <div key={index}>
@@ -170,14 +185,19 @@ const Register = () => {
               </fieldset>
             )}
 
+            <br />
+
             {/* CONSENT CHECK */}
             <div className="bg-gray-50 p-4 text-xs text-gray-700">
               <label className="flex items-start gap-2">
                 <input type="checkbox" className="mt-1" />
                 <p>
-                <strong>FURTHER, I HEREBY ACKNOWLEDGE</strong> that I have read and understood the Privacy Notice and agree thereto as well.
-                <br />I give my consent to collect, use and process my personal information. I understand that my consent does not preclude the existence of other <br></br>lawful bases for processing personal data, and does not waive any of my rights under the Data Privacy Act of 2012 and other applicable laws.
-              </p>
+                  <strong>
+                    I acknowledge that I have read and understood
+                    <br />
+                    the Privacy Notice and agree thereto as well.
+                  </strong>
+                </p>
               </label>
             </div>
 
@@ -191,6 +211,7 @@ const Register = () => {
 
           </form>
         )}
+
       </div>
     </div>
   );
