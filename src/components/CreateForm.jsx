@@ -30,7 +30,7 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
   const [eventEnd, setEventEnd] = useState("");
   const [banner, setBanner] = useState("");
   const [eventConsentMessage, setEventConsentMessage] = useState(`By accepting this Event Consent form, I willingly authorize its Organizers to process my personal data for the sole purpose of achieving the objectives of this event dubbed "National Summit on Progressive and Fair Advertising Self Regulation." I entrust that my personal data shall be given utmost care and confidentiality by the Event Organizers and that this shall not be used outside the objectives and purpose above-stated.`);
-  const [eventFormInstructions, setEventFormInstructions] = useState("Please fill out all required information");
+  
   
   // Ref to access hidden file input element
   const fileInputRef = useRef(null);
@@ -60,7 +60,7 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
       try {
         const parsed = JSON.parse(editData)
         setEventDescription(parsed.eventDescription || eventDescription)
-        setEventFormInstructions(parsed.eventFormInstructions || eventFormInstructions)
+       
         setEventName(parsed.eventName || eventName)
         setEventVenue(parsed.eventVenue || eventVenue)
         setEventInquiryContact(parsed.eventInquiryContact || eventInquiryContact)
@@ -134,7 +134,6 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
       menuOptions,
       showMenuInForm,
       eventDescription,
-      eventFormInstructions,
       eventName,
       eventVenue,
       eventStart,
@@ -161,177 +160,65 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
             Create an Event Registration Form
           </h1>
 
-          {/* Banner */}
-          <div className="space-y-3">
-            <h2 className="section-title">Banner Setup</h2>
-
-            <input
-              type="text"
-              value={banner}
-              onChange={(e) => setBanner(e.target.value)}
-              placeholder="Upload banner image"
-              className="form-input"
-            />
-            
-            {/* Hidden file input - triggers file manager when upload button is clicked */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleBannerUpload}
-              style={{ display: "none" }}
-            />
-            
-            {/* Upload Banner Button - opens device file manager on click */}
-            <button onClick={triggerFileInput} className="primary-btn mt-3">
-              <Plus size={15} />
-              Upload
-            </button>
-            {banner && (
-              <img
-                src={banner}
-                alt="banner"
-                className="banner-preview"
-              />
-            )}
-            
-          </div>
-          {/* Event Name */}
-          <div className="space-y-3">
-            <h2 className="section-title">Event Name</h2>
-
-            <input
-              type="text"
-              value={eventName}
-              onChange={(e) => setEventName(e.target.value)}
-              placeholder="Enter event name"
-              className="form-input"
-              required
-            />
-          </div>
-
-          {/* Event Date */}
-          <div className="space-y-3">
-            <h2 className="section-title">Event Date</h2>
-
-            <div className="flex flex-col gap-4 md:flex-row md:items-end"><div className="flex flex-col md:flex-row md:items-center gap-2 flex-1"><label className="text-sm font-medium text-slate-700">From</label><input type="datetime-local" value={eventStart} onChange={(e) => setEventStart(e.target.value)} className="form-input flex-1" /></div><div className="flex flex-col md:flex-row md:items-center gap-2 flex-1"><label className="text-sm font-medium text-slate-700">To</label><input type="datetime-local" value={eventEnd} onChange={(e) => setEventEnd(e.target.value)} className="form-input flex-1" /></div></div>
-          </div>
-          {/* Event Venue */}
-          <div className="space-y-3">
-            <h2 className="section-title">Event Venue</h2>
-
-            <input
-              type="text"
-              value={eventVenue}
-              onChange={(e) => setEventVenue(e.target.value)}
-              placeholder="Enter event venue"
-              className="form-input"
-            />
-          </div>
-
-           {/* Event Inquiry Contact */}
-          <div className="space-y-3">
-            <h2 className="section-title">Event Inquiry Contact</h2>
-
-            <textarea
-              value={eventInquiryContact}
-              onChange={(e) => setEventInquiryContact(e.target.value)}
-              placeholder="Enter event inquiry contact"
-              className="form-input"
-            />
-          </div>
-          {/* Event Consent */}
-          <div className="space-y-3">
-            <h2 className="section-title">Event Consent Message</h2>
-
-            <textarea
-              value={eventConsentMessage}
-              onChange={(e) => setEventConsentMessage(e.target.value)}
-              className="form-input"
-              rows="4"
-              placeholder="Event Consent Message"
-            />
-          </div>
-
-          {/* Form Instructions */}
-          <div className="space-y-3">
-            <h2 className="section-title">Form Instructions</h2>
-
-            <textarea
-              value={eventFormInstructions}
-              onChange={(e) => setEventFormInstructions(e.target.value)}
-              className="form-input"
-              rows="4"
-              placeholder="Form Instructions"
-            />
-          </div>
-           
-          {/* Registration Fields */}
-          <div className="space-y-6">
-            <h2 className="section-title">Registration Fields</h2>
-
-            <div className="space-y-4">
-              {fields.map((field, index) => (
-                <div key={index} className="field-card">
-
-                  <input
-                    value={field.label}
-                    onChange={(e) =>
-                      updateField(index, "label", e.target.value)
-                    }
-                    className="form-input flex-1 min-w-[120px]"
-                    placeholder="Field label"
-                  />
-
-                  <select
-                    value={field.type}
-                    onChange={(e) =>
-                      updateField(index, "type", e.target.value)
-                    }
-                    className="form-select"
-                  >
-                    <option value="text">Text</option>
-                    <option value="email">Email</option>
-                    <option value="number">Number</option>
-                    <option value="date">Date</option>
-                    <option value="radio">Radio</option>
-                  </select>
-
-                  <label className="checkbox-group">
+         
+         
+         
+          <div className="form-grid">
+            {/* Event Name */}
+             <div>
+                <h2 className="section-title">Event Name</h2>
+                <input
+                    type="text"
+                    value={eventName}
+                    onChange={(e) => setEventName(e.target.value)}
+                    placeholder="Enter event name"
+                    className="form-input"
+                  required />
+                {/* Event Date */}  
+                  <div className="space-y-3">
+                     <h2 className="section-title">Event Date</h2>
+                     <div className="flex flex-col gap-4 md:flex-row md:items-end"><div className="flex flex-col md:flex-row md:items-center gap-2 flex-1"><label className="text-sm font-medium text-slate-700">From</label><input type="datetime-local" value={eventStart} onChange={(e) => setEventStart(e.target.value)} className="form-input flex-1" /></div><div className="flex flex-col md:flex-row md:items-center gap-2 flex-1"><label className="text-sm font-medium text-slate-700">To</label><input type="datetime-local" value={eventEnd} onChange={(e) => setEventEnd(e.target.value)} className="form-input flex-1" /></div></div>
+                  </div>
+                {/* Event Venue */}
+                  <div className="space-y-3">
+                    <h2 className="section-title">Event Venue</h2>
                     <input
-                      type="checkbox"
-                      checked={field.required}
-                      onChange={(e) =>
-                        updateField(index, "required", e.target.checked)
-                      }
-                    />
-                    Required
-                  </label>
-               
-                  <button
-                    onClick={() => removeField(index)}
-                    className="delete-btn"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
+                      type="text"
+                      value={eventVenue}
+                      onChange={(e) => setEventVenue(e.target.value)}
+                      placeholder="Enter event venue"
+                      className="form-input"/>
+                  </div>
+  
             </div>
-            <br />
-            <button onClick={addField} className="primary-btn">
-              <Plus size={18} />
-              Add Field
-            </button>
-          </div>
+              
+            <div>
+                {/* Date of Accepting Responses */}  
+                  <div className="space-y-3">
+                     <h2 className="section-title">Accept Responses</h2>
+                     <div className="flex flex-col gap-4 md:flex-row md:items-end"><div className="flex flex-col md:flex-row md:items-center gap-2 flex-1"><label className="text-sm font-medium text-slate-700">From</label><input type="datetime-local" value={eventStart} onChange={(e) => setEventStart(e.target.value)} className="form-input flex-1" /></div><div className="flex flex-col md:flex-row md:items-center gap-2 flex-1"><label className="text-sm font-medium text-slate-700">To</label><input type="datetime-local" value={eventEnd} onChange={(e) => setEventEnd(e.target.value)} className="form-input flex-1" /></div></div>
+                  </div>
+                  
+                <h2 className="section-title">Event Consent Message</h2>
+               <textarea
+                 value={eventConsentMessage}
+                  onChange={(e) => setEventConsentMessage(e.target.value)}
+                  className="form-input"
+                  rows="6"
+                placeholder="Event Consent Message"
+                />
+            </div>
 
+          </div>
+          
           {/* Menu Reference */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center justify-between gap-2">
               <div>
                 <h2 className="section-title">Menu Reference</h2>
                 <p className="text-sm text-slate-500">Toggle to include this section in the registration form.</p>
               </div>
-              <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+              <label className="inline-flex items-center gap-2 text-xs text-slate-700">
                 <input
                   type="checkbox"
                   checked={showMenuInForm}
@@ -357,46 +244,22 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
                         onClick={() => removeMenuOption(index)}
                         className="delete-btn"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={15} />
                       </button>
+                      <button onClick={addMenuOption} className="primary-btn">
+                  <Plus size={9} />
+                  Add Menu Option
+                </button>
                     </div>
                   ))}
                 </div>
-                <br />
-                <button onClick={addMenuOption} className="primary-btn">
-                  <Plus size={18} />
-                  Add Menu Option
-                </button>
+               
+                
               </>
             )}
           </div>
           <br />
-          {/* Accept Responses */}
-          <div className="space-y-3">
-            <h2 className="section-title">Form Settings: </h2>
-            <h2 className="section-title">Accept Responses</h2>
-
-            <div className="flex flex-col gap-4 md:flex-row md:items-end">
-              <div className="flex flex-col md:flex-row md:items-center gap-2 flex-1">
-                <label className="text-sm font-medium text-slate-700">From</label>
-                <input
-                  type="datetime-local"
-                  value={eventStart}
-                  onChange={(e) => setEventStart(e.target.value)}
-                  className="form-input flex-1"
-                />
-              </div>
-              <div className="flex flex-col md:flex-row md:items-center gap-2 flex-1">
-                <label className="text-sm font-medium text-slate-700">To</label>
-                <input
-                  type="datetime-local"
-                  value={eventEnd}
-                  onChange={(e) => setEventEnd(e.target.value)}
-                  className="form-input flex-1"
-                />
-              </div>
-            </div>
-          </div>
+          
 
         <br />
         <div className="template-actions">

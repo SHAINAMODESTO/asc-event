@@ -100,21 +100,31 @@ const AllEventsList = () => {
               </div>
 
               <div className="event-actions">
-               
+               <button
+                  type="button"
+                  className="event-button"
+                >
+                  Draft
+                </button>
                 <button
                   type="button"
                   className="event-button"
-                  onClick={() => editTemplate(event)}
                 >
                   Edit
                 </button>
                 <button
                   type="button"
+                  className="event-button"
+                >
+                  Generate URL
+                </button>
+                <button
+                  type="button"
                   className="event-button event-button-delete"
-                  onClick={() => deleteTemplate(event.id)}
                 >
                   Delete
                 </button>
+
               </div>
 
               

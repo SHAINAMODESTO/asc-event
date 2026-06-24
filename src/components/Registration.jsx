@@ -36,15 +36,16 @@ const Register = () => {
 
   return (
     <div className="registration-page">
+     <div className="active-page">
       <div className="modal-container">
-
-        <hr className="my-6 border-green-300" />
+       
+       <hr className="my-6 border-green-300" />
 
         {/* ================= AFTER CONSENT ================= */}
         {consentAccepted && (
           <div className="text-center mb-8">
 
-            {/* ✅ BANNER ADDED HERE */}
+            {/* BANNER ADDED HERE */}
             {banner && (
               <div className="mb-4">
                 <img
@@ -59,13 +60,12 @@ const Register = () => {
               {eventName + " Registration Form"}
             </h1>
 
-            <p className="text-gray-500 mt-2">{headerText}</p>
 
             <div className="mt-4 text-sm text-slate-600">
-              {eventVenue && <p>Venue: {eventVenue}</p>}
+              {eventVenue && <b>Venue: {eventVenue}</b> }
 
               {(eventStart || eventEnd) && (
-                <p>
+                <p><b>
                   Date:{" "}
                   {eventStart
                     ? new Date(eventStart).toLocaleString()
@@ -73,10 +73,12 @@ const Register = () => {
                   {eventEnd
                     ? ` — ${new Date(eventEnd).toLocaleString()}`
                     : ""}
-                </p>
+                </b></p>
               )}
             </div>
+            
           </div>
+          
         )}
 
         {/* ================= CONSENT MODAL ================= */}
@@ -120,7 +122,7 @@ const Register = () => {
               </div>
 
               <div className="consent-card" style={{ marginTop: 12 }}>
-                <p className="consent-text mt-2" style={{ whiteSpace: "pre-line" }}>
+               <p  className="consent-text mt-2" style={{ whiteSpace: "pre-line" }}><input type="checkbox" className="mt-1" />
                   {eventConsentMessage}
                 </p>
               </div>
@@ -139,7 +141,7 @@ const Register = () => {
                   className="consent-btn accept"
                   onClick={() => setConsentAccepted(true)}
                 >
-                  I Accept
+                  Register
                 </button>
               </div>
 
@@ -147,20 +149,86 @@ const Register = () => {
           </div>
         ) : (
           /* ================= REGISTRATION FORM ================= */
+          
           <form className="reg-form" onSubmit={(e) => e.preventDefault()}>
+            <h3>Please fill out the following: </h3>
+             <div className="form-grid grid grid-cols-2 gap-6">
+          {/* LEFT COLUMN */}
+            <div>
+                <label>First Name</label>
+                  <input
+                   type="text"
+                    onChange={(e) => setEventName(e.target.value)}
+                    placeholder="Enter first name"
+                    className="form-input"
+                    required /> 
 
-            {fields.map((field, index) => (
-              <div key={index}>
-                <label className="block text-gray-700 mb-1 font-semibold">
-                  {field.label}{field.required ? " *" : ""}
-                </label>
+                 <label>Middle Name</label>
+                  <input
+                    type="text"
+                    onChange={(e) => setEventName(e.target.value)}
+                    placeholder="Enter middle name"
+                    className="form-input"/>
 
+                <label >Last Name</label>
                 <input
-                  type={field.type}
-                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  type="text"
+                  onChange={(e) => setEventName(e.target.value)}
+                  placeholder="Enter last name"
+                  className="form-input"
+                  required
                 />
-              </div>
-            ))}
+
+              <label >Email Address</label>
+              <input
+                type="email"
+                onChange={(e) => setEventName(e.target.value)}
+                placeholder="Enter email"
+                className="form-input"
+                required
+              />
+             </div>
+
+        {/* RIGHT COLUMN */}
+          <div>
+            <label >Preferred Name for ID</label>
+              <input
+                type="text"
+                onChange={(e) => setEventName(e.target.value)}
+                placeholder="Enter preferred name for ID"
+                className="form-input"
+                required
+              />
+
+            <label >Mobile Number</label>
+              <input
+                type="text"
+                onChange={(e) => setEventName(e.target.value)}
+                placeholder="Enter mobile number"
+                className="form-input"
+                required
+              />
+
+            <label >Company Name</label>
+              <input
+                type="number"
+                onChange={(e) => setEventName(e.target.value)}
+                placeholder="Enter company name"
+                className="form-input"
+                required
+              />
+
+            <label >Position</label>
+              <input
+                type="text"
+                onChange={(e) => setEventName(e.target.value)}
+                placeholder="Enter position"
+                className="form-input"
+                required
+              />
+          </div>
+          
+        </div>
 
             {/* MENU */}
             {showMenuInForm && (
@@ -185,19 +253,16 @@ const Register = () => {
               </fieldset>
             )}
 
-            <br />
 
             {/* CONSENT CHECK */}
             <div className="bg-gray-50 p-4 text-xs text-gray-700">
               <label className="flex items-start gap-2">
                 <input type="checkbox" className="mt-1" />
                 <p>
-                  <strong>
-                    I acknowledge that I have read and understood
-                    <br />
-                    the Privacy Notice and agree thereto as well.
-                  </strong>
-                </p>
+                 I HEREBY CERTIFY that the information provided in this form is complete, true and correct to the best of my knowledge.  
+
+                FURTHER, I HEREBY ACKNOWLEDGE that I have read and understood the Privacy Notice and agree there to as well. I give my consent to collect, use and process my personal information. I understand that my consent does not preclude the existence of other criteria for lawful processing of personal data, and does not waive any of my rights under the Data Privacy Act of 2012 and other applicable laws.
+              </p>
               </label>
             </div>
 
@@ -212,6 +277,7 @@ const Register = () => {
           </form>
         )}
 
+      </div>
       </div>
     </div>
   );

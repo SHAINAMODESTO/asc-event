@@ -1,23 +1,47 @@
 .registration-page{
   display: flex;
-  width: 800px;
+  width: 100%;
   border: 1px solid #059669;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f3f4f6; /* light gray background */
+  background-color: #ffffff; /* light gray background */
+  /*background-image: url(/src/assets/bg2.jpg);*/
   padding: 1rem;
+  margin-top: 1px;
 }
 .reg-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  width: 700px;
-  max-width: 700px; /* limit form width */
-  background-color: #ffffff; /* white background for the form */
+  width: 800px;
+  max-width: 950px; /* limit form width */
+  background-color: #f4f4f4; /* white background for the form */
   padding: 2rem;
   border-radius: 1rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+.active-page{
+ width: 800px;
+  background-color: #059669;
+  border-radius: .5rem;
+ 
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2 equal columns */
+  gap: 2px;
+  width: 100%;
+}
+
+
+ .form-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+
 }
 
 
@@ -236,6 +260,12 @@
 .terms-close:hover {
   background: #047857;   /* darker green on hover */
 }
+
+.form-input,
+  .form-select {
+    padding: 0.75rem;
+    width: 300px;
+  }
 
 /* ================= RESPONSIVE ================= */
 
