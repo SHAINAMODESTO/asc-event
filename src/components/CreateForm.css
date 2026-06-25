@@ -1,22 +1,70 @@
 /* =========================
+   GLOBAL RESET
+   ========================= */
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+/* =========================
+   PAGE WRAPPER
+   ========================= */
+.create-form-page {
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, #eff6ff, #f3f4f6);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+  font-size: 12px;
+  overflow-x: hidden;
+}
+
+/* =========================
+   FORM WRAPPER
+   ========================= */
+.form-wrapper {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* =========================
    FORM CONTAINER
    ========================= */
 .form-container {
   background: #ffffff;
   border-radius: 1.5rem;
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
-  padding: 1.5rem;
+  padding: clamp(1rem, 2vw, 2rem);
   border: 1px solid rgba(15, 23, 42, 0.06);
-  max-height: 900px;
-  overflow-y: auto;
+  width: 100%;
+  margin: -55px auto 0;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
-/* Titles */
+/* =========================
+   TITLES
+   ========================= */
 .form-title {
-  font-size: 1.25rem;
+  font-size: clamp(1.25rem, 2vw, 1.6rem);
   font-weight: 800;
   color: #0f172a;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .section-title {
@@ -26,19 +74,21 @@
   margin-bottom: 0.5rem;
 }
 
-/* Inputs */
+/* =========================
+   INPUTS
+   ========================= */
 .form-input,
 .form-select {
   width: 100%;
-  max-width: 100%;
   min-width: 0;
+  box-sizing: border-box;
   background: #f8fafc;
   border: 1px solid #cbd5e1;
   border-radius: 0.75rem;
   padding: 0.85rem 1rem;
   color: #0f172a;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: 0.2s ease;
 }
 
 .form-input:focus,
@@ -47,31 +97,52 @@
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
 }
 
+/* =========================
+   TEXTAREA (FIXED CUT ISSUE)
+   ========================= */
 textarea.form-input {
+  width: 100%;
+  min-width: 0;
+  max-width: 600px;
+  box-sizing: border-box;
+  padding: 0.9rem 1rem;
   resize: vertical;
+  line-height: 1.5;
+  display: block;
+  overflow-y: auto;
 }
 
 /* =========================
-   TWO-COLUMN LAYOUT
+   GRID LAYOUT
    ========================= */
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* two equal columns */
-  gap: 2rem;                      /* spacing between columns */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 2rem);
   align-items: start;
 }
 
-/* Ensure sections inside grid stretch properly */
 .form-grid > div {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 /* =========================
-   CARDS
+   DATE GROUP
    ========================= */
-.field-card,
+.date-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.date-group > div {
+  flex: 1;
+}
+
+/* =========================
+   MENU CARD
+   ========================= */
 .menu-card {
   display: flex;
   align-items: center;
@@ -83,111 +154,117 @@ textarea.form-input {
   flex-wrap: wrap;
 }
 
-.field-card .form-input,
-.menu-card .form-input {
-  background: transparent;
-  border-color: transparent;
-  padding: 0.75rem 0.85rem;
-  flex: 1;
-  width: auto;
-}
-
 /* =========================
    BUTTONS
    ========================= */
 .delete-btn,
-.primary-btn {
+.primary-btn,
+.draft-btn,
+.generate-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 0.85rem 1rem;
+  padding: 0.85rem 2rem;
   font-weight: 700;
   border-radius: 0.85rem;
   border: none;
   cursor: pointer;
+  width: 100%;
+  max-width: 220px;
 }
 
-.template-actions {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-}
-
-.draft-btn,
-.generate-btn {
-  gap: 0.5rem;
-  padding: 0.85rem 1rem;
-  font-weight: 700;
-  border-radius: 0.85rem;
-  border: none;
-  width: 150px;
-}
-
-.draft-btn {
-  background-color: #e4e4e4;
-}
-
-.generate-btn {
-  background-color: #52ba67;
-  color: #ffffff;
+.delete-btn {
+  background: #ef4444;
+  color: white;
 }
 
 .primary-btn {
   background: #2563eb;
-  color: #ffffff;
+  color: white;
 }
 
 .primary-btn:hover {
   background: #1d4ed8;
 }
 
+.draft-btn {
+  background: #e4e4e4;
+}
+
+.generate-btn {
+  background: #52ba67;
+  color: white;
+}
+
+.template-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: -0.5rem;
+}
+
 /* =========================
-   RESPONSIVE BREAKPOINTS
+   RESPONSIVE DESIGN
    ========================= */
+
+/* Tablet */
 @media (max-width: 1024px) {
-  .form-container {
-    padding: 1.25rem;
+  .form-wrapper {
+    max-width: 95%;
+  }
+
+  .form-grid {
+    gap: 1.5rem;
   }
 }
 
+/* Mobile */
 @media (max-width: 768px) {
-  .form-container {
+  .create-form-page {
     padding: 1rem;
-    border-radius: 1rem;
   }
 
-  .form-title {
-    font-size: 1.1rem;
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
-  .template-actions {
-    justify-content: center;
+  .date-group {
+    flex-direction: column;
   }
 
-  .draft-btn,
-  .generate-btn {
-    width: 100%;
-  }
-
-  .field-card,
   .menu-card {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .form-grid {
-    grid-template-columns: 1fr; /* stack on mobile */
+  .template-actions {
+    flex-direction: column;
+  }
+
+  .delete-btn,
+  .primary-btn,
+  .draft-btn,
+  .generate-btn {
+    width: 100%;
+    max-width: 100%;
   }
 }
 
+/* Small phones */
 @media (max-width: 480px) {
   .form-container {
     padding: 0.75rem;
+    border-radius: 1rem;
   }
 
-  .form-input,
-  .form-select {
-    padding: 0.75rem;
+  .form-title {
+    text-align: center;
+  }
+
+  .form-input {
+    font-size: 12px;
   }
 }
