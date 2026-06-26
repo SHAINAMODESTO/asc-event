@@ -1,55 +1,84 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getEvents, publishEvent } from "../services/eventService";
 import "./AllEventsList.css";
-
-const STORAGE_KEY = "ascEventTemplates";
 
 const formatDateRange = (start, end) => {
   if (!start && !end) return "No date set";
+
   const from = start ? new Date(start).toLocaleString() : "TBD";
   const to = end ? new Date(end).toLocaleString() : "TBD";
+
   return `${from} — ${to}`;
 };
 
 const AllEventsList = () => {
   const navigate = useNavigate();
+
   const [events, setEvents] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
 
+  // Fetch all events from backend
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        setEvents(JSON.parse(stored));
-      } catch (error) {
-        console.error("Failed to parse saved templates", error);
-      }
-    }
+    fetchEvents();
   }, []);
 
+  const fetchEvents = async () => {
+    try {
+      const response = await getEvents();
+
+      if (response.success) {
+        setEvents(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch events:", error);
+    }
+  };
+
+  // Filter search
   const filteredEvents = events.filter((event) => {
     const query = searchTerm.toLowerCase();
+
     return (
-      event.eventName?.toLowerCase().includes(query) ||
-      event.eventVenue?.toLowerCase().includes(query)
+      event.title?.toLowerCase().includes(query) ||
+      event.venue?.toLowerCase().includes(query)
     );
   });
 
+  // Delete event (frontend only for now)
   const deleteTemplate = (id) => {
     const remaining = events.filter((event) => event.id !== id);
     setEvents(remaining);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
     setStatusMessage("Template deleted.");
   };
 
+  // View event
   const viewTemplate = (eventTemplate) => {
     navigate("/registration", { state: eventTemplate });
   };
 
+  // Edit event
   const editTemplate = (eventTemplate) => {
     localStorage.setItem("ascEventEdit", JSON.stringify(eventTemplate));
     navigate(`/?item=${encodeURIComponent("Create Event")}`);
+  };
+
+  // Publish event
+  const handlePublish = async (id) => {
+    try {
+      const response = await publishEvent(id);
+
+      if (response.success) {
+        setStatusMessage("Event published successfully.");
+        fetchEvents(); // refresh event list
+      }
+    } catch (error) {
+      console.error(error.response?.data);
+      setStatusMessage(
+        error.response?.data?.message || "Failed to publish event."
+      );
+    }
   };
 
   return (
@@ -61,6 +90,7 @@ const AllEventsList = () => {
             Review saved templates and open them for reference.
           </p>
         </div>
+
         <div className="all-events-stat">
           {events.length} saved event{events.length === 1 ? "" : "s"}
         </div>
@@ -76,15 +106,15 @@ const AllEventsList = () => {
         />
       </div>
 
-      {statusMessage && <div className="all-events-status">{statusMessage}</div>}
+      {statusMessage && (
+        <div className="all-events-status">{statusMessage}</div>
+      )}
 
       {events.length === 0 ? (
-        <div className="event-list-empty">
-          No saved templates yet. Save a template from Create Event and it will appear here.
-        </div>
+        <div className="event-list-empty">No saved templates yet.</div>
       ) : filteredEvents.length === 0 ? (
         <div className="event-list-empty">
-          No templates match "{searchTerm}". Try a different search term.
+          No templates match "{searchTerm}".
         </div>
       ) : (
         <div className="space-y-4">
@@ -92,49 +122,57 @@ const AllEventsList = () => {
             <div key={event.id || index} className="all-event-card">
               <div className="event-card-header">
                 <div>
-                  <h2 className="event-title">{event.eventName || "Untitled Event"}</h2>
-                  <p className="event-venue"><b>VENUE:</b> {event.eventVenue || "No venue set"}</p>
-                  <p className="event-date"><b>DATE:</b> {formatDateRange(event.eventStart, event.eventEnd)}</p>
+                  <h2 className="event-title">
+                    {event.title || "Untitled Event"}
+                  </h2>
+
+                  <p className="event-venue">
+                    <b>VENUE:</b> {event.venue || "No venue set"}
+                  </p>
+
+                  <p className="event-date">
+                    <b>DATE:</b>{" "}
+                    {formatDateRange(event.startDate, event.endDate)}
+                  </p>
+
+                  {/* Status */}
+                  <p>
+                    <b>STATUS:</b> {event.status}
+                  </p>
                 </div>
-                
               </div>
 
               <div className="event-actions">
-               <button
-                  type="button"
-                  className="event-button"
-                >
-                  Draft
-                </button>
+
+                {/* Edit */}
                 <button
                   type="button"
                   className="event-button"
+                  onClick={() => editTemplate(event)}
                 >
                   Edit
                 </button>
+
+                {/* Generate URL */}
                 <button
                   type="button"
                   className="event-button"
+                  onClick={() => viewTemplate(event)}
                 >
                   Generate URL
                 </button>
+
+                {/* Delete */}
                 <button
                   type="button"
                   className="event-button event-button-delete"
+                  onClick={() => deleteTemplate(event.id)}
                 >
                   Delete
                 </button>
-
               </div>
 
-              
-
-              <div className="event-section">
-                
-    
-              </div>
-
-              
+              <div className="event-section"></div>
             </div>
           ))}
         </div>

@@ -9,8 +9,8 @@ import './Sidebar.css'
 const sectionItems = {
     Events: [
         'Create Event',
-        'All Events List',
-        'Draft / Published Events',
+        'Draft Events List',
+        'Published Events List',
     ],
     Attendees: [
         'Attendee List',
@@ -109,7 +109,7 @@ export default function Sidebar() {
 
                 {activeItem === 'Create Event' ? (
                     <CreateForm />
-                ) : activeItem === 'All Events List' ? (
+                ) : activeItem === 'Draft Events List' ? (
                     <AllEventsList />
                 ) : activeItem === 'Attendee List' ? (
                     <AttendeesList />
