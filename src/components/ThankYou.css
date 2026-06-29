@@ -1,0 +1,57 @@
+.thankyou-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  padding: 20px;
+}
+
+.thankyou-card {
+  background: #fff;
+  width: 100%;
+  max-width: 650px;
+  padding: 50px 40px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+}
+
+.success-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #22c55e;
+  margin-bottom: 25px;
+}
+
+.thankyou-card h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #15803d;
+  line-height: 1.4;
+  margin-bottom: 18px;
+}
+
+.thankyou-card p {
+  font-size: 16px;
+  color: #4b5563;
+  line-height: 1.7;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .thankyou-card {
+    padding: 35px 25px;
+  }
+
+  .thankyou-card h1 {
+    font-size: 24px;
+  }
+
+  .thankyou-card p {
+    font-size: 14px;
+  }
+}

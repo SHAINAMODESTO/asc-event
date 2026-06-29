@@ -1,11 +1,12 @@
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Divide, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { createEvent } from "../services/eventService";
 import "./CreateForm.css";
 
 const CreateForm = () => {
   const navigate = useNavigate();
+
   const [formTitle] = useState("Registration Form");
 
   const [description, setDescription] = useState(
@@ -16,38 +17,47 @@ Event Venue: Rizal Ballroom, Makati Shangri-La Hotel
 Inquiry Contact:
 - Digna Santos +639189032173 or digna.santos@asc.com.ph
 - Bree Muyco +639561503875 or breanna.muyco@asc.com.ph
-- Patricia Tombo +639171248773 or patricia.tombo@asc.com.ph
-
-Consent: By signing this Event Consent form, I willingly authorize its Organizers to process my personal data for the sole purpose of achieving the objectives of this event dubbed "National Summit on Progressive and Fair Advertising Self Regulation." I entrust that my personal data shall be given utmost care and confidentiality by the Event Organizers and that this shall not be used outside the objectives and purpose above-stated.`
+- Patricia Tombo +639171248773 or patricia.tombo@asc.com.ph`
   );
 
+  // Event Description
   const [eventDescription, setEventDescription] = useState(
     "Please fill out all required information"
   );
 
+  // Basic Event Info
   const [eventName, setEventName] = useState("");
   const [eventVenue, setEventVenue] = useState("");
 
-  const [eventInquiryContact, setEventInquiryContact] = useState(`- Digna Santos +639189032173 or digna.santos@asc.com.ph
-- Bree Muyco +639561503875 or breanna.muyco@asc.com.ph
-- Patricia Tombo +639171248773 or patricia.tombo@asc.com.ph`);
+  // NEW: Max participants
+  const [maxParticipants, setMaxParticipants] = useState("");
 
-  // Event dates
+  // Event Dates
   const [eventStart, setEventStart] = useState("");
   const [eventEnd, setEventEnd] = useState("");
 
-  // ADDED: Registration dates (Accept Responses)
+  // Registration Dates (Accept Responses)
   const [registrationStart, setRegistrationStart] = useState("");
   const [registrationEnd, setRegistrationEnd] = useState("");
 
+  // Banner
   const [banner, setBanner] = useState("");
 
+  // Inquiry Contacts
+  const [eventInquiryContact, setEventInquiryContact] = useState(
+    `- Digna Santos +639189032173 or digna.santos@asc.com.ph
+- Bree Muyco +639561503875 or breanna.muyco@asc.com.ph
+- Patricia Tombo +639171248773 or patricia.tombo@asc.com.ph`
+  );
+
+  // Consent Message
   const [eventConsentMessage, setEventConsentMessage] = useState(
-    `By accepting this Event Consent form, I willingly authorize its Organizers to process my personal data for the sole purpose of achieving the objectives of this event dubbed "National Summit on Progressive and Fair Advertising Self Regulation." I entrust that my personal data shall be given utmost care and confidentiality by the Event Organizers and that this shall not be used outside the objectives and purpose above-stated.`
+    `By accepting this Event Consent form, I willingly authorize its Organizers to process my personal data for the sole purpose of achieving the objectives of this event.`
   );
 
   const fileInputRef = useRef(null);
 
+  // Default Registration Fields
   const [fields, setFields] = useState([
     { label: "First Name", type: "text", required: true },
     { label: "Middle Initial", type: "text", required: false },
@@ -59,6 +69,7 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
     { label: "Position", type: "text", required: true },
   ]);
 
+  // Menu Options
   const [menuOptions, setMenuOptions] = useState([
     "Pork",
     "Fish",
@@ -67,6 +78,7 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
 
   const [showMenuInForm, setShowMenuInForm] = useState(true);
 
+  // Load Edit Data
   React.useEffect(() => {
     const editData = localStorage.getItem("ascEventEdit");
 
@@ -74,26 +86,20 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
       try {
         const parsed = JSON.parse(editData);
 
-        setEventDescription(parsed.eventDescription || eventDescription);
-        setEventName(parsed.eventName || eventName);
-        setEventVenue(parsed.eventVenue || eventVenue);
-        setEventInquiryContact(
-          parsed.eventInquiryContact || eventInquiryContact
-        );
-        setEventStart(parsed.eventStart || eventStart);
-        setEventEnd(parsed.eventEnd || eventEnd);
-
-        // ADDED
-        setRegistrationStart(parsed.registrationStart || registrationStart);
-        setRegistrationEnd(parsed.registrationEnd || registrationEnd);
-
-        setEventConsentMessage(
-          parsed.eventConsentMessage || eventConsentMessage
-        );
-        setBanner(parsed.banner || banner);
+        setEventDescription(parsed.eventDescription || "");
+        setEventName(parsed.eventName || "");
+        setEventVenue(parsed.eventVenue || "");
+        setMaxParticipants(parsed.maxParticipants || "");
+        setEventInquiryContact(parsed.eventInquiryContact || "");
+        setEventStart(parsed.eventStart || "");
+        setEventEnd(parsed.eventEnd || "");
+        setRegistrationStart(parsed.registrationStart || "");
+        setRegistrationEnd(parsed.registrationEnd || "");
+        setEventConsentMessage(parsed.eventConsentMessage || "");
+        setBanner(parsed.banner || "");
         setFields(parsed.fields || fields);
         setMenuOptions(parsed.menuOptions || menuOptions);
-        setShowMenuInForm(parsed.showMenuInForm ?? showMenuInForm);
+        setShowMenuInForm(parsed.showMenuInForm ?? true);
       } catch (error) {
         console.error("Failed to load edit template", error);
       } finally {
@@ -125,18 +131,7 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
   const removeMenuOption = (index) =>
     setMenuOptions(menuOptions.filter((_, i) => i !== index));
 
-  const handleBannerUpload = (event) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const fileUrl = URL.createObjectURL(file);
-      setBanner(fileUrl);
-      console.log("Banner uploaded:", file.name);
-    }
-  };
 
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
 
   const STORAGE_KEY = "ascEventTemplates";
 
@@ -146,19 +141,22 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
     localStorage.setItem(STORAGE_KEY, JSON.stringify([template, ...parsed]));
   };
 
+  // Save Event
   const handleSaveTemplate = async () => {
     const eventData = {
       title: eventName,
       description: eventDescription,
       venue: eventVenue,
+     // maxParticipants: Number(maxParticipants),
 
+      // Event Dates
       startDate: eventStart.split("T")[0],
       endDate: eventEnd.split("T")[0],
 
       requiresMealPreference: showMenuInForm,
       isRegistrationRequired: true,
 
-      // FIXED: use registration dates, not event dates
+      // Registration Dates
       registrationStart: registrationStart.replace("T", " "),
       registrationEnd: registrationEnd.replace("T", " "),
     };
@@ -168,7 +166,7 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
 
       if (response.success) {
         const template = {
-          id: response.data.id,
+          eventId: response.data.id,
           eventCode: response.data.eventCode,
           fields,
           menuOptions,
@@ -176,13 +174,11 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
           eventDescription,
           eventName,
           eventVenue,
+          maxParticipants,
           eventStart,
           eventEnd,
-
-          // ADDED
           registrationStart,
           registrationEnd,
-
           eventInquiryContact,
           eventConsentMessage,
           banner,
@@ -212,7 +208,7 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
           <h1 className="form-title">Create an Event Registration Form</h1>
 
           <div className="form-grid">
-            {/* Event Name */}
+            {/* LEFT SIDE */}
             <div>
               <h2 className="section-title">Event Name</h2>
               <input
@@ -227,6 +223,7 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
               {/* Event Date */}
               <div className="space-y-3">
                 <h2 className="section-title">Event Date</h2>
+
                 <div className="flex flex-col gap-4 md:flex-row md:items-end">
                   <div className="flex flex-col md:flex-row md:items-center gap-2 flex-1">
                     <label>From</label>
@@ -261,12 +258,25 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
                   className="form-input"
                 />
               </div>
+
+              {/* Maximum Attendees */}
+              <div className="space-y-3">
+                <h2 className="section-title">Maximum Attendees </h2>
+                <input
+                  type="number"
+                  value={maxParticipants}
+                  onChange={(e) => setMaxParticipants(e.target.value)}
+                  placeholder="Enter maximum attendees"
+                  className="form-input"
+                />
+              </div>
             </div>
 
+            {/* RIGHT SIDE */}
             <div>
               {/* Accept Responses */}
               <div className="space-y-3">
-                <h2 className="section-title">Accept Responses</h2>
+                <h2 className="section-title">Accept Responses (Optional)</h2>
 
                 <div className="flex flex-col gap-4 md:flex-row md:items-end">
                   <div className="flex flex-col md:flex-row md:items-center gap-2 flex-1">
@@ -291,7 +301,9 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
                 </div>
               </div>
 
+              {/* Consent */}
               <h2 className="section-title">Event Consent Message</h2>
+
               <textarea
                 value={eventConsentMessage}
                 onChange={(e) => setEventConsentMessage(e.target.value)}
@@ -302,7 +314,7 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
             </div>
           </div>
 
-          {/* Menu Reference */}
+          {/* Menu */}
           <div className="space-y-1">
             <div className="flex items-center justify-between gap-2">
               <div>
@@ -319,38 +331,28 @@ Consent: By signing this Event Consent form, I willingly authorize its Organizer
               </label>
             </div>
 
-            {showMenuInForm && (
-              <>
-                <div className="space-y-3">
-                  {menuOptions.map((option, index) => (
-                    <div key={index} className="menu-card">
-                      <input
-                        value={option}
-                        onChange={(e) =>
-                          updateMenuOption(index, e.target.value)
-                        }
-                        className="form-input flex-1"
-                      />
+            {showMenuInForm &&
+              menuOptions.map((option, index) => (
+                <div key={index} className="menu-card">
+                  <input
+                    value={option}
+                    onChange={(e) => updateMenuOption(index, e.target.value)}
+                    className="form-input flex-1"
+                  />
 
-                      <button
-                        onClick={() => removeMenuOption(index)}
-                        className="delete-btn"
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                  <button
+                    onClick={() => removeMenuOption(index)}
+                    className="delete-btn"
+                  >
+                    <Trash2 size={15} />
+                  </button>
 
-                      <button
-                        onClick={addMenuOption}
-                        className="primary-btn"
-                      >
-                        <Plus size={9} />
-                        Add Menu Option
-                      </button>
-                    </div>
-                  ))}
+                  <button onClick={addMenuOption} className="primary-btn">
+                    <Plus size={9} />
+                    Add Menu Option
+                  </button>
                 </div>
-              </>
-            )}
+              ))}
           </div>
 
           <br />

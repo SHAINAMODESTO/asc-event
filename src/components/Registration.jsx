@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./Registration.css";
+import { createAttendee } from "../services/attendeeListService";
 
 const Register = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  console.log("LOCATION STATE:", location.state);
+  console.log("EVENT ID:", location.state?.eventId);
 
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [consentChecked, setConsentChecked] = useState(false);
@@ -17,6 +21,7 @@ const Register = () => {
   const [contactNumber, setContactNumber] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [position, setPosition] = useState("");
+  const [selectedMenu, setSelectedMenu] = useState("");
 
   const {
     menuOptions = [],
@@ -33,24 +38,45 @@ const Register = () => {
 
   const navigateHome = () => navigate("/", { replace: true });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const formData = {
-      firstName,
-      lastName,
-      middleInitial,
-      preferredName,
-      email,
-      contactNumber,
-      companyName,
-      position,
-    };
-
-    console.log(formData);
-    alert("Registration Submitted!");
+  const formData = {
+    eventId: location.state?.eventId,
+    firstName,
+    lastName,
+    emailAddress: email,
+    contactNumber,
+    preferredNameOnBadge: preferredName,
+    company: companyName,
+    position,
   };
 
+  console.log("SENDING:", formData);
+
+  try {
+    const response = await createAttendee(formData);
+
+    console.log("SUCCESS:", response);
+
+    // remove alert here
+    navigate("/thankyou", {
+      replace: true,
+      state: {
+        eventName,
+        email,
+      },
+    });
+  } catch (error) {
+    console.error("FULL ERROR:", error.response?.data);
+
+    alert(
+      Array.isArray(error.response?.data?.message)
+        ? error.response.data.message.join("\n")
+        : error.response?.data?.message || "Failed to submit registration"
+    );
+  }
+};
   return (
     <div className="registration-page">
       {!consentAccepted ? (
@@ -248,7 +274,13 @@ const Register = () => {
                 <div className="menu-list">
                   {menuOptions.map((option, index) => (
                     <label key={index} className="menu-option">
-                      <input type="radio" name="menu" />
+                      <input
+                        type="radio"
+                        name="menu"
+                        value={option}
+                        checked={selectedMenu === option}
+                        onChange={(e) => setSelectedMenu(e.target.value)}
+                      />
                       <span>{option}</span>
                     </label>
                   ))}
