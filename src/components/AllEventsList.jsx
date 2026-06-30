@@ -22,9 +22,10 @@ const AllEventsList = () => {
 
   const [events, setEvents] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
 
-  // Fetch all events from backend
   useEffect(() => {
     fetchEvents();
   }, []);
@@ -41,76 +42,66 @@ const AllEventsList = () => {
     }
   };
 
-  // Filter search
+  // Search + Date Range Filter
   const filteredEvents = events.filter((event) => {
     const query = searchTerm.toLowerCase();
 
-    return (
+    const matchesSearch =
       event.title?.toLowerCase().includes(query) ||
-      event.venue?.toLowerCase().includes(query)
-    );
+      event.venue?.toLowerCase().includes(query);
+
+    const eventStart = new Date(event.startDate);
+
+    const matchesFromDate = fromDate
+      ? eventStart >= new Date(fromDate)
+      : true;
+
+    const matchesToDate = toDate
+      ? eventStart <= new Date(toDate)
+      : true;
+
+    return matchesSearch && matchesFromDate && matchesToDate;
   });
 
-  // Delete event (frontend only for now)
- const deleteTemplate = async (id) => {
-  try {
-    const response = await deleteEvent(id);
+  const deleteTemplate = async (id) => {
+    try {
+      const response = await deleteEvent(id);
 
-    if (response.success) {
-      // Refresh backend event list
-      fetchEvents();
+      if (response.success) {
+        fetchEvents();
 
-      // Also remove from localStorage (for AttendeesList)
-      const stored = localStorage.getItem("ascEventTemplates");
+        const stored = localStorage.getItem("ascEventTemplates");
 
-      if (stored) {
-        const parsed = JSON.parse(stored);
+        if (stored) {
+          const parsed = JSON.parse(stored);
 
-        const updatedTemplates = parsed.filter(
-          (template) => template.eventId !== id
-        );
+          const updatedTemplates = parsed.filter(
+            (template) => template.eventId !== id
+          );
 
-        localStorage.setItem(
-          "ascEventTemplates",
-          JSON.stringify(updatedTemplates)
-        );
+          localStorage.setItem(
+            "ascEventTemplates",
+            JSON.stringify(updatedTemplates)
+          );
+        }
+
+        setStatusMessage("Event deleted successfully.");
       }
-
-      setStatusMessage("Event deleted successfully.");
+    } catch (error) {
+      console.error("Delete failed:", error);
+      setStatusMessage(
+        error.response?.data?.message || "Failed to delete event."
+      );
     }
-  } catch (error) {
-    console.error("Delete failed:", error);
-    setStatusMessage(
-      error.response?.data?.message || "Failed to delete event."
-    );
-  }
-};
-  // View event
+  };
+
   const viewTemplate = (eventTemplate) => {
     navigate("/registration", { state: eventTemplate });
   };
 
-  // Edit event
   const editTemplate = (eventTemplate) => {
     localStorage.setItem("ascEventEdit", JSON.stringify(eventTemplate));
     navigate(`/?item=${encodeURIComponent("Create Event")}`);
-  };
-
-  // Publish event
-  const handlePublish = async (id) => {
-    try {
-      const response = await publishEvent(id);
-
-      if (response.success) {
-        setStatusMessage("Event published successfully.");
-        fetchEvents(); // refresh event list
-      }
-    } catch (error) {
-      console.error(error.response?.data);
-      setStatusMessage(
-        error.response?.data?.message || "Failed to publish event."
-      );
-    }
   };
 
   return (
@@ -118,9 +109,6 @@ const AllEventsList = () => {
       <div className="all-events-header">
         <div>
           <h1 className="all-events-title">All Events List</h1>
-          <p className="all-events-subtitle">
-            Review saved templates and open them for reference.
-          </p>
         </div>
 
         <div className="all-events-stat">
@@ -128,15 +116,36 @@ const AllEventsList = () => {
         </div>
       </div>
 
+      {/* Search + Date Range */}
       <div className="all-events-search">
-        <input
-          type="text"
-          placeholder="Search by event name or venue"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="search-input"
-        />
-      </div>
+  <input
+    type="text"
+    placeholder="Search by event name or venue"
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    className="search-input"
+  />
+
+  <div className="date-range-wrapper">
+    <label className="date-range-label">Date Range:</label>
+
+    <span className="date-text">From</span>
+    <input
+      type="date"
+      value={fromDate}
+      onChange={(e) => setFromDate(e.target.value)}
+      className="date-input"
+    />
+
+    <span className="date-text">To</span>
+    <input
+      type="date"
+      value={toDate}
+      onChange={(e) => setToDate(e.target.value)}
+      className="date-input"
+    />
+  </div>
+</div>
 
       {statusMessage && (
         <div className="all-events-status">{statusMessage}</div>
@@ -146,10 +155,10 @@ const AllEventsList = () => {
         <div className="event-list-empty">No saved templates yet.</div>
       ) : filteredEvents.length === 0 ? (
         <div className="event-list-empty">
-          No templates match "{searchTerm}".
+          No templates match your filters.
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="events-grid">
           {filteredEvents.map((event, index) => (
             <div key={event.id || index} className="all-event-card">
               <div className="event-card-header">
@@ -167,7 +176,6 @@ const AllEventsList = () => {
                     {formatDateRange(event.startDate, event.endDate)}
                   </p>
 
-                  {/* Status */}
                   <p>
                     <b>STATUS:</b> {event.status}
                   </p>
@@ -175,8 +183,6 @@ const AllEventsList = () => {
               </div>
 
               <div className="event-actions">
-
-                {/* Edit */}
                 <button
                   type="button"
                   className="event-button"
@@ -185,7 +191,6 @@ const AllEventsList = () => {
                   Edit
                 </button>
 
-                {/* Generate URL */}
                 <button
                   type="button"
                   className="event-button"
@@ -194,7 +199,6 @@ const AllEventsList = () => {
                   Generate URL
                 </button>
 
-                {/* Delete */}
                 <button
                   type="button"
                   className="event-button event-button-delete"

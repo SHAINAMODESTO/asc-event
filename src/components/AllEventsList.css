@@ -1,9 +1,18 @@
+/* =========================
+   CONTAINER
+========================= */
 .all-events-list {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
+/* =========================
+   HEADER
+========================= */
 .all-events-header {
   display: flex;
   flex-direction: column;
@@ -34,15 +43,128 @@
   font-size: 0.95rem;
 }
 
+/* =========================
+   SEARCH
+========================= */
+/* =========================
+   SEARCH
+========================= */
+.all-events-search {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: nowrap; /* keeps everything in one line */
+}
+
+.search-input {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.85rem;
+  padding: 0.85rem 1rem;
+  color: #0f172a;
+  outline: none;
+  flex-shrink: 0;
+}
+
+.search-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+/* Date Range Wrapper */
+.date-range-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap; /* prevents wrapping */
+}
+
+.date-range-label {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.date-text {
+  font-size: 0.95rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+.date-input {
+  width: 150px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.85rem;
+  background: #ffffff;
+  color: #0f172a;
+  outline: none;
+}
+
+.date-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+/* =========================
+   EVENTS GRID
+   COLUMN-FIRST ORDER
+   (1 4 7 / 2 5 8 / 3 6 9)
+========================= */
+.events-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  width: 100%;
+
+  /* 3 rows visible only */
+  max-height: calc((202px * 3) + (16px * 2));
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-right: 8px;
+}
+
+/* Custom Scrollbar */
+.events-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.events-grid::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.events-grid::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 10px;
+}
+
+.events-grid::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* =========================
+   CARD
+========================= */
 .all-event-card {
   border: 1px solid #e2e8f0;
   border-radius: 1.5rem;
-  background: #f8fafc;
+  background: #ffffff;
   padding: 1.5rem;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-  width: 30%;
+
+  width: 100%;
+  height: 202px;
+  min-width: 280px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
+/* =========================
+   CARD HEADER
+========================= */
 .event-card-header {
   display: flex;
   flex-direction: column;
@@ -57,6 +179,9 @@
   }
 }
 
+/* =========================
+   TEXT
+========================= */
 .event-title {
   font-size: 1.125rem;
   font-weight: 700;
@@ -67,8 +192,13 @@
 .event-date {
   color: #475569;
   font-size: 0.95rem;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
+/* =========================
+   EVENT SECTION
+========================= */
 .event-section {
   margin-top: 1rem;
   display: grid;
@@ -88,6 +218,16 @@
   color: #64748b;
 }
 
+.event-section-content {
+  margin-top: 0.5rem;
+  color: #334155;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* =========================
+   BUTTONS
+========================= */
 .event-actions {
   display: flex;
   gap: 0.75rem;
@@ -126,48 +266,34 @@
   background: #dc2626;
 }
 
-.event-section-content {
-  margin-top: 0.5rem;
-  color: #334155;
-  font-size: 0.95rem;
-  line-height: 1.6;
-}
-
-.all-events-search {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-@media (min-width: 768px) {
-  .all-events-search {
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-  }
-}
-
-.search-input {
-  width: 100%;
-  max-width: 420px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.85rem;
-  padding: 0.85rem 1rem;
-  color: #0f172a;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.search-input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
-}
-
+/* =========================
+   EMPTY STATE
+========================= */
 .event-list-empty {
   border: 1px solid #bfdbfe;
   background: #eff6ff;
   color: #1d4ed8;
   border-radius: 1.5rem;
   padding: 1.5rem;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 1024px) {
+  .events-grid {
+    grid-template-rows: repeat(2, auto);
+    max-height: calc((202px * 2) + 16px);
+  }
+}
+
+@media (max-width: 600px) {
+  .events-grid {
+    grid-template-rows: repeat(1, auto);
+    max-height: 202px;
+  }
+
+  .all-event-card {
+    min-width: 100%;
+  }
 }

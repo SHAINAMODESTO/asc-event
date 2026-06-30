@@ -4,6 +4,7 @@ import Registration from "./components/Registration";
 import ThankYou from "./components/ThankYou";
 import AttendeesList from "./components/AttendeesList";
 import EventAttendees from "./components/EventAttendees";
+import CreateForm from "./components/CreateForm";
 
 function App() {
   return (
@@ -12,9 +13,13 @@ function App() {
       <Route path="/registration" element={<Registration />} />
       <Route path="/thankyou" element={<ThankYou />} />
 
+      {/* CREATE / EDIT EVENT */}
+      <Route path="/create-event" element={<CreateForm />} />
+      <Route path="/create-event/:id" element={<CreateForm />} />
+
       {/* Attendees */}
-        <Route path="/attendees" element={<AttendeesList />} />
-        <Route path="/attendees/:eventId" element={<EventAttendees />} />
+      <Route path="/attendees" element={<AttendeesList />} />
+      <Route path="/attendees/:eventId" element={<EventAttendees />} />
     </Routes>
   );
 }
