@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Sidebar from "./shared/Sidebar";
 import Registration from "./components/Registration";
+import RegistrationV2 from "./components/RegistrationV2";
 import ThankYou from "./components/ThankYou";
 import AttendeesList from "./components/AttendeesList";
 import EventAttendees from "./components/EventAttendees";
@@ -10,11 +11,12 @@ function App() {
     <Routes>
       <Route path="/" element={<Sidebar />} />
       <Route path="/registration" element={<Registration />} />
+      <Route path="/registration/:eventId" element={<RegistrationV2 />} />
       <Route path="/thankyou" element={<ThankYou />} />
 
       {/* Attendees */}
-        <Route path="/attendees" element={<AttendeesList />} />
-        <Route path="/attendees/:eventId" element={<EventAttendees />} />
+      <Route path="/attendees" element={<AttendeesList />} />
+      <Route path="/attendees/:eventId" element={<EventAttendees />} />
     </Routes>
   );
 }
