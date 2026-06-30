@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getEvents, publishEvent } from "../services/eventService";
+
+import {
+  getEvents,
+  publishEvent,
+  deleteEvent,
+} from "../services/eventService";
 import "./AllEventsList.css";
 
 const formatDateRange = (start, end) => {
@@ -47,12 +52,39 @@ const AllEventsList = () => {
   });
 
   // Delete event (frontend only for now)
-  const deleteTemplate = (id) => {
-    const remaining = events.filter((event) => event.id !== id);
-    setEvents(remaining);
-    setStatusMessage("Template deleted.");
-  };
+ const deleteTemplate = async (id) => {
+  try {
+    const response = await deleteEvent(id);
 
+    if (response.success) {
+      // Refresh backend event list
+      fetchEvents();
+
+      // Also remove from localStorage (for AttendeesList)
+      const stored = localStorage.getItem("ascEventTemplates");
+
+      if (stored) {
+        const parsed = JSON.parse(stored);
+
+        const updatedTemplates = parsed.filter(
+          (template) => template.eventId !== id
+        );
+
+        localStorage.setItem(
+          "ascEventTemplates",
+          JSON.stringify(updatedTemplates)
+        );
+      }
+
+      setStatusMessage("Event deleted successfully.");
+    }
+  } catch (error) {
+    console.error("Delete failed:", error);
+    setStatusMessage(
+      error.response?.data?.message || "Failed to delete event."
+    );
+  }
+};
   // View event
   const viewTemplate = (eventTemplate) => {
     navigate("/registration", { state: eventTemplate });

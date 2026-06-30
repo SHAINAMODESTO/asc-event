@@ -1,57 +1,68 @@
 import React, { useEffect, useState } from "react";
 import "./AllEventsList.css";
-
-const STORAGE_KEY = "ascEventTemplates";
+import { useNavigate } from "react-router-dom";
+import { getEvents } from "../services/eventService";
 
 const formatDateRange = (start, end) => {
   if (!start && !end) return "No date set";
+
   const from = start ? new Date(start).toLocaleString() : "TBD";
   const to = end ? new Date(end).toLocaleString() : "TBD";
+
   return `${from} — ${to}`;
 };
 
 const AttendeesList = () => {
+  const navigate = useNavigate();
+
   const [events, setEvents] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
 
+  // Fetch events from backend
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        setEvents(JSON.parse(stored));
-      } catch (error) {
-        console.error("Failed to parse saved templates", error);
-      }
-    }
+    fetchEvents();
   }, []);
 
+  const fetchEvents = async () => {
+    try {
+      const response = await getEvents();
+
+      if (response.success) {
+        setEvents(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch events:", error);
+    }
+  };
+
+  // Search filter
   const filteredEvents = events.filter((event) => {
     const query = searchTerm.toLowerCase();
+
     return (
-      event.eventName?.toLowerCase().includes(query) ||
-      event.eventVenue?.toLowerCase().includes(query)
+      event.title?.toLowerCase().includes(query) ||
+      event.venue?.toLowerCase().includes(query)
     );
   });
 
-  const viewAttendees = (eventTemplate) => {
-    setStatusMessage(`View attendees for ${eventTemplate.eventName || "this event"}`);
-  };
-
   return (
     <div className="all-events-list">
+      {/* Header */}
       <div className="all-events-header">
         <div>
           <h1 className="all-events-title">Attendees List</h1>
           <p className="all-events-subtitle">
-            Browse events and view the attendees associated with each template.
+            Browse events and view the attendees associated with each event.
           </p>
         </div>
+
         <div className="all-events-stat">
-          {events.length} saved event{events.length === 1 ? "" : "s"}
+          {events.length} event{events.length === 1 ? "" : "s"}
         </div>
       </div>
 
+      {/* Search */}
       <div className="all-events-search">
         <input
           type="text"
@@ -62,15 +73,17 @@ const AttendeesList = () => {
         />
       </div>
 
-      {statusMessage && <div className="all-events-status">{statusMessage}</div>}
+      {/* Status */}
+      {statusMessage && (
+        <div className="all-events-status">{statusMessage}</div>
+      )}
 
+      {/* Event List */}
       {events.length === 0 ? (
-        <div className="event-list-empty">
-          No saved templates yet. Save a template from Create Event and it will appear here.
-        </div>
+        <div className="event-list-empty">No events found.</div>
       ) : filteredEvents.length === 0 ? (
         <div className="event-list-empty">
-          No templates match "{searchTerm}". Try a different search term.
+          No events match "{searchTerm}".
         </div>
       ) : (
         <div className="space-y-4">
@@ -78,9 +91,22 @@ const AttendeesList = () => {
             <div key={event.id || index} className="all-event-card">
               <div className="event-card-header">
                 <div>
-                  <h2 className="event-title">{event.eventName || "Untitled Event"}</h2>
-                  <p className="event-venue"><b>VENUE:</b> {event.eventVenue || "No venue set"}</p>
-                  <p className="event-date"><b>DATE:</b> {formatDateRange(event.eventStart, event.eventEnd)}</p>
+                  <h2 className="event-title">
+                    {event.title || "Untitled Event"}
+                  </h2>
+
+                  <p className="event-venue">
+                    <b>VENUE:</b> {event.venue || "No venue set"}
+                  </p>
+
+                  <p className="event-date">
+                    <b>DATE:</b>{" "}
+                    {formatDateRange(event.startDate, event.endDate)}
+                  </p>
+
+                  <p>
+                    <b>STATUS:</b> {event.status}
+                  </p>
                 </div>
               </div>
 
@@ -88,7 +114,17 @@ const AttendeesList = () => {
                 <button
                   type="button"
                   className="event-button event-button-view"
-                  onClick={() => viewAttendees(event)}
+                  onClick={() => {
+                    localStorage.setItem(
+                      "selectedEvent",
+                      JSON.stringify({
+                        eventId: event.id,
+                        eventName: event.title,
+                      })
+                    );
+
+                    navigate("/?item=Event Attendees");
+                  }}
                 >
                   View Attendees
                 </button>

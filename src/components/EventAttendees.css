@@ -1,0 +1,248 @@
+/* =========================
+   PAGE WRAPPER
+========================= */
+.event-attendees-page {
+  padding: 2rem;
+  width: 100%;
+  min-height: 100vh;
+  background: #f8fafc;
+  font-family: Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+/* =========================
+   HEADER
+========================= */
+.attendees-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.attendees-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.attendees-header p {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+}
+.attendees-header input:focus,
+.attendees-header select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+.back-btn {
+  background: #2563eb;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s ease;
+  
+}
+
+/* =========================
+   SEARCH + FILTERS
+========================= */
+.attendees-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.attendees-controls input,
+.attendees-controls select {
+  flex: 1;
+  min-width: 220px;
+  padding: 0.85rem 1rem;
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+  outline: none;
+  font-size: 0.95rem;
+  background: white;
+  transition: 0.2s ease;
+}
+
+.attendees-controls input:focus,
+.attendees-controls select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+.attendee-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.print-btn,
+.export-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.print-btn {
+  background: #2563eb;
+  color: white;
+}
+
+.print-btn:hover {
+  background: #1d4ed8;
+}
+
+.export-btn {
+  background: #16a34a;
+  color: white;
+}
+
+.export-btn:hover {
+  background: #15803d;
+}
+
+/* =========================
+   TABLE WRAPPER
+========================= */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e2e8f0;
+}
+
+/* =========================
+   TABLE
+========================= */
+.attendees-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
+}
+
+.attendees-table thead {
+  background: #f1f5f9;
+}
+
+.attendees-table th {
+  text-align: left;
+  padding: 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #334155;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.attendees-table td {
+  padding: 1rem;
+  font-size: 0.9rem;
+  color: #475569;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.attendees-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.attendees-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* =========================
+   STATUS BADGE
+========================= */
+.attendees-table td:last-child {
+  font-weight: 600;
+}
+
+/* =========================
+   EMPTY / LOADING
+========================= */
+.table-wrapper p {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+/* =========================
+   PAGINATION
+========================= */
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.pagination button {
+  padding: 0.7rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.pagination button:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  font-size: 0.9rem;
+  color: #334155;
+  font-weight: 500;
+}
+
+/* =========================
+   MOBILE
+========================= */
+@media (max-width: 768px) {
+  .event-attendees-page {
+    padding: 1rem;
+  }
+
+  .attendees-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .attendees-controls {
+    flex-direction: column;
+  }
+
+  .attendees-controls input,
+  .attendees-controls select {
+    width: 100%;
+  }
+
+  .pagination {
+    justify-content: center;
+  }
+  
+}
