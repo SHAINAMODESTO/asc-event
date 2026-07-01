@@ -25,7 +25,7 @@ const Register = () => {
     eventVenue = "",
     eventStart = "",
     eventEnd = "",
-    eventInquiryContact = "",
+    eventInquiryContact = "Bree Muyco +639561503875 or breanna.muyco@asc.com.ph",
     eventConsentMessage = "",
     eventDescription = "",
     banner = "",
@@ -40,7 +40,7 @@ const Register = () => {
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   const [privacyChecked, setPrivacyChecked] = useState(false);
-
+  const [fieldErrors, setFieldErrors] = useState({});
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -52,6 +52,16 @@ const Register = () => {
     position: "",
     selectedMenu: "",
   });
+
+  const requiredFields = [
+    { key: "firstName", label: "First Name" },
+    { key: "lastName", label: "Last Name" },
+    { key: "preferredName", label: "Preferred Name on Badge" },
+    { key: "email", label: "Email Address" },
+    { key: "contactNumber", label: "Contact Number" },
+    { key: "companyName", label: "Company / Organization" },
+    { key: "position", label: "Position" },
+  ];
   useEffect(() => {
     loadEvent();
   }, []);
@@ -80,6 +90,25 @@ const Register = () => {
       console.error(err);
     }
   };
+
+  const validateForm = () => {
+    const errors = [];
+
+    requiredFields.forEach(({ key, label }) => {
+      const value = formData[key];
+
+      if (!value || value.toString().trim() === "") {
+        errors.push(`${label} is required.`);
+      }
+    });
+
+    if (!privacyChecked) {
+      errors.push("Please accept the Privacy Notice.");
+    }
+
+    return errors;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -124,6 +153,19 @@ const Register = () => {
     }
   };
 
+  const getInputClass = (fieldName, hasIcon = false) => {
+    const base =
+      "w-full rounded-xl border py-3 transition duration-200 focus:outline-none focus:ring-4";
+
+    const padding = hasIcon ? "pl-11 pr-4" : "px-4";
+
+    const state = fieldErrors[fieldName]
+      ? "border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-100"
+      : "border-slate-300 bg-white hover:border-slate-400 focus:border-blue-600 focus:ring-blue-100";
+
+    return `${base} ${padding} ${state}`;
+  };
+
   if (!privacyAccepted) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-6">
@@ -148,6 +190,8 @@ const Register = () => {
             <h1 className="mt-2 text-3xl font-bold text-slate-900">
               {event.title}
             </h1>
+
+            <h2 className="mt-2 text-slate-900">{event.description}</h2>
 
             <p className="mt-3">
               Please review the event details and privacy notice before
@@ -178,9 +222,11 @@ const Register = () => {
               <div>
                 <h3 className="font-semibold">Schedule</h3>
 
-                <p className="mt-1 text-sm text-slate-500">{eventStart}</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {event.startDate} to {event.endDate}{" "}
+                </p>
 
-                <p className="text-sm text-slate-500">{eventEnd}</p>
+                {/* <p className="text-sm text-slate-500">{event.endDate}</p> */}
               </div>
             </div>
 
@@ -229,13 +275,12 @@ const Register = () => {
                 {/* I have read and understood the Privacy Notice. I voluntarily
                 consent to the collection and processing of my personal
                 information for this event. */}
-                By signing this Event Consent form, I willingly authorize its
+                {`By signing this Event Consent form, I willingly authorize its
                 Organizers to process my personal data for the sole purpose of
-                achieving the objectives of this event dubbed “National Summit
-                on Progressive and Fair Advertising Self Regulation.” I entrust
+                achieving the objectives of this event dubbed “${event.title}” I entrust
                 that my personal data shall be given utmost care and
                 confidentiality by the Event Organizers and that this shall not
-                be used outside the objectives and purpose above-stated.
+                be used outside the objectives and purpose above-stated.`}
               </span>
             </label>
 
@@ -283,16 +328,11 @@ const Register = () => {
               EVENT REGISTRATION
             </span>
 
-            {/* <h1 className="mt-6 text-5xl font-bold text-white">{eventName}</h1> */}
-            {/* <p className="mt-5 text-lg leading-8 text-slate-200">
-              {eventDescription}
-            </p> */}
             <h1 className="mt-6 text-5xl font-bold text-white">
-              Annual Conferencee 6999
+              {event.title}
             </h1>
-
-            <p className="mt-5 text-lg leading-8 text-slate-200">
-              A gathering of industry professionals.
+            <p className="mt-3 text-lg leading-8 text-slate-200">
+              {event.description}
             </p>
           </div>
         </div>
@@ -320,19 +360,19 @@ const Register = () => {
           {/* Event Summary */}
 
           <div className="grid gap-6 md:grid-cols-3">
-            <div className="rounded-2xl border bg-slate-50 p-5">
+            <div className="rounded-2xl border-slate-200 bg-slate-50 p-5">
               <p className="text-sm text-slate-500">Venue</p>
 
-              <h3 className="mt-2 font-semibold">{eventVenue}</h3>
+              <h3 className="mt-2 font-semibold">{event.venue}</h3>
             </div>
 
-            <div className="rounded-2xl border bg-slate-50 p-5">
+            <div className="rounded-2xl border-slate-200 bg-slate-50 p-5">
               <p className="text-sm text-slate-500">Schedule</p>
 
-              <h3 className="mt-2 font-semibold">{eventStart}</h3>
+              <h3 className="mt-2 font-semibold">{event.startDate}</h3>
             </div>
 
-            <div className="rounded-2xl border bg-slate-50 p-5">
+            <div className="rounded-2xl border-slate-200 bg-slate-50 p-5">
               <p className="text-sm text-slate-500">Contact</p>
 
               <h3 className="mt-2 font-semibold">{eventInquiryContact}</h3>
@@ -360,7 +400,8 @@ const Register = () => {
                   value={formData.firstName}
                   onChange={handleChange}
                   placeholder="Enter first name"
-                  className="w-full rounded-xl border border-slate-300 py-3 pl-11 pr-4 transition focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                  className={getInputClass("firstName", true)}
+                  // className="w-full rounded-xl border border-slate-300 py-3 pl-11 pr-4 transition focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
                 />
               </div>
             </div>
@@ -382,7 +423,7 @@ const Register = () => {
                   value={formData.lastName}
                   onChange={handleChange}
                   placeholder="Enter last name"
-                  className="w-full rounded-xl border border-slate-300 py-3 pl-11 pr-4 transition focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                  className={getInputClass("lastName", true)}
                 />
               </div>
             </div>
@@ -404,7 +445,7 @@ const Register = () => {
                   value={formData.middleInitial}
                   onChange={handleChange}
                   placeholder="M"
-                  className="w-full rounded-xl border border-slate-300 py-3 pl-11 pr-4 transition focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                  className={getInputClass("middleInitial", true)}
                 />
               </div>
             </div>
@@ -413,16 +454,17 @@ const Register = () => {
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Preferred Name on Badge
+                Preferred Name on Badge <span className="text-red-500">*</span>
               </label>
 
               <input
                 type="text"
                 name="preferredName"
+                required
                 value={formData.preferredName}
                 onChange={handleChange}
                 placeholder="Preferred Name"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                className={getInputClass("preferredName", true)}
               />
             </div>
 
@@ -443,7 +485,7 @@ const Register = () => {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="example@email.com"
-                  className="w-full rounded-xl border border-slate-300 py-3 pl-11 pr-4 transition focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                  className={getInputClass("email", true)}
                 />
               </div>
             </div>
@@ -462,7 +504,7 @@ const Register = () => {
                 value={formData.contactNumber}
                 onChange={handleChange}
                 placeholder="09XXXXXXXXX"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                className={getInputClass("contactNumber")}
               />
             </div>
 
@@ -470,7 +512,7 @@ const Register = () => {
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Company / Organization
+                Company / Organization <span className="text-red-500">*</span>
               </label>
 
               <div className="relative">
@@ -479,10 +521,11 @@ const Register = () => {
                 <input
                   type="text"
                   name="companyName"
+                  required
                   value={formData.companyName}
                   onChange={handleChange}
                   placeholder="Company Name"
-                  className="w-full rounded-xl border border-slate-300 py-3 pl-11 pr-4 transition focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                  className={getInputClass("companyName", true)}
                 />
               </div>
             </div>
@@ -491,16 +534,17 @@ const Register = () => {
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Position
+                Position <span className="text-red-500">*</span>
               </label>
 
               <input
                 type="text"
                 name="position"
+                required
                 value={formData.position}
                 onChange={handleChange}
                 placeholder="Job Position"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                className={getInputClass("position", true)}
               />
             </div>
           </div>

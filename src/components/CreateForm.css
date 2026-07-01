@@ -1,6 +1,6 @@
 /* =========================
    GLOBAL RESET
-   ========================= */
+========================= */
 html,
 body,
 #root {
@@ -20,49 +20,55 @@ body,
 
 /* =========================
    PAGE WRAPPER
-   ========================= */
+========================= */
 .create-form-page {
   min-height: 100vh;
   background: linear-gradient(to bottom right, #eff6ff, #f3f4f6);
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: clamp(0.75rem, 2vw, 1.5rem);
+
+  /* smaller top spacing */
+  padding: 0.5rem 2rem 2rem;
+  
   font-size: 12px;
   overflow-x: hidden;
+  width: 100%;
 }
-
 /* =========================
    FORM WRAPPER
-   ========================= */
+========================= */
 .form-wrapper {
   width: 100%;
-  max-width: 1100px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 0 1rem;
 }
 
 /* =========================
    FORM CONTAINER
-   ========================= */
+========================= */
 .form-container {
   background: #ffffff;
   border-radius: 1.5rem;
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
   padding: clamp(1rem, 2vw, 2rem);
   border: 1px solid rgba(15, 23, 42, 0.06);
+
   width: 100%;
-  margin: -55px auto 0;
+  margin: 0 auto;
+  margin-top: -40px;
+
   overflow-x: hidden;
   overflow-y: visible;
 }
 
 /* =========================
    TITLES
-   ========================= */
+========================= */
 .form-title {
-  font-size: clamp(1.25rem, 2vw, 1.6rem);
-  font-weight: 800;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-weight: 700;
   color: #0f172a;
   margin-bottom: 1rem;
 }
@@ -76,7 +82,7 @@ body,
 
 /* =========================
    INPUTS
-   ========================= */
+========================= */
 .form-input,
 .form-select {
   width: 100%;
@@ -98,12 +104,12 @@ body,
 }
 
 /* =========================
-   TEXTAREA (FIXED CUT ISSUE)
-   ========================= */
+   TEXTAREA
+========================= */
 textarea.form-input {
-  width: 100%;
+  width: 60%;
   min-width: 0;
-  max-width: 600px;
+  max-width: 100%;
   box-sizing: border-box;
   padding: 0.9rem 1rem;
   resize: vertical;
@@ -114,10 +120,10 @@ textarea.form-input {
 
 /* =========================
    GRID LAYOUT
-   ========================= */
+========================= */
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(300px, 1fr));
   gap: clamp(1rem, 2vw, 2rem);
   align-items: start;
 }
@@ -130,7 +136,7 @@ textarea.form-input {
 
 /* =========================
    DATE GROUP
-   ========================= */
+========================= */
 .date-group {
   display: flex;
   gap: 1rem;
@@ -142,7 +148,7 @@ textarea.form-input {
 
 /* =========================
    MENU CARD
-   ========================= */
+========================= */
 .menu-card {
   display: flex;
   align-items: center;
@@ -156,7 +162,7 @@ textarea.form-input {
 
 /* =========================
    BUTTONS
-   ========================= */
+========================= */
 .delete-btn,
 .primary-btn,
 .draft-btn,
@@ -202,33 +208,36 @@ textarea.form-input {
   justify-content: flex-end;
   gap: 1rem;
   flex-wrap: wrap;
-  margin-top: -0.5rem;
+  margin-top: 1rem;
 }
 
 /* =========================
-   RESPONSIVE DESIGN
-   ========================= */
-
-/* Tablet */
-@media (max-width: 1024px) {
+   TABLET
+========================= */
+@media (max-width: 1200px) {
   .form-wrapper {
     max-width: 95%;
-  }
-
-  .form-grid {
-    gap: 1.5rem;
+    padding: 0 1.5rem;
   }
 }
 
-/* Mobile */
+@media (max-width: 1024px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .form-wrapper {
+    max-width: 100%;
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
 @media (max-width: 768px) {
   .create-form-page {
     padding: 1rem;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
   }
 
   .date-group {
@@ -253,7 +262,9 @@ textarea.form-input {
   }
 }
 
-/* Small phones */
+/* =========================
+   SMALL PHONES
+========================= */
 @media (max-width: 480px) {
   .form-container {
     padding: 0.75rem;

@@ -205,7 +205,7 @@ Inquiry Contact:
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex justify-center p-6 text-[12px]">
       <div className="w-full max-w-4xl">
         <div className="form-container">
-          <h1 className="form-title">Create an Event Registration Form</h1>
+          <h3 className="form-title">Create an Event Registration Form</h3>
 
           <div className="form-grid">
             {/* LEFT SIDE */}
@@ -261,7 +261,7 @@ Inquiry Contact:
 
               {/* Maximum Attendees */}
               <div className="space-y-3">
-                <h2 className="section-title">Maximum Attendees </h2>
+                <h2 className="section-title">Maximum Attendees (Optional)</h2>
                 <input
                   type="number"
                   value={maxParticipants}

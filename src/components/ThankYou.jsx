@@ -97,7 +97,7 @@ const ThankYou = () => {
 
         {/* Reminder */}
 
-        <div className="mt-8 rounded-2xl bg-blue-50 border border-blue-200 p-6">
+        {/* <div className="mt-8 rounded-2xl bg-blue-50 border border-blue-200 p-6">
           <h3 className="font-semibold text-blue-700">What's Next?</h3>
 
           <ul className="mt-4 space-y-3 text-slate-600">
@@ -107,11 +107,11 @@ const ThankYou = () => {
 
             <li>✔ Bring a valid ID during the event.</li>
           </ul>
-        </div>
+        </div> */}
 
         {/* Button */}
 
-        <button
+        {/* <button
           onClick={() => navigate("/", { replace: true })}
           className="
           mt-10
@@ -131,7 +131,7 @@ const ThankYou = () => {
         >
           <FaHome />
           Back to Home
-        </button>
+        </button> */}
       </div>
     </div>
   );

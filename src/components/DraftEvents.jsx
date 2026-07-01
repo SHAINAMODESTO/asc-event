@@ -87,7 +87,7 @@ const DraftEvents = () => {
           No templates match "{searchTerm}". Try a different search term.
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="events-grid">
           {filteredEvents.map((event, index) => (
             <div key={event.id || index} className="all-event-card">
               <div className="event-card-header">

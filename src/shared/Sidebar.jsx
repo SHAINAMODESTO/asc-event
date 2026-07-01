@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
 import CreateForm from "../components/CreateForm";
 import AllEventsList from "../components/AllEventsList";
 import AttendeesList from "../components/AttendeesList";
@@ -34,13 +35,16 @@ export default function Sidebar() {
   const [selectedSection, setSelectedSection] = useState("Events");
   const [activeItem, setActiveItem] = useState("");
 
+  // EDIT SUPPORT
+  const [editEventId, setEditEventId] = useState(null);
+
   // Load user
   useEffect(() => {
     const storedName = localStorage.getItem("name");
     if (storedName) setUserName(storedName);
   }, []);
 
-  // Handle sidebar state from query params
+  // Handle sidebar query
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const item = params.get("item");
@@ -48,11 +52,8 @@ export default function Sidebar() {
     if (item) {
       setActiveItem(item);
 
-      // Auto-open correct section
       if (
-        ["Create Event", "Draft Events List", "Published Events List"].includes(
-          item
-        )
+        ["Create Event", "Draft Events List", "Published Events List"].includes(item)
       ) {
         setSelectedSection("Events");
       }
@@ -63,13 +64,21 @@ export default function Sidebar() {
     }
   }, [location.search]);
 
-  // Detect attendee details page
+  // Detect attendee route
   useEffect(() => {
     if (location.pathname.includes("/attendees/")) {
       setSelectedSection("Attendees");
       setActiveItem("Event Attendees");
     }
   }, [location.pathname]);
+
+  // Load edit ID
+  useEffect(() => {
+    const storedEditId = localStorage.getItem("editEventId");
+    if (storedEditId) {
+      setEditEventId(storedEditId);
+    }
+  }, [activeItem]);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -79,6 +88,7 @@ export default function Sidebar() {
 
   return (
     <div className="dashboard-layout">
+      {/* ================= SIDEBAR ================= */}
       <aside className="sidebar-panel">
         <div className="sidebar-brand">Event Management</div>
 
@@ -91,7 +101,9 @@ export default function Sidebar() {
                   selectedSection === section ? "active" : ""
                 }`}
                 onClick={() =>
-                  setSelectedSection((prev) => (prev === section ? "" : section))
+                  setSelectedSection((prev) =>
+                    prev === section ? "" : section
+                  )
                 }
               >
                 {section}
@@ -109,7 +121,12 @@ export default function Sidebar() {
                       onClick={() => {
                         setActiveItem(item);
 
-                        // Optional: update URL query
+                        // RESET EDIT WHEN CREATING NEW
+                        if (item === "Create Event") {
+                          localStorage.removeItem("editEventId");
+                          setEditEventId(null);
+                        }
+
                         navigate(`/?item=${encodeURIComponent(item)}`);
                       }}
                     >
@@ -133,6 +150,7 @@ export default function Sidebar() {
         </div>
       </aside>
 
+      {/* ================= MAIN ================= */}
       <main className="workspace">
         {!activeItem && (
           <section className="topbar">
@@ -143,8 +161,9 @@ export default function Sidebar() {
           </section>
         )}
 
+        {/* CREATE / EDIT EVENT */}
         {activeItem === "Create Event" ? (
-          <CreateForm />
+          <CreateForm key={editEventId || "create"} />
         ) : activeItem === "Draft Events List" ? (
           <AllEventsList />
         ) : activeItem === "Attendee List" ? (
