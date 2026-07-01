@@ -1,6 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import Sidebar from "./shared/Sidebar";
 import Registration from "./components/Registration";
+//import RegistrationV2 from "./components/RegistrationV2";
+import RegisterV3 from "./pages/RegisterV3";
 import ThankYou from "./components/ThankYou";
 import AttendeesList from "./components/AttendeesList";
 import EventAttendees from "./components/EventAttendees";
@@ -11,6 +13,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Sidebar />} />
       <Route path="/registration" element={<Registration />} />
+      <Route path="/registration/:eventId" element={<RegisterV3 />} />
       <Route path="/thankyou" element={<ThankYou />} />
 
       {/* CREATE / EDIT EVENT */}

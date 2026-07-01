@@ -38,45 +38,45 @@ const Register = () => {
 
   const navigateHome = () => navigate("/", { replace: true });
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const formData = {
-    eventId: location.state?.eventId,
-    firstName,
-    lastName,
-    emailAddress: email,
-    contactNumber,
-    preferredNameOnBadge: preferredName,
-    company: companyName,
-    position,
+    const formData = {
+      eventId: location.state?.eventId,
+      firstName,
+      lastName,
+      emailAddress: email,
+      contactNumber,
+      preferredNameOnBadge: preferredName,
+      company: companyName,
+      position,
+    };
+
+    console.log("SENDING:", formData);
+
+    try {
+      const response = await createAttendee(formData);
+
+      console.log("SUCCESS:", response);
+
+      // remove alert here
+      navigate("/thankyou", {
+        replace: true,
+        state: {
+          eventName,
+          email,
+        },
+      });
+    } catch (error) {
+      console.error("FULL ERROR:", error.response?.data);
+
+      alert(
+        Array.isArray(error.response?.data?.message)
+          ? error.response.data.message.join("\n")
+          : error.response?.data?.message || "Failed to submit registration",
+      );
+    }
   };
-
-  console.log("SENDING:", formData);
-
-  try {
-    const response = await createAttendee(formData);
-
-    console.log("SUCCESS:", response);
-
-    // remove alert here
-    navigate("/thankyou", {
-      replace: true,
-      state: {
-        eventName,
-        email,
-      },
-    });
-  } catch (error) {
-    console.error("FULL ERROR:", error.response?.data);
-
-    alert(
-      Array.isArray(error.response?.data?.message)
-        ? error.response.data.message.join("\n")
-        : error.response?.data?.message || "Failed to submit registration"
-    );
-  }
-};
   return (
     <div className="registration-page">
       {!consentAccepted ? (
@@ -133,12 +133,10 @@ const Register = () => {
         <>
           {/* Hero Banner */}
           <div className="hero-banner">
-            {banner && (
-              <img src={banner} alt="Banner" className="hero-image" />
-            )}
+            {banner && <img src={banner} alt="Banner" className="hero-image" />}
 
             <div className="hero-overlay">
-              <h3>{eventName}  Registration Form</h3>
+              <h3>{eventName} Registration Form</h3>
               <p>{eventDescription}</p>
             </div>
           </div>
@@ -155,9 +153,9 @@ const Register = () => {
               <div className="info-card">
                 <h3>📅 Schedule</h3>
                 <p>
-                 From: {eventStart}
-                 <br></br>
-                  To:   {eventEnd}
+                  From: {eventStart}
+                  <br></br>
+                  To: {eventEnd}
                 </p>
               </div>
 
@@ -169,137 +167,119 @@ const Register = () => {
 
             {/* Form */}
             <div className="form-container">
-               
-              
               <form className="reg-form" onSubmit={handleSubmit}>
-               
-                  
                 <div className="form-grid">
-                 
-                  <label>
-                    First Name  </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Enter first name"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                    />
-                 
-                  <label >
-                    Last Name </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Enter last name"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                    />
-                  
+                  <label>First Name </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Enter first name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                  />
 
-                  <label>
-                    Middle Initial  </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Enter middle initial"
-                      maxLength="1"
-                      value={middleInitial}
-                      onChange={(e) => setMiddleInitial(e.target.value)}
-                    />
-                 
+                  <label>Last Name </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Enter last name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                  />
 
-                  <label>
-                    Preferred Name for ID  </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Enter preferred name"
-                      value={preferredName}
-                      onChange={(e) => setPreferredName(e.target.value)}
-                    />
-                 
+                  <label>Middle Initial </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Enter middle initial"
+                    maxLength="1"
+                    value={middleInitial}
+                    onChange={(e) => setMiddleInitial(e.target.value)}
+                  />
 
-                  <label >
-                    Email Address   </label>
-                    <input
-                      type="email"
-                      className="form-input"
-                      placeholder="Enter email address"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                
+                  <label>Preferred Name for ID </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Enter preferred name"
+                    value={preferredName}
+                    onChange={(e) => setPreferredName(e.target.value)}
+                  />
 
-                  <label >
-                    Contact Number  </label>
-                    <input
-                      type="tel"
-                      className="form-input"
-                      placeholder="Enter contact number"
-                      value={contactNumber}
-                      onChange={(e) => setContactNumber(e.target.value)}
-                    />
-                 
+                  <label>Email Address </label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    placeholder="Enter email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
 
-                  <label>
-                    Company Name </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Enter company name"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                    />
-                  
+                  <label>Contact Number </label>
+                  <input
+                    type="tel"
+                    className="form-input"
+                    placeholder="Enter contact number"
+                    value={contactNumber}
+                    onChange={(e) => setContactNumber(e.target.value)}
+                  />
 
-                  <label>
-                    Position  </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Enter position"
-                      value={position}
-                      onChange={(e) => setPosition(e.target.value)}
-                    />
-                 
+                  <label>Company Name </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Enter company name"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                  />
+
+                  <label>Position </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Enter position"
+                    value={position}
+                    onChange={(e) => setPosition(e.target.value)}
+                  />
                 </div>
 
                 {/* Menu */}
                 {showMenuInForm && menuOptions.length > 0 && (
                   <div className="menu-wrapper">
-                <fieldset className="menu-box">
-                <legend>Menu Reference</legend>
+                    <fieldset className="menu-box">
+                      <legend>Menu Reference</legend>
 
-                <div className="menu-list">
-                  {menuOptions.map((option, index) => (
-                    <label key={index} className="menu-option">
-                      <input
-                        type="radio"
-                        name="menu"
-                        value={option}
-                        checked={selectedMenu === option}
-                        onChange={(e) => setSelectedMenu(e.target.value)}
-                      />
-                      <span>{option}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-            </div>
+                      <div className="menu-list">
+                        {menuOptions.map((option, index) => (
+                          <label key={index} className="menu-option">
+                            <input
+                              type="radio"
+                              name="menu"
+                              value={option}
+                              checked={selectedMenu === option}
+                              onChange={(e) => setSelectedMenu(e.target.value)}
+                            />
+                            <span>{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                  </div>
                 )}
 
                 {/* Consent */}
                 <div className="consent-box">
                   <input type="checkbox" required />
                   <p>
-                    I HEREBY CERTIFY that the information provided in this form is complete, true and correct to the best of my knowledge.  
-
-                    FURTHER, I HEREBY ACKNOWLEDGE that I have read and understood the Privacy Notice 
-                    and agree there to as well. I give my consent to collect, use and process my personal information.
-                     I understand that my consent does not preclude the existence of other criteria for lawful processing
-                      of personal data, and does not waive any of my rights under the Data Privacy Act of 2012 
-                      and other applicable laws.
+                    I HEREBY CERTIFY that the information provided in this form
+                    is complete, true and correct to the best of my knowledge.
+                    FURTHER, I HEREBY ACKNOWLEDGE that I have read and
+                    understood the Privacy Notice and agree there to as well. I
+                    give my consent to collect, use and process my personal
+                    information. I understand that my consent does not preclude
+                    the existence of other criteria for lawful processing of
+                    personal data, and does not waive any of my rights under the
+                    Data Privacy Act of 2012 and other applicable laws.
                   </p>
                 </div>
 
