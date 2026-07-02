@@ -1,7 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Sidebar from "./shared/Sidebar";
 import Registration from "./components/Registration";
-//import RegistrationV2 from "./components/RegistrationV2";
 import RegisterV3 from "./pages/RegisterV3";
 import ThankYou from "./components/ThankYou";
 import AttendeesList from "./components/AttendeesList";

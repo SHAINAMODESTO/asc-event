@@ -11,6 +11,7 @@ const InputField = ({
   icon: Icon,
   error = false,
   maxLength,
+  options = [],
 }) => {
   const inputClass = `
     w-full rounded-xl border py-3 transition duration-200
@@ -39,15 +40,36 @@ const InputField = ({
           />
         )}
 
-        <input
-          type={type}
-          name={name}
-          value={value}
-          onChange={onChange}
-          maxLength={maxLength}
-          placeholder={placeholder}
-          className={inputClass}
-        />
+        {type === "select" ? (
+          <select
+            name={name}
+            value={value}
+            onChange={onChange}
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 focus:border-blue-500 focus:outline-none"
+          >
+            <option value="">{placeholder}</option>
+
+            {options.map((option) => {
+              const value = typeof option === "string" ? option : option.value;
+              const label = typeof option === "string" ? option : option.label;
+
+              return (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              );
+            })}
+          </select>
+        ) : (
+          <input
+            type={type || "text"}
+            name={name}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            className={inputClass}
+          />
+        )}
       </div>
     </div>
   );
