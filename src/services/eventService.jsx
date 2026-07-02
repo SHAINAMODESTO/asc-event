@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = "https://api.asconlineportal.com/api-event";
+// const BASE_URL = "https://api.asconlineportal.com/api-event";
+const BASE_URL = "http://localhost:3021/api-event";
 
 // Create Event
 export const createEvent = async (eventData) => {
