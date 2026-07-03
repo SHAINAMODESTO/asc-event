@@ -17,18 +17,19 @@ export const createEvent = async (eventData) => {
 // Publish Event
 export const publishEvent = async (eventId) => {
   try {
-    const response = await axios.patch(`${BASE_URL}/event/${eventId}/publish`);
+    const response = await axios.patch(
+      `${BASE_URL}/event/${eventId}/publish`
+    );
 
     return response.data;
   } catch (error) {
     console.error(
       "Publish Event Error:",
-      error.response?.data || error.message,
+      error.response?.data || error.message
     );
     throw error;
   }
 };
-
 // Get All Events
 export const getEvents = async () => {
   try {
