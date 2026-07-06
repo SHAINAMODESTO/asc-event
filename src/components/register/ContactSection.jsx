@@ -23,8 +23,8 @@ const ContactSection = ({ contacts = [] }) => {
         className="flex w-full items-center justify-between p-5 text-left transition hover:bg-slate-100"
       >
         <div className="flex items-center gap-4">
-          <div className="rounded-xl bg-blue-100 p-3">
-            <FaQuestionCircle className="text-blue-600" />
+          <div className="rounded-xl bg-red-100 p-3">
+            <FaQuestionCircle className="text-red-600" />
           </div>
 
           <div>
@@ -38,7 +38,7 @@ const ContactSection = ({ contacts = [] }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-sm font-medium text-blue-600">
+        <div className="flex items-center gap-2 text-sm font-medium text-red-600">
           {open ? "Hide Contacts" : "View Contacts"}
 
           {open ? <FaChevronUp /> : <FaChevronDown />}
@@ -55,8 +55,8 @@ const ContactSection = ({ contacts = [] }) => {
               className="rounded-xl border border-slate-200 bg-white p-4"
             >
               <div className="flex gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100">
-                  <FaUserTie className="text-blue-600" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-100">
+                  <FaUserTie className="text-red-600" />
                 </div>
 
                 <div className="min-w-0 flex-1">

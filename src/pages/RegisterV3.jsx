@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 
 import Hero from "../components/register/Hero";
@@ -13,7 +13,7 @@ const RegisterV3 = () => {
   const navigate = useNavigate();
   const { eventId } = useParams();
 
-  const { event, loading } = useEvent(eventId);
+  const { event, loading, notFound } = useEvent(eventId);
 
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [privacyChecked, setPrivacyChecked] = useState(false);
@@ -22,6 +22,10 @@ const RegisterV3 = () => {
 
   if (loading) {
     return <div>Loading...</div>;
+  }
+
+  if (notFound) {
+    return <Navigate to="/not-found" replace />;
   }
 
   if (!privacyAccepted) {

@@ -28,7 +28,7 @@ const RegisterConsent = ({
                 className="mb-4 h-16 w-auto object-contain"
               />
 
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-600">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-red-600">
                 Event Registration
               </p>
 
@@ -63,10 +63,10 @@ const RegisterConsent = ({
           {/* Privacy */}
 
           <div className="space-y-8 p-8">
-            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
               <div className="flex items-start gap-5">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-blue-100">
-                  <FaShieldAlt className="text-2xl text-blue-600" />
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-red-100">
+                  <FaShieldAlt className="text-2xl text-red-600" />
                 </div>
 
                 <div className="flex-1">
@@ -84,12 +84,12 @@ const RegisterConsent = ({
 
             {/* Consent */}
 
-            <label className="flex cursor-pointer items-start gap-4 rounded-2xl border border-slate-300 bg-slate-50 p-6 transition hover:border-blue-300">
+            <label className="flex cursor-pointer items-start gap-4 rounded-2xl border border-slate-300 bg-slate-50 p-6 transition hover:border-red-300">
               <input
                 type="checkbox"
                 checked={privacyChecked}
                 onChange={(e) => setPrivacyChecked(e.target.checked)}
-                className="mt-1 h-5 w-5 rounded accent-blue-600"
+                className="mt-1 h-5 w-5 rounded accent-red-600"
               />
 
               <span className="text-sm leading-8 text-slate-700">
@@ -117,7 +117,7 @@ const RegisterConsent = ({
               <button
                 disabled={!privacyChecked}
                 onClick={onContinue}
-                className="rounded-xl bg-blue-600 px-7 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="rounded-xl bg-red-600 px-7 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 Continue Registration
               </button>
@@ -130,9 +130,9 @@ const RegisterConsent = ({
 };
 
 const InfoCard = ({ icon: Icon, title, value }) => (
-  <div className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:border-blue-200 hover:shadow-sm">
-    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-100">
-      <Icon className="text-blue-600" />
+  <div className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:border-red-200 hover:shadow-sm">
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-100">
+      <Icon className="text-red-600" />
     </div>
 
     <div className="min-w-0">

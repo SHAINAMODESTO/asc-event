@@ -6,6 +6,7 @@ import ThankYou from "./components/ThankYou";
 import AttendeesList from "./components/AttendeesList";
 import EventAttendees from "./components/EventAttendees";
 import CreateForm from "./components/CreateForm";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -14,7 +15,8 @@ function App() {
       <Route path="/registration" element={<Registration />} />
       <Route path="/registration/:eventId" element={<RegisterV3 />} />
       <Route path="/thankyou" element={<ThankYou />} />
-
+      {/* Catch all unknown routes */}
+      <Route path="*" element={<NotFound />} />
       {/* CREATE / EDIT EVENT */}
       <Route path="/create-event" element={<CreateForm />} />
       <Route path="/create-event/:id" element={<CreateForm />} />

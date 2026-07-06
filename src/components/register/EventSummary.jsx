@@ -27,8 +27,8 @@ const EventSummary = ({ venue, schedule }) => {
         return (
           <div key={card.key} className="rounded-2xl bg-slate-50 p-5">
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-blue-100 p-3">
-                <Icon className="text-blue-600" />
+              <div className="rounded-xl bg-red-100 p-3">
+                <Icon className="text-red-600" />
               </div>
 
               <div>

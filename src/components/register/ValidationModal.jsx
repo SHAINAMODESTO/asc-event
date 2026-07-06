@@ -33,7 +33,7 @@ const ValidationModal = ({ open, errors, onClose }) => {
         <div className="flex justify-end border-t p-5">
           <button
             onClick={onClose}
-            className="rounded-xl bg-blue-600 px-6 py-3 text-white"
+            className="rounded-xl bg-red-600 px-6 py-3 text-white"
           >
             Got it
           </button>
