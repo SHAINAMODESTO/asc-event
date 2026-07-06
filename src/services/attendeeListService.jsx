@@ -1,13 +1,14 @@
 import axios from "axios";
 
-const BASE_URL = "https://api.asconlineportal.com/api-event";
+// const BASE_URL = "https://api.asconlineportal.com/api-event";
+const BASE_URL = "http://localhost:3021/api-event";
 
 // Create attendee
 export const createAttendee = async (attendeeData) => {
   try {
     const response = await axios.post(
       `${BASE_URL}/attendee/create`,
-      attendeeData
+      attendeeData,
     );
 
     return response.data;

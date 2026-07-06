@@ -11,22 +11,16 @@ const cards = [
     icon: FaCalendarAlt,
     key: "schedule",
   },
-  {
-    title: "Contact",
-    icon: FaPhoneAlt,
-    key: "contact",
-  },
 ];
 
-const EventSummary = ({ venue, schedule, contact }) => {
+const EventSummary = ({ venue, schedule }) => {
   const values = {
     venue,
     schedule,
-    contact,
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-3">
+    <div className="grid gap-6 md:grid-cols-2">
       {cards.map((card) => {
         const Icon = card.icon;
 
