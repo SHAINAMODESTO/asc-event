@@ -236,12 +236,12 @@ const removeLootBagOption = (index) => {
 };
 
   return (
-    <div className="w-[100%] !h-[100%] w-4/5 h-screen bg-white p-6 text-[12px] overflow-y-auto">
-       <div className="flex items-center justify-between  !h-[100px] mb-6  bg-border-[#c30d2e] p-4 shadow-md">
+    <div className="w-[100%] !h-[100%] w-4/5 h-screen bg-white p-6 text-[12px] ">
+       <div className="flex items-center justify-between  !h-[95px] mb-6  bg-border-[#c30d2e] p-4 shadow-md">
               <h1 className="text-white text-xl font-semibold tracking-wide">Create an Event Registration Form </h1>
        </div>
          <div className="w-full flex justify-center px-6 pt-2">
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-10 h-[700px] overflow-y-auto bg-white rounded-lg shadow-md p-10">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-10 h-[600px] overflow-y-auto bg-white rounded-lg shadow-md p-10">
       
                   {/* LEFT SIDE */}
                   <div>
@@ -359,7 +359,7 @@ const removeLootBagOption = (index) => {
                           <input
                             value={option}
                             onChange={(e) => updateMenuOption(index, e.target.value)}
-                            className="form-input !w-[270px] !h-[40px]"
+                            className="form-input !w-[250px] !h-[40px]"
                           />
 
                           <button
@@ -461,7 +461,7 @@ const removeLootBagOption = (index) => {
                             onChange={(e) =>
                               updateLootBagOption(index, e.target.value)
                             }
-                            className="form-input !w-[270px] !h-[40px]"
+                            className="form-input !w-[250px] !h-[40px]"
                             placeholder="Enter loot bag / souvenir item"
                           />
 
@@ -514,7 +514,7 @@ const removeLootBagOption = (index) => {
                                 value={bannerText}
                                 onChange={(e) => setBannerText(e.target.value)}
                                 placeholder="Enter banner name"
-                                className="form-input !w-[320px] !h-[40px]"
+                                className="form-input !w-[300px] !h-[40px]"
                               />
 
                               <button

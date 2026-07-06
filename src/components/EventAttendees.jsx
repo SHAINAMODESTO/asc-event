@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getAttendees } from "../services/attendeeListService";
+import { getAttendees,  assignTable} from "../services/attendeeListService";
 import { getEventById } from "../services/eventService";
 import "./EventAttendees.css";
 
@@ -26,16 +26,140 @@ const EventAttendees = () => {
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [tableNumber, setTableNumber] = useState("");
 
-  const handlePrint = () => {
-    const printContents = printRef.current.innerHTML;
-    const originalContents = document.body.innerHTML;
+ const handlePrint = () => {
+  const printWindow = window.open("", "_blank");
 
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
+  const tableRows = attendees
+    .map(
+      (attendee, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${attendee.firstName || "-"}</td>
+          <td>${attendee.lastName || "-"}</td>
+          <td>${attendee.preferredNameOnBadge || "-"}</td>
+          <td>${attendee.emailAddress || "-"}</td>
+          <td>${attendee.company || "-"}</td>
+          <td>${attendee.position || "-"}</td>
+          <td>${attendee.status || "-"}</td>
+          <td>${
+            attendee.createdAt
+              ? new Date(attendee.createdAt).toLocaleString()
+              : "-"
+          }</td>
+        </tr>
+      `
+    )
+    .join("");
 
-    window.location.reload();
-  };
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>${eventName} Attendees</title>
+
+        <style>
+          *{
+            box-sizing:border-box;
+          }
+
+          body{
+            font-family:Arial, Helvetica, sans-serif;
+            margin:20px;
+            color:#222;
+          }
+
+          h1{
+            text-align:center;
+            margin-bottom:5px;
+            font-size:24px;
+          }
+
+          h3{
+            text-align:center;
+            margin-top:0;
+            margin-bottom:20px;
+            color:#555;
+            font-weight:normal;
+          }
+
+          table{
+            width:100%;
+            border-collapse:collapse;
+            table-layout:auto;
+          }
+
+          thead{
+            background:#f5f5f5;
+          }
+
+          th,
+          td{
+            border:1px solid #999;
+            padding:8px;
+            font-size:11px;
+            text-align:left;
+            vertical-align:top;
+            word-break:break-word;
+          }
+
+          th{
+            font-weight:bold;
+          }
+
+          td:first-child,
+          th:first-child{
+            width:45px;
+            text-align:center;
+          }
+
+          tr{
+            page-break-inside:avoid;
+          }
+
+          @page{
+            size:landscape;
+            margin:10mm;
+          }
+        </style>
+      </head>
+
+      <body>
+
+        <h1>${eventName}</h1>
+        <h3>Attendees List</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Preferred Name</th>
+              <th>Email</th>
+              <th>Company</th>
+              <th>Position</th>
+              <th>Status</th>
+              <th>Created Date</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+
+      </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  }, 500);
+};
 
   const fetchEventDetails = async () => {
     try {
@@ -174,6 +298,40 @@ const EventAttendees = () => {
 
     reader.readAsText(file);
   };
+//Save table assignment to the backend
+ const handleAssignTable = async () => {
+  try {
+    console.log("Assigning:", {
+      attendeeId: selectedAttendee.id,
+      tableNumber,
+    });
+
+    const response = await assignTable(
+      selectedAttendee.id,
+      tableNumber
+    );
+
+    console.log("Assign Table Response:", response);
+
+    // Refresh attendees from the API
+    await fetchAttendees();
+
+    // Update the modal
+    setSelectedAttendee((prev) => ({
+      ...prev,
+      tableNumber,
+    }));
+
+    setShowAssignForm(false);
+    setTableNumber("");
+
+    alert("Table assigned successfully.");
+  } catch (error) {
+    console.error("Assign Table Error:", error.response?.data || error);
+    alert("Failed to assign table.");
+  }
+};
+
 
   return (
     <div className="event-attendees-page">
@@ -262,8 +420,9 @@ const EventAttendees = () => {
       </div>
 
       {/* Table */}
-      <div ref={printRef}>
-        <div className="table-wrapper">
+    
+       <div className="table-wrapper overflow-auto max-h-[600px] rounded-lg border border-gray-200">
+          <div ref={printRef}>
           {loading ? (
             <p>Loading attendees...</p>
           ) : attendees.length === 0 ? (
@@ -279,6 +438,7 @@ const EventAttendees = () => {
                   <th>Company</th>
                   <th>Position</th>
                   <th>Status</th>
+                  <th>Table No.</th>
                   <th>Created Date</th>
                 </tr>
               </thead>
@@ -297,6 +457,11 @@ const EventAttendees = () => {
                     <td>{attendee.company || "-"}</td>
                     <td>{attendee.position || "-"}</td>
                     <td>{attendee.status || "-"}</td>
+                    <td>
+                      {attendee.tableNumber
+                        ? attendee.tableNumber
+                        : "-"}
+                    </td>
                     <td>
                       {attendee.createdAt
                         ? new Date(attendee.createdAt).toLocaleString()
@@ -346,37 +511,19 @@ const EventAttendees = () => {
                   placeholder="Enter table number"
                 />
 
-                <button
-                  className="save-table-btn"
-                  onClick={() => {
-                    if (!tableNumber.trim()) {
-                      alert("Please enter a table number.");
-                      return;
-                    }
+                  <button
+                    className="save-table-btn"
+                    onClick={async () => {
+                      if (!tableNumber.trim()) {
+                        alert("Please enter a table number.");
+                        return;
+                      }
 
-                    setAttendees((prev) =>
-                      prev.map((attendee) =>
-                        attendee.id === selectedAttendee.id
-                          ? { ...attendee, tableNumber }
-                          : attendee
-                      )
-                    );
-
-                    setSelectedAttendee((prev) => ({
-                      ...prev,
-                      tableNumber,
-                    }));
-
-                    alert(
-                      `${selectedAttendee.firstName} assigned to Table ${tableNumber}`
-                    );
-
-                    setShowAssignForm(false);
-                    setTableNumber("");
-                  }}
-                >
-                  Save Table
-                </button>
+                      await handleAssignTable();
+                    }}
+                  >
+                    Save Table
+                  </button>
               </div>
             )}
 
