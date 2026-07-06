@@ -113,17 +113,12 @@
 ========================= */
 .events-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  width: 100%;
+  grid-template-columns: repeat(3,1fr);
+  gap:16px;
 
-  /* 3 rows visible only */
-  max-height: calc((220px * 3) + (16px * 2));
-
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  padding-right: 8px;
+  max-height: 72vh;
+  overflow-y:auto;
+  padding-right:8px;
 }
 
 /* Custom Scrollbar */
@@ -151,15 +146,15 @@
 .all-event-card {
   border: 1px solid #e2e8f0;
   border-radius: 1.5rem;
-  background: #ffffff;
+  background: #fff;
   padding: 1.5rem;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 10px 30px rgba(15,23,42,.06);
 
-  width: 100%;
-  height: 220px;
   min-width: 280px;
+  min-height: 220px;
+  height: auto;
+
   box-sizing: border-box;
-  overflow: hidden;
 }
 
 /* =========================

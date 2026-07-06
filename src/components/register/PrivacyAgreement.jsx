@@ -1,3 +1,4 @@
+
 const PrivacyAgreement = ({ checked, onChange }) => {
   return (
     <div className="rounded-2xl border border-blue-200 bg-blue-50 p-6">

@@ -153,7 +153,7 @@ const formatDateTime = (date) => {
     title: eventName,
     description: eventDescription,
     venue: eventVenue,
-    maxParticipants: maxParticipants,
+  //  maxParticipants: maxParticipants,
     startDate: eventStart ? eventStart.split("T")[0] : null,
     endDate: eventEnd ? eventEnd.split("T")[0] : null,
     requiresMealPreference: showMenuInForm,
@@ -188,13 +188,13 @@ const formatDateTime = (date) => {
   }
 };
 
-  // Save Event
- const handleSaveTemplate = async () => {
+// Save Event
+const handleSaveTemplate = async () => {
   const eventData = {
     title: eventName,
     description: eventDescription,
     venue: eventVenue,
-    maxParticipants: maxParticipants,
+    // maxParticipants: maxParticipants,
     startDate: eventStart ? eventStart.split("T")[0] : null,
     endDate: eventEnd ? eventEnd.split("T")[0] : null,
     requiresMealPreference: showMenuInForm,
@@ -208,31 +208,43 @@ const formatDateTime = (date) => {
   };
 
   try {
+    // ======================
+    // UPDATE EXISTING EVENT
+    // ======================
     if (isEdit) {
       await updateEvent(editEvent.id, eventData);
 
       alert("Event updated successfully!");
+
       navigate("/draft-events");
       return;
     }
 
+    // ======================
+    // CREATE NEW EVENT
+    // ======================
     const createResponse = await createEvent(eventData);
 
     if (createResponse.success) {
+      // Publish immediately
       await publishEvent(createResponse.data.id);
 
-      navigate("/registration", {
-        state: createResponse.data,
-      });
-
       alert("Event published successfully!");
+
+      // Open preview/registration page in a NEW TAB
+      window.open(
+        `/registration/${createResponse.data.id}`,
+        "_blank"
+      );
+
+      // Current tab goes to Published Events
+      navigate("/published-events");
     }
   } catch (error) {
     console.error(error.response?.data || error);
     alert(error.response?.data?.message || "Failed to save event");
   }
 };
-
 // Edit Event
 useEffect(() => {
   if (!editEvent?.id) return;
@@ -254,7 +266,7 @@ useEffect(() => {
       setRegistrationStart(formatDateTime(event.registrationStart));
       setRegistrationEnd(formatDateTime(event.registrationEnd));
 
-      setMaxParticipants(event.maxParticipants || "");
+      // setMaxParticipants(event.maxParticipants || "");
       setShowMenuInForm(event.requiresMealPreference || false);
     } catch (err) {
       console.error(err);

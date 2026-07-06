@@ -25,6 +25,7 @@ const AllEventsList = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  
 
   useEffect(() => {
     fetchEvents();
@@ -61,7 +62,13 @@ const handlePublish = async (event) => {
 
       fetchEvents();
 
+      window.open(
+        `/registration/${event.id}`,
+        "_blank"
+      );
       navigate("/published-events");
+
+navigate("/published-events");
     }
   } catch (error) {
     console.error("Publish failed:", error);
