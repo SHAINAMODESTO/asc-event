@@ -1,15 +1,19 @@
-import React, { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Plus, Trash2, SquarePen } from "lucide-react";
 import {
   createEvent,
   publishEvent,
   getEventById,
+  updateEvent,
 } from "../services/eventService";
 import "./CreateForm.css";
 
 const CreateForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const editEvent = location.state;
+  const isEdit = !!editEvent;
 
   const [formTitle] = useState("Registration Form");
 
@@ -105,36 +109,6 @@ const removeLootBagOption = (index) => {
   setLootBagOptions(updated);
 };
 
-  // Load Edit Data
-  React.useEffect(() => {
-    const editData = localStorage.getItem("ascEventEdit");
-
-    if (editData) {
-      try {
-        const parsed = JSON.parse(editData);
-
-        setEventDescription(parsed.eventDescription || "");
-        setEventName(parsed.eventName || "");
-        setEventVenue(parsed.eventVenue || "");
-        setMaxParticipants(parsed.maxParticipants || "");
-        setEventInquiryContact(parsed.eventInquiryContact || "");
-        setEventStart(parsed.eventStart || "");
-        setEventEnd(parsed.eventEnd || "");
-        setRegistrationStart(parsed.registrationStart || "");
-        setRegistrationEnd(parsed.registrationEnd || "");
-        setEventConsentMessage(parsed.eventConsentMessage || "");
-        setBanner(parsed.banner || "");
-        setFields(parsed.fields || fields);
-        setMenuOptions(parsed.menuOptions || menuOptions);
-        setShowMenuInForm(parsed.showMenuInForm ?? true);
-      } catch (error) {
-        console.error("Failed to load edit template", error);
-      } finally {
-        localStorage.removeItem("ascEventEdit");
-      }
-    }
-  }, []);
-
   const addField = () =>
     setFields([...fields, { label: "", type: "text", required: false }]);
 
@@ -158,7 +132,13 @@ const removeLootBagOption = (index) => {
   const removeMenuOption = (index) =>
     setMenuOptions(menuOptions.filter((_, i) => i !== index));
 
+const formatDateTime = (date) => {
+  if (!date) return "";
 
+  return new Date(date)
+    .toISOString()
+    .slice(0, 16);
+};
 
   /*const STORAGE_KEY = "ascEventTemplates";
 
@@ -167,12 +147,13 @@ const removeLootBagOption = (index) => {
     const parsed = existing ? JSON.parse(existing) : [];
     localStorage.setItem(STORAGE_KEY, JSON.stringify([template, ...parsed]));
   }; */
-
+//Save Draft
  const handleSaveDraft = async () => {
   const eventData = {
     title: eventName,
     description: eventDescription,
     venue: eventVenue,
+    maxParticipants: maxParticipants,
     startDate: eventStart ? eventStart.split("T")[0] : null,
     endDate: eventEnd ? eventEnd.split("T")[0] : null,
     requiresMealPreference: showMenuInForm,
@@ -183,15 +164,23 @@ const removeLootBagOption = (index) => {
     registrationEnd: registrationEnd
       ? registrationEnd.replace("T", " ")
       : null,
-      
   };
 
   try {
-    const response = await createEvent(eventData);
+    if (isEdit) {
+      const response = await updateEvent(editEvent.id, eventData);
 
-    if (response.success) {
-      alert("Draft saved successfully!");
-      navigate("/?item=Draft Events List");
+      if (response.success || response.data) {
+        alert("Draft updated successfully!");
+        navigate("/draft-events");
+      }
+    } else {
+      const response = await createEvent(eventData);
+
+      if (response.success) {
+        alert("Draft saved successfully!");
+        navigate("/draft-events");
+      }
     }
   } catch (error) {
     console.error(error.response?.data || error);
@@ -200,11 +189,12 @@ const removeLootBagOption = (index) => {
 };
 
   // Save Event
-  const handleSaveTemplate = async () => {
+ const handleSaveTemplate = async () => {
   const eventData = {
     title: eventName,
     description: eventDescription,
     venue: eventVenue,
+    maxParticipants: maxParticipants,
     startDate: eventStart ? eventStart.split("T")[0] : null,
     endDate: eventEnd ? eventEnd.split("T")[0] : null,
     requiresMealPreference: showMenuInForm,
@@ -218,6 +208,14 @@ const removeLootBagOption = (index) => {
   };
 
   try {
+    if (isEdit) {
+      await updateEvent(editEvent.id, eventData);
+
+      alert("Event updated successfully!");
+      navigate("/draft-events");
+      return;
+    }
+
     const createResponse = await createEvent(eventData);
 
     if (createResponse.success) {
@@ -231,14 +229,45 @@ const removeLootBagOption = (index) => {
     }
   } catch (error) {
     console.error(error.response?.data || error);
-    alert(error.response?.data?.message || "Failed to publish event");
+    alert(error.response?.data?.message || "Failed to save event");
   }
 };
+
+// Edit Event
+useEffect(() => {
+  if (!editEvent?.id) return;
+
+  const loadEvent = async () => {
+    try {
+      const response = await getEventById(editEvent.id);
+
+      console.log("Full Event:", response);
+
+      const event = response.data || response;
+
+      setEventName(event.title || "");
+      setEventVenue(event.venue || "");
+      setEventDescription(event.description || "");
+
+      setEventStart(formatDateTime(event.startDate));
+      setEventEnd(formatDateTime(event.endDate));
+      setRegistrationStart(formatDateTime(event.registrationStart));
+      setRegistrationEnd(formatDateTime(event.registrationEnd));
+
+      setMaxParticipants(event.maxParticipants || "");
+      setShowMenuInForm(event.requiresMealPreference || false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  loadEvent();
+}, [editEvent]);
 
   return (
     <div className="w-[100%] !h-[100%] w-4/5 h-screen bg-white p-6 text-[12px] ">
        <div className="flex items-center justify-between  !h-[95px] mb-6  bg-border-[#c30d2e] p-4 shadow-md">
-              <h1 className="text-white text-xl font-semibold tracking-wide">Create an Event Registration Form </h1>
+              <h1 className="text-white text-xl font-semibold tracking-wide">{isEdit ? "Edit Event" : "Create Event"} </h1>
        </div>
          <div className="w-full flex justify-center px-6 pt-2">
   <div className="grid grid-cols-1 md:grid-cols-2 gap-10 h-[600px] overflow-y-auto bg-white rounded-lg shadow-md p-10">
@@ -548,7 +577,7 @@ const removeLootBagOption = (index) => {
                       onClick={handleSaveTemplate}
                       className="generate-btn"
                     >
-                      Generate Form
+                       {isEdit ? "Update Event" : "Generate Form"}
                     </button>
                    </div> 
               </div>
