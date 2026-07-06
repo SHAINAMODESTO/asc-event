@@ -1,11 +1,5 @@
 ﻿import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-
-import CreateForm from "../components/CreateForm";
-import AllEventsList from "../components/AllEventsList";
-import AttendeesList from "../components/AttendeesList";
-import EventAttendees from "../components/EventAttendees";
-
+import { useLocation, useNavigate, Outlet } from "react-router-dom";
 import "./Sidebar.css";
 
 const sectionItems = {
@@ -14,7 +8,6 @@ const sectionItems = {
     "Draft Events List",
     "Published Events List",
   ],
-  Attendees: ["Attendee List"],
   "User Management": [
     "Admin users",
     "Event organizers",
@@ -35,55 +28,54 @@ export default function Sidebar() {
   const [selectedSection, setSelectedSection] = useState("Events");
   const [activeItem, setActiveItem] = useState("");
 
-  // EDIT SUPPORT
-  const [editEventId, setEditEventId] = useState(null);
-
   // Load user
   useEffect(() => {
     const storedName = localStorage.getItem("name");
     if (storedName) setUserName(storedName);
   }, []);
 
-  // Handle sidebar query
+  // Detect active route
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const item = params.get("item");
+    const path = location.pathname;
 
-    if (item) {
-      setActiveItem(item);
-
-      if (
-        ["Create Event", "Draft Events List", "Published Events List"].includes(item)
-      ) {
-        setSelectedSection("Events");
-      }
-
-      if (item === "Attendee List") {
-        setSelectedSection("Attendees");
-      }
-    }
-  }, [location.search]);
-
-  // Detect attendee route
-  useEffect(() => {
-    if (location.pathname.includes("/attendees/")) {
-      setSelectedSection("Attendees");
-      setActiveItem("Event Attendees");
-    }
+    if (path.includes("/create-event")) {
+      setSelectedSection("Events");
+      setActiveItem("Create Event");
+    } else if (path.includes("/draft-events")) {
+      setSelectedSection("Events");
+      setActiveItem("Draft Events List");
+    } else if (path.includes("/published-events")) {
+      setSelectedSection("Events");
+      setActiveItem("Published Events List");
+    } 
   }, [location.pathname]);
-
-  // Load edit ID
-  useEffect(() => {
-    const storedEditId = localStorage.getItem("editEventId");
-    if (storedEditId) {
-      setEditEventId(storedEditId);
-    }
-  }, [activeItem]);
 
   const handleLogout = () => {
     localStorage.clear();
     sessionStorage.clear();
     navigate("/login");
+  };
+
+  const handleNavigation = (item) => {
+    setActiveItem(item);
+
+    switch (item) {
+      case "Create Event":
+        localStorage.removeItem("editEventId");
+        navigate("/create-event");
+        break;
+
+      case "Draft Events List":
+        navigate("/draft-events");
+        break;
+
+      case "Published Events List":
+        navigate("/published-events");
+        break;
+
+      default:
+        break;
+    }
   };
 
   return (
@@ -118,17 +110,7 @@ export default function Sidebar() {
                       className={`sidebar-sublink ${
                         activeItem === item ? "active" : ""
                       }`}
-                      onClick={() => {
-                        setActiveItem(item);
-
-                        // RESET EDIT WHEN CREATING NEW
-                        if (item === "Create Event") {
-                          localStorage.removeItem("editEventId");
-                          setEditEventId(null);
-                        }
-
-                        navigate(`/?item=${encodeURIComponent(item)}`);
-                      }}
+                      onClick={() => handleNavigation(item)}
                     >
                       {item}
                     </button>
@@ -150,50 +132,37 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* ================= MAIN ================= */}
+      {/* ================= MAIN CONTENT ================= */}
       <main className="workspace">
-        {!activeItem && (
-          <section className="topbar">
-            <div>
-              <h2>Welcome back, {userName || "Admin"}!</h2>
-              <p>Here's the Event Management overview for today.</p>
-            </div>
-          </section>
-        )}
+        {/* Default Dashboard */}
+        {location.pathname === "/" ? (
+          <>
+            <section className="topbar">
+              <div>
+                <h2>Welcome back, {userName || "Admin"}!</h2>
+                <p>Here's the Event Management overview for today.</p>
+              </div>
+            </section>
 
-        {/* CREATE / EDIT EVENT */}
-        {activeItem === "Create Event" ? (
-          <CreateForm key={editEventId || "create"} />
-        ) : activeItem === "Draft Events List" ? (
-          <AllEventsList />
-        ) : activeItem === "Attendee List" ? (
-          <AttendeesList />
-        ) : activeItem === "Event Attendees" ? (
-          <EventAttendees />
-        ) : activeItem ? (
-          <section className="dashboard-grid">
-            <article className="content-card">
-              <h3>{activeItem}</h3>
-              <p>This view is selected from the sidebar.</p>
-            </article>
-          </section>
+            <section className="dashboard-grid">
+              <article className="content-card">
+                <h3>Upcoming Events</h3>
+                <p>6</p>
+              </article>
+
+              <article className="content-card">
+                <h3>Attendees Today</h3>
+                <p>342</p>
+              </article>
+
+              <article className="content-card">
+                <h3>Quick Actions</h3>
+                <span>Create event, Manage attendees, Export reports.</span>
+              </article>
+            </section>
+          </>
         ) : (
-          <section className="dashboard-grid">
-            <article className="content-card">
-              <h3>Upcoming Events</h3>
-              <p>6</p>
-            </article>
-
-            <article className="content-card">
-              <h3>Attendees Today</h3>
-              <p>342</p>
-            </article>
-
-            <article className="content-card">
-              <h3>Quick Actions</h3>
-              <span>Create event, Manage attendees, Export reports.</span>
-            </article>
-          </section>
+          <Outlet />
         )}
       </main>
     </div>

@@ -1,35 +1,31 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getAttendees } from "../services/attendeeListService";
+import { getEventById } from "../services/eventService";
 import "./EventAttendees.css";
 
 const EventAttendees = () => {
   const navigate = useNavigate();
+  const { eventId } = useParams();
   const printRef = useRef();
-
-  // Get selected event from localStorage
-  const selectedEvent = JSON.parse(
-    localStorage.getItem("selectedEvent")
-  );
-
-  const eventId = selectedEvent?.eventId;
-  const eventName = selectedEvent?.eventName || "Event";
+  const fileInputRef = useRef();
 
   const [attendees, setAttendees] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Search
   const [search, setSearch] = useState("");
-
-  // Filter
   const [status, setStatus] = useState("");
+  const [eventName, setEventName] = useState("");
 
-  // Pagination
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Print only header + table
+  // Modal states
+  const [selectedAttendee, setSelectedAttendee] = useState(null);
+  const [showAssignForm, setShowAssignForm] = useState(false);
+  const [tableNumber, setTableNumber] = useState("");
+
   const handlePrint = () => {
     const printContents = printRef.current.innerHTML;
     const originalContents = document.body.innerHTML;
@@ -39,6 +35,19 @@ const EventAttendees = () => {
     document.body.innerHTML = originalContents;
 
     window.location.reload();
+  };
+
+  const fetchEventDetails = async () => {
+    try {
+      const response = await getEventById(eventId);
+
+      console.log("Event details:", response);
+
+      setEventName(response.data?.title || "Event");
+    } catch (error) {
+      console.error("Fetch event details error:", error);
+      setEventName("Event");
+    }
   };
 
   const fetchAttendees = async () => {
@@ -71,10 +80,10 @@ const EventAttendees = () => {
   };
 
   useEffect(() => {
+    fetchEventDetails();
     fetchAttendees();
-  }, [page, search, status]);
+  }, [eventId, page, search, status]);
 
-  // Export CSV
   const handleExport = () => {
     const csvRows = [
       [
@@ -85,6 +94,7 @@ const EventAttendees = () => {
         "Company",
         "Position",
         "Status",
+        "Table Number",
         "Created Date",
       ],
       ...attendees.map((attendee) => [
@@ -95,6 +105,7 @@ const EventAttendees = () => {
         attendee.company || "",
         attendee.position || "",
         attendee.status || "",
+        attendee.tableNumber || "",
         attendee.createdAt
           ? new Date(attendee.createdAt).toLocaleString()
           : "",
@@ -109,31 +120,98 @@ const EventAttendees = () => {
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `${eventName}-attendees.csv`;
+    link.download = `attendees-${eventId}.csv`;
     link.click();
+  };
+
+  const totalAttendees = attendees.length;
+
+  const checkedInCount = attendees.filter(
+    (a) => a.status === "CHECKED_IN"
+  ).length;
+
+  const checkedInPercentage =
+    totalAttendees > 0
+      ? ((checkedInCount / totalAttendees) * 100).toFixed(1)
+      : 0;
+
+  const calledCount = attendees.filter(
+    (a) => a.status === "CALLED"
+  ).length;
+
+  const handleBulkUpload = (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      const text = event.target.result;
+      const rows = text.split("\n").map((row) => row.split(","));
+
+      const dataRows = rows.slice(1);
+
+      const newAttendees = dataRows
+        .filter((row) => row.length >= 6)
+        .map((row, index) => ({
+          id: `${eventId}-${Date.now()}-${index}`,
+          eventId,
+          firstName: row[0]?.trim(),
+          lastName: row[1]?.trim(),
+          preferredNameOnBadge: row[2]?.trim(),
+          emailAddress: row[3]?.trim(),
+          company: row[4]?.trim(),
+          position: row[5]?.trim(),
+          status: "PENDING",
+          createdAt: new Date().toISOString(),
+        }));
+
+      setAttendees((prev) => [...prev, ...newAttendees]);
+
+      alert(`${newAttendees.length} attendees uploaded successfully.`);
+    };
+
+    reader.readAsText(file);
   };
 
   return (
     <div className="event-attendees-page">
-         {/* Header */}
-        <div className="attendees-header">
-          <h1>{eventName} Attendees</h1>
-          <p>{attendees.length} attendee(s)</p>
+      <div className="attendees-header">
+        <h1>{eventName} Attendees</h1>
+        <p>{attendees.length} attendee(s)</p>
+      </div>
+
+      {/* Dashboard */}
+      <div className="attendees-dashboard">
+        <div className="dashboard-card">
+          <h3>Total Attendees</h3>
+          <p>{totalAttendees}</p>
         </div>
-      {/* Search + Filter */}
+
+        <div className="dashboard-card">
+          <h3>Checked-in Rate</h3>
+          <p>{checkedInPercentage}%</p>
+        </div>
+
+        <div className="dashboard-card">
+          <h3>Called by Coordinator</h3>
+          <p>{calledCount}</p>
+        </div>
+      </div>
+
+      {/* Controls */}
       <div className="attendees-controls">
-        {/* Back button */}
         <button
           className="back-btn"
-          onClick={() => navigate("/?item=Attendee List")}
+          onClick={() => navigate("/published-events")}
         >
           ← Back
         </button>
 
-        {/* Search */}
         <input
           type="text"
-          placeholder="Search by name, email, preferred name, code"
+          placeholder="Search attendees..."
           value={search}
           onChange={(e) => {
             setPage(1);
@@ -141,7 +219,6 @@ const EventAttendees = () => {
           }}
         />
 
-        {/* Status Filter */}
         <select
           value={status}
           onChange={(e) => {
@@ -158,7 +235,6 @@ const EventAttendees = () => {
           <option value="NO_SHOW">No Show</option>
         </select>
 
-        {/* Action Buttons */}
         <div className="attendee-actions">
           <button className="print-btn" onClick={handlePrint}>
             Print
@@ -167,13 +243,26 @@ const EventAttendees = () => {
           <button className="export-btn" onClick={handleExport}>
             Export
           </button>
+
+          <button
+            className="bulk-upload-btn"
+            onClick={() => fileInputRef.current.click()}
+          >
+            Bulk Upload
+          </button>
+
+          <input
+            type="file"
+            accept=".csv"
+            ref={fileInputRef}
+            style={{ display: "none" }}
+            onChange={handleBulkUpload}
+          />
         </div>
       </div>
 
-      {/* PRINTABLE AREA ONLY */}
+      {/* Table */}
       <div ref={printRef}>
-
-        {/* Table */}
         <div className="table-wrapper">
           {loading ? (
             <p>Loading attendees...</p>
@@ -196,7 +285,11 @@ const EventAttendees = () => {
 
               <tbody>
                 {attendees.map((attendee) => (
-                  <tr key={attendee.id}>
+                  <tr
+                    key={attendee.id}
+                    onClick={() => setSelectedAttendee(attendee)}
+                    className="clickable-row"
+                  >
                     <td>{attendee.firstName || "-"}</td>
                     <td>{attendee.lastName || "-"}</td>
                     <td>{attendee.preferredNameOnBadge || "-"}</td>
@@ -216,6 +309,99 @@ const EventAttendees = () => {
           )}
         </div>
       </div>
+
+      {/* Modal */}
+      {selectedAttendee && (
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            setSelectedAttendee(null);
+            setShowAssignForm(false);
+            setTableNumber("");
+          }}
+        >
+          <div
+            className="modal-box"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2>Attendee Details</h2>
+
+            <p><b>First Name:</b> {selectedAttendee.firstName}</p>
+            <p><b>Last Name:</b> {selectedAttendee.lastName}</p>
+            <p><b>Preferred Name:</b> {selectedAttendee.preferredNameOnBadge}</p>
+            <p><b>Email:</b> {selectedAttendee.emailAddress}</p>
+            <p><b>Company:</b> {selectedAttendee.company}</p>
+            <p><b>Position:</b> {selectedAttendee.position}</p>
+            <p><b>Status:</b> {selectedAttendee.status}</p>
+            <p><b>Table Number:</b> {selectedAttendee.tableNumber || "-"}</p>
+
+            {/* Assign Table Form */}
+            {showAssignForm && (
+              <div className="assign-form">
+                <label>Table Number</label>
+                <input
+                  type="text"
+                  value={tableNumber}
+                  onChange={(e) => setTableNumber(e.target.value)}
+                  placeholder="Enter table number"
+                />
+
+                <button
+                  className="save-table-btn"
+                  onClick={() => {
+                    if (!tableNumber.trim()) {
+                      alert("Please enter a table number.");
+                      return;
+                    }
+
+                    setAttendees((prev) =>
+                      prev.map((attendee) =>
+                        attendee.id === selectedAttendee.id
+                          ? { ...attendee, tableNumber }
+                          : attendee
+                      )
+                    );
+
+                    setSelectedAttendee((prev) => ({
+                      ...prev,
+                      tableNumber,
+                    }));
+
+                    alert(
+                      `${selectedAttendee.firstName} assigned to Table ${tableNumber}`
+                    );
+
+                    setShowAssignForm(false);
+                    setTableNumber("");
+                  }}
+                >
+                  Save Table
+                </button>
+              </div>
+            )}
+
+            <div className="modal-actions">
+              <button
+                className="assign-btn"
+                onClick={() => setShowAssignForm(true)}
+              >
+                Assign Table
+              </button>
+
+              <button
+                className="close-btn"
+                onClick={() => {
+                  setSelectedAttendee(null);
+                  setShowAssignForm(false);
+                  setTableNumber("");
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pagination */}
       <div className="pagination">

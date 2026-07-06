@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import {
-  getEvents,
-  publishEvent,
-  deleteEvent,
-} from "../services/eventService";
+import { getEvents, deleteEvent } from "../services/eventService";
 import "./AllEventsList.css";
 
 const formatDateRange = (start, end) => {
@@ -17,7 +13,7 @@ const formatDateRange = (start, end) => {
   return `${from} — ${to}`;
 };
 
-const AllEventsList = () => {
+const PublishedEvents = () => {
   const navigate = useNavigate();
 
   const [events, setEvents] = useState([]);
@@ -30,48 +26,26 @@ const AllEventsList = () => {
     fetchEvents();
   }, []);
 
-const fetchEvents = async () => {
-  try {
-    const response = await getEvents();
+  const fetchEvents = async () => {
+    try {
+      const response = await getEvents();
 
-    console.log("Fetched events:", response);
+      console.log("Fetched published events:", response);
 
-    const draftEvents = response.filter(
-      (event) => event.status?.toLowerCase().includes("draft")
-    );
+      const publishedEvents = response.filter(
+        (event) => event.status?.toLowerCase().includes("published")
+      );
 
-    setEvents(draftEvents);
-  } catch (error) {
-    console.error("Failed to fetch events:", error);
-    console.log(response[0]);
-  }
-};
-const handlePublish = async (event) => {
-  const confirmed = window.confirm(
-    `Are you sure you want to publish ${event.title}Event?`
-  );
-
-  if (!confirmed) return;
-
-  try {
-    const response = await publishEvent(event.id);
-
-    if (response.success || response.data) {
-      alert("Event published successfully.");
-
-      fetchEvents();
-
-      navigate("/published-events");
+      setEvents(publishedEvents);
+    } catch (error) {
+      console.error("Failed to fetch published events:", error);
     }
-  } catch (error) {
-    console.error("Publish failed:", error);
+  };
+   const viewAttendees = (event) => {
+  navigate(`/attendees/${event.id}`);
+}; 
 
-    setStatusMessage(
-      error.response?.data?.message || "Failed to publish event."
-    );
-  }
-};
-  // Search + Date Range Filter
+  // Search + Date Filter
   const filteredEvents = events.filter((event) => {
     const query = searchTerm.toLowerCase();
 
@@ -93,83 +67,77 @@ const handlePublish = async (event) => {
   });
 
   const deleteTemplate = async (id) => {
-  try {
-    const response = await deleteEvent(id);
+    try {
+      const response = await deleteEvent(id);
 
-    if (response.success) {
-      fetchEvents();
-      setStatusMessage("Event deleted successfully.");
+      if (response.success) {
+        fetchEvents();
+        setStatusMessage("Published event deleted successfully.");
+      }
+    } catch (error) {
+      console.error("Delete failed:", error);
+      setStatusMessage(
+        error.response?.data?.message || "Failed to delete event."
+      );
     }
-  } catch (error) {
-    console.error("Delete failed:", error);
-    setStatusMessage(
-      error.response?.data?.message || "Failed to delete event."
-    );
-  }
-};
+  };
 
   const viewTemplate = (eventTemplate) => {
     navigate("/registration", { state: eventTemplate });
   };
 
-const editTemplate = (eventTemplate) => {
-  navigate("/?item=Create Event", {
-    state: eventTemplate,
-  });
-};
-
   return (
     <div className="all-events-list">
       <div className="all-events-header">
         <div>
-          <h1 className="all-events-title">Draft Events List</h1>
+          <h1 className="all-events-title">Published Events List</h1>
         </div>
 
         <div className="all-events-stat">
-          {events.length} saved event{events.length === 1 ? "" : "s"}
+          {events.length} published event{events.length === 1 ? "" : "s"}
         </div>
       </div>
 
       {/* Search + Date Range */}
       <div className="all-events-search">
-  <input
-    type="text"
-    placeholder="Search by event name or venue"
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-    className="search-input"
-  />
+        <input
+          type="text"
+          placeholder="Search by event name or venue"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
 
-  <div className="date-range-wrapper">
-    <label className="date-range-label">Date Range:</label>
+        <div className="date-range-wrapper">
+          <label className="date-range-label">Date Range:</label>
 
-    <span className="date-text">From</span>
-    <input
-      type="date"
-      value={fromDate}
-      onChange={(e) => setFromDate(e.target.value)}
-      className="date-input"
-    />
+          <span className="date-text">From</span>
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="date-input"
+          />
 
-    <span className="date-text">To</span>
-    <input
-      type="date"
-      value={toDate}
-      onChange={(e) => setToDate(e.target.value)}
-      className="date-input"
-    />
-  </div>
-</div>
+          <span className="date-text">To</span>
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="date-input"
+          />
+        </div>
+      </div>
 
       {statusMessage && (
         <div className="all-events-status">{statusMessage}</div>
       )}
 
       {events.length === 0 ? (
-        <div className="event-list-empty">No saved templates yet.</div>
+        <div className="event-list-empty">No published events yet.</div>
       ) : filteredEvents.length === 0 ? (
         <div className="event-list-empty">
-          No templates match your filters.
+          No published events match your filters.
         </div>
       ) : (
         <div className="events-grid">
@@ -200,17 +168,9 @@ const editTemplate = (eventTemplate) => {
                 <button
                   type="button"
                   className="event-button"
-                  onClick={() => editTemplate(event)}
+                  onClick={() => viewAttendees(event)}
                 >
-                  Edit
-                </button>
-
-                <button
-                  type="button"
-                  className="event-button event-button-publish"
-                  onClick={() => handlePublish(event)}
-                >
-                  Publish Form 
+                  View Attendees
                 </button>
 
                 <button
@@ -218,11 +178,9 @@ const editTemplate = (eventTemplate) => {
                   className="event-button event-button-delete"
                   onClick={() => deleteTemplate(event.id)}
                 >
-                  Delete
+                  Archive
                 </button>
               </div>
-
-              <div className="event-section"></div>
             </div>
           ))}
         </div>
@@ -231,4 +189,4 @@ const editTemplate = (eventTemplate) => {
   );
 };
 
-export default AllEventsList;
+export default PublishedEvents;

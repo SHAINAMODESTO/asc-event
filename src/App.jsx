@@ -6,17 +6,27 @@ import ThankYou from "./components/ThankYou";
 import AttendeesList from "./components/AttendeesList";
 import EventAttendees from "./components/EventAttendees";
 import CreateForm from "./components/CreateForm";
+import PublishedEvents from "./components/PublishedEvents";
+import AllEventsList from "./components/AllEventsList";
 import NotFound from "./pages/NotFound";
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Sidebar />} />
+      {/* Sidebar Layout */}
+      <Route path="/" element={<Sidebar />}>
+        <Route path="create-event" element={<CreateForm />} />
+        <Route path="draft-events" element={<AllEventsList />} />
+        <Route path="attendees" element={<AttendeesList />} />
+        <Route path="attendees/:eventId" element={<EventAttendees />} />
+        <Route path="published-events" element={<PublishedEvents />} />
+      </Route>
+
+      {/* Public Pages */}
       <Route path="/registration" element={<Registration />} />
       <Route path="/registration/:eventId" element={<RegisterV3 />} />
       <Route path="/thankyou" element={<ThankYou />} />
-      {/* Catch all unknown routes */}
-      <Route path="*" element={<NotFound />} />
+
       {/* CREATE / EDIT EVENT */}
       <Route path="/create-event" element={<CreateForm />} />
       <Route path="/create-event/:id" element={<CreateForm />} />
