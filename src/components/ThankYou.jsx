@@ -69,7 +69,7 @@ const ThankYou = () => {
 
         <div className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-6">
           <div className="flex items-center gap-3">
-            <FaCalendarAlt className="text-blue-600 text-xl" />
+            <FaCalendarAlt className="text-red-600 text-xl" />
 
             <div>
               <h3 className="font-semibold text-slate-900">Event</h3>
@@ -83,7 +83,7 @@ const ThankYou = () => {
 
         <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-6">
           <div className="flex items-center gap-3">
-            <FaEnvelope className="text-blue-600 text-xl" />
+            <FaEnvelope className="text-red-600 text-xl" />
 
             <div>
               <h3 className="font-semibold text-slate-900">
@@ -97,8 +97,8 @@ const ThankYou = () => {
 
         {/* Reminder */}
 
-        {/* <div className="mt-8 rounded-2xl bg-blue-50 border border-blue-200 p-6">
-          <h3 className="font-semibold text-blue-700">What's Next?</h3>
+        {/* <div className="mt-8 rounded-2xl bg-red-50 border border-red-200 p-6">
+          <h3 className="font-semibold text-red-700">What's Next?</h3>
 
           <ul className="mt-4 space-y-3 text-slate-600">
             <li>✔ Check your email for your registration confirmation.</li>
@@ -121,12 +121,12 @@ const ThankYou = () => {
           justify-center
           gap-3
           rounded-xl
-          bg-blue-600
+          bg-red-600
           py-4
           font-semibold
           text-white
           transition
-          hover:bg-blue-700
+          hover:bg-red-700
           "
         >
           <FaHome />

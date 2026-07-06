@@ -6,6 +6,7 @@ export default function useEvent(eventId) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [notFound, setNotFound] = useState(false);
   useEffect(() => {
     if (!eventId) return;
 
@@ -19,7 +20,13 @@ export default function useEvent(eventId) {
         setEvent(response.data);
       } catch (err) {
         console.error(err);
-        setError(err);
+
+        // API returned 404
+        if (err.response?.status === 404 || err.response?.status === 400) {
+          setNotFound(true);
+        } else {
+          setError(err);
+        }
       } finally {
         setLoading(false);
       }
@@ -32,5 +39,6 @@ export default function useEvent(eventId) {
     event,
     loading,
     error,
+    notFound,
   };
 }

@@ -185,7 +185,7 @@ const RegisterForm = ({
           <button
             type="submit"
             disabled={loading}
-            className="rounded-xl bg-blue-600 px-8 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+            className="rounded-xl bg-red-600 px-8 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
           >
             {loading ? (
               <div className="flex items-center justify-center gap-2">

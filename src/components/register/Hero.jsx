@@ -8,7 +8,7 @@ const Hero = ({ banner, title, description }) => {
           className="absolute inset-0 h-full w-full object-cover"
         />
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700" />
+        <div className="absolute inset-0 bg-gradient-to-r from-red-700 via-red-600 to-red-700" />
       )}
 
       <div className="absolute inset-0 bg-slate-900/60" />

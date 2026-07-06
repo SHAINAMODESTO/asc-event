@@ -2,7 +2,7 @@ const SectionHeader = ({ eyebrow, title, description }) => {
   return (
     <div>
       {eyebrow && (
-        <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">
+        <p className="text-sm font-semibold uppercase tracking-widest text-red-600">
           {eyebrow}
         </p>
       )}
