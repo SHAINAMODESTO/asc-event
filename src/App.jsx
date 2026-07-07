@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate} from "react-router-dom";
 import Sidebar from "./shared/Sidebar";
 import Registration from "./components/Registration";
 import RegisterV3 from "./pages/RegisterV3";
@@ -10,32 +10,54 @@ import PublishedEvents from "./components/PublishedEvents";
 import AllEventsList from "./components/AllEventsList";
 import NotFound from "./pages/NotFound";
 import EventSummary from "./components/register/EventSummary";
+import Login from "./components/Login";
+
+const ProtectedRoute = ({ children }) => {
+  const isLoggedIn = localStorage.getItem("isLoggedIn");
+
+  return isLoggedIn ? children : <Navigate to="/login" replace />;
+};
 
 function App() {
   return (
-    <Routes>
-      {/* Sidebar Layout */}
-      <Route path="/" element={<Sidebar />}>
-        <Route path="create-event" element={<CreateForm />} />
-        <Route path="draft-events" element={<AllEventsList />} />
-        <Route path="attendees" element={<AttendeesList />} />
-        <Route path="attendees/:eventId" element={<EventAttendees />} />
-        <Route path="published-events" element={<PublishedEvents />} />
-      </Route>
+   
+        <Routes>
 
-      {/* Public Pages */}
-      <Route path="/registration" element={<Registration />} />
-      <Route path="/registration/:eventId" element={<RegisterV3 />} />
-      <Route path="/thankyou" element={<ThankYou />} />
+      {/* Login */}
+        <Route path="/login" element={<Login />} />
 
-      {/* CREATE / EDIT EVENT */}
-      <Route path="/create-event" element={<CreateForm />} />
-      <Route path="/create-event/:id" element={<CreateForm />} />
+        {/* Protected Dashboard */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Sidebar />
+            </ProtectedRoute>
+          }
+        ></Route>
+          {/* Sidebar Layout */}
+          <Route path="/" element={<Sidebar />}>
+            <Route path="create-event" element={<CreateForm />} />
+            <Route path="draft-events" element={<AllEventsList />} />
+            <Route path="attendees" element={<AttendeesList />} />
+            <Route path="attendees/:eventId" element={<EventAttendees />} />
+            <Route path="published-events" element={<PublishedEvents />} />
+          </Route>
 
-      {/* Attendees */}
-      <Route path="/attendees" element={<AttendeesList />} />
-      <Route path="/attendees/:eventId" element={<EventAttendees />} />
-    </Routes>
+          {/* Public Pages */}
+          <Route path="/registration" element={<Registration />} />
+          <Route path="/registration/:eventId" element={<RegisterV3 />} />
+          <Route path="/thankyou" element={<ThankYou />} />
+
+          {/* CREATE / EDIT EVENT */}
+          <Route path="/create-event" element={<CreateForm />} />
+          <Route path="/create-event/:id" element={<CreateForm />} />
+
+          {/* Attendees */}
+          <Route path="/attendees" element={<AttendeesList />} />
+          <Route path="/attendees/:eventId" element={<EventAttendees />} />
+        </Routes>
+   
   );
 }
 

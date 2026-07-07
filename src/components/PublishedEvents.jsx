@@ -157,10 +157,6 @@ const PublishedEvents = () => {
                     <b>DATE:</b>{" "}
                     {formatDateRange(event.startDate, event.endDate)}
                   </p>
-
-                  <p>
-                    <b>STATUS:</b> {event.status}
-                  </p>
                 </div>
               </div>
 

@@ -1,5 +1,7 @@
 ﻿import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, Outlet } from "react-router-dom";
+import { getEvents } from "../services/eventService";
+import { getAttendees } from "../services/attendeeListService";
 import "./Sidebar.css";
 
 const sectionItems = {
@@ -27,6 +29,36 @@ export default function Sidebar() {
   const [userName, setUserName] = useState("");
   const [selectedSection, setSelectedSection] = useState("Events");
   const [activeItem, setActiveItem] = useState("");
+
+  const [upcomingEvents, setUpcomingEvents] = useState(0);
+  const [attendeesToday, setAttendeesToday] = useState(0);
+
+
+  useEffect(() => {
+  loadDashboard();
+}, []);
+
+const loadDashboard = async () => {
+  try {
+    const events = await getEvents();
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const upcoming = events.filter((event) => {
+      if (!event.startDate) return false;
+
+      const eventDate = new Date(event.startDate);
+      eventDate.setHours(0, 0, 0, 0);
+
+      return eventDate >= today;
+    });
+
+    setUpcomingEvents(upcoming.length);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   // Load user
   useEffect(() => {
@@ -76,6 +108,56 @@ export default function Sidebar() {
       default:
         break;
     }
+    const [upcomingEvents, setUpcomingEvents] = useState(0);
+const [attendeesToday, setAttendeesToday] = useState(0);
+useEffect(() => {
+  loadDashboard();
+}, []);
+
+const loadDashboard = async () => {
+  try {
+    // EVENTS
+    const eventResponse = await getEvents();
+
+    const events = eventResponse.data || eventResponse || [];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const upcoming = events.filter((event) => {
+      if (!event.startDate) return false;
+
+      const eventDate = new Date(event.startDate);
+      eventDate.setHours(0, 0, 0, 0);
+
+      return eventDate >= today;
+    });
+
+    setUpcomingEvents(upcoming.length);
+
+    // ATTENDEES
+    const attendeeResponse = await getAttendees();
+
+    const attendees = attendeeResponse.data || attendeeResponse || [];
+
+    const todayAttendees = attendees.filter((attendee) => {
+      if (!attendee.createdAt) return false;
+
+      const created = new Date(attendee.createdAt);
+
+      return (
+        created.getFullYear() === today.getFullYear() &&
+        created.getMonth() === today.getMonth() &&
+        created.getDate() === today.getDate()
+      );
+    });
+
+    setAttendeesToday(todayAttendees.length);
+
+  } catch (error) {
+    console.error(error);
+  }
+};
   };
 
   return (
@@ -147,12 +229,12 @@ export default function Sidebar() {
             <section className="dashboard-grid">
               <article className="content-card">
                 <h3>Upcoming Events</h3>
-                <p>6</p>
+                <p>{upcomingEvents}</p>
               </article>
 
               <article className="content-card">
                 <h3>Attendees Today</h3>
-                <p>342</p>
+                <p>{attendeesToday}</p>
               </article>
 
               <article className="content-card">
