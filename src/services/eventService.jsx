@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// const BASE_URL = "https://api.asconlineportal.com/api-event";
-const BASE_URL = "http://localhost:3021/api-event";
+ const BASE_URL = "https://api.asconlineportal.com/api-event";
+//const BASE_URL = "http://localhost:3021/api-event";
 
 // Create Event
 export const createEvent = async (eventData) => {
@@ -52,6 +52,23 @@ export const getEventById = async (eventId) => {
     return response.data;
   } catch (error) {
     console.error("Get Event Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+//Edit Event
+export const updateEvent = async (eventId, eventData) => {
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/event/${eventId}`,
+      eventData
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Update Event Error:",
+      error.response?.data || error.message
+    );
     throw error;
   }
 };

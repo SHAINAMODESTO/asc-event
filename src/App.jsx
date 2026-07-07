@@ -9,6 +9,7 @@ import CreateForm from "./components/CreateForm";
 import PublishedEvents from "./components/PublishedEvents";
 import AllEventsList from "./components/AllEventsList";
 import NotFound from "./pages/NotFound";
+import EventSummary from "./components/register/EventSummary";
 
 function App() {
   return (

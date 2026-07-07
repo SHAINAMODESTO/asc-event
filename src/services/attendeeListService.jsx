@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// const BASE_URL = "https://api.asconlineportal.com/api-event";
-const BASE_URL = "http://localhost:3021/api-event";
+ const BASE_URL = "https://api.asconlineportal.com/api-event";
+//const BASE_URL = "http://localhost:3021/api-event";
 
 // Create attendee
 export const createAttendee = async (attendeeData) => {
@@ -16,6 +16,17 @@ export const createAttendee = async (attendeeData) => {
     console.error("Create attendee error:", error.response?.data || error);
     throw error;
   }
+};
+// Asign table number to attendee
+export const assignTable = async (attendeeId, tableNumber) => {
+  const response = await axios.patch(
+    `${BASE_URL}/attendee/${attendeeId}/table`,
+    {
+      tableNumber,
+    }
+  );
+
+  return response.data;
 };
 
 // Get attendees with pagination, search, filter

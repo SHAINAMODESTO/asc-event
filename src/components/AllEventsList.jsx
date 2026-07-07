@@ -25,6 +25,7 @@ const AllEventsList = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  
 
   useEffect(() => {
     fetchEvents();
@@ -61,7 +62,13 @@ const handlePublish = async (event) => {
 
       fetchEvents();
 
+      window.open(
+        `/registration/${event.id}`,
+        "_blank"
+      );
       navigate("/published-events");
+
+navigate("/published-events");
     }
   } catch (error) {
     console.error("Publish failed:", error);
@@ -112,11 +119,19 @@ const handlePublish = async (event) => {
     navigate("/registration", { state: eventTemplate });
   };
 
-const editTemplate = (eventTemplate) => {
-  navigate("/?item=Create Event", {
+  /*const editTemplate = (eventTemplate) => {
+    navigate("/create-event", {
+      state: eventTemplate,
+    });
+  };*/
+  const editTemplate = (eventTemplate) => {
+  console.log("Edit Event:", eventTemplate);
+
+  navigate("/create-event", {
     state: eventTemplate,
   });
 };
+
 
   return (
     <div className="all-events-list">
