@@ -4,6 +4,9 @@ import InputField from "../components/register/InputField";
 import PrivacyAgreement from "../components/register/PrivacyAgreement";
 import { FaUser, FaEnvelope, FaBuilding, FaIdBadge } from "react-icons/fa";
 import ContactSection from "../components/register/ContactSection";
+import { useState, useEffect } from "react";
+import { getContacts } from "../services/contactListService";
+
 const formFields = [
   {
     name: "firstName",
@@ -67,43 +70,6 @@ const formFields = [
     required: true,
   },
 ];
-const eventInquiryContact = [
-  {
-    id: 1,
-    name: "Bree Muyco",
-    phone: "+63 956 150 3875",
-    email: "breanna.muyco@asc.com.ph",
-    position: "Event Coordinator",
-  },
-  {
-    id: 2,
-    name: "John Dela Cruz",
-    phone: "+63 917 123 4567",
-    email: "john.delacruz@asc.com.ph",
-    position: "Registration Officer",
-  },
-  {
-    id: 3,
-    name: "Maria Santos",
-    phone: "+63 918 765 4321",
-    email: "maria.santos@asc.com.ph",
-    position: "Technical Support",
-  },
-  {
-    id: 4,
-    name: "Mark Reyes",
-    phone: "+63 995 888 1111",
-    email: "mark.reyes@asc.com.ph",
-    position: "Program Coordinator",
-  },
-  {
-    id: 5,
-    name: "Anna Lopez",
-    phone: "+63 927 111 2222",
-    email: "anna.lopez@asc.com.ph",
-    position: "Customer Relations",
-  },
-];
 
 const RegisterForm = ({
   event,
@@ -116,6 +82,20 @@ const RegisterForm = ({
   handleSubmit,
   setFormData,
 }) => {
+  const [contacts, setContacts] = useState([]);
+
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  async function fetchContacts() {
+    try {
+      const data = await getContacts();
+      setContacts(data);
+    } catch (error) {
+      console.error("Failed to fetch contacts:", error);
+    }
+  }
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
       <form
@@ -133,7 +113,7 @@ const RegisterForm = ({
           schedule={`${event.startDate} - ${event.endDate}`}
         />
 
-        <ContactSection contacts={eventInquiryContact} />
+        <ContactSection contacts={contacts.data} />
 
         <div className="grid gap-6 md:grid-cols-2">
           {formFields

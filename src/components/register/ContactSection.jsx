@@ -62,12 +62,12 @@ const ContactSection = ({ contacts = [] }) => {
                 <div className="min-w-0 flex-1">
                   <h4 className="font-semibold">{contact.name}</h4>
 
-                  <p className="text-sm text-slate-500">{contact.position}</p>
+                  <p className="text-sm text-slate-500">{contact.role}</p>
 
                   <div className="mt-3 space-y-2 text-sm text-slate-600">
                     <div className="flex items-center gap-2">
                       <FaPhoneAlt className="text-slate-400" />
-                      <span>{contact.phone}</span>
+                      <span>{contact.phoneNumber}</span>
                     </div>
 
                     <div className="flex items-center gap-2 break-all">
