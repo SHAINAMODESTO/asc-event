@@ -43,6 +43,9 @@ Inquiry Contact:
   // NEW: Max participants
   const [maxParticipants, setMaxParticipants] = useState("");
 
+  // NEW: Attire
+  const [attire, setAttire] = useState("");
+
   // Event Dates
   const [eventStart, setEventStart] = useState("");
   const [eventEnd, setEventEnd] = useState("");
@@ -140,31 +143,39 @@ const formatDateTime = (date) => {
     .slice(0, 16);
 };
 
-  /*const STORAGE_KEY = "ascEventTemplates";
-
-  const saveTemplateToStorage = (template) => {
-    const existing = localStorage.getItem(STORAGE_KEY);
-    const parsed = existing ? JSON.parse(existing) : [];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([template, ...parsed]));
-  }; */
 //Save Draft
  const handleSaveDraft = async () => {
   const eventData = {
-    title: eventName,
-    description: eventDescription,
-    venue: eventVenue,
-  //  maxParticipants: maxParticipants,
-    startDate: eventStart ? eventStart.split("T")[0] : null,
-    endDate: eventEnd ? eventEnd.split("T")[0] : null,
-    requiresMealPreference: showMenuInForm,
-    isRegistrationRequired: true,
-    registrationStart: registrationStart
+  title: eventName,
+  description: eventDescription,
+  venue: eventVenue,
+
+  startDate: eventStart ? eventStart.split("T")[0] : null,
+  endDate: eventEnd ? eventEnd.split("T")[0] : null,
+
+  requiresMealPreference: showMenuInForm,
+  mealPreferences: showMenuInForm ? menuOptions : [],
+
+  isRegistrationRequired: true,
+
+  dressCode: attire || null,
+
+  maxParticipants: maxParticipants
+    ? Number(maxParticipants)
+    : null,
+
+  includesDoorPrize: showLootBags,
+
+  registrationStart:
+    showAcceptResponses && registrationStart
       ? registrationStart.replace("T", " ")
       : null,
-    registrationEnd: registrationEnd
+
+  registrationEnd:
+    showAcceptResponses && registrationEnd
       ? registrationEnd.replace("T", " ")
       : null,
-  };
+};
 
   try {
     if (isEdit) {
@@ -191,22 +202,36 @@ const formatDateTime = (date) => {
 // Save Event
 const handleSaveTemplate = async () => {
   const eventData = {
-    title: eventName,
-    description: eventDescription,
-    venue: eventVenue,
-    // maxParticipants: maxParticipants,
-    startDate: eventStart ? eventStart.split("T")[0] : null,
-    endDate: eventEnd ? eventEnd.split("T")[0] : null,
-    requiresMealPreference: showMenuInForm,
-    isRegistrationRequired: true,
-    registrationStart: registrationStart
+  title: eventName,
+  description: eventDescription,
+  venue: eventVenue,
+
+  startDate: eventStart ? eventStart.split("T")[0] : null,
+  endDate: eventEnd ? eventEnd.split("T")[0] : null,
+
+  requiresMealPreference: showMenuInForm,
+  mealPreferences: showMenuInForm ? menuOptions : [],
+
+  isRegistrationRequired: true,
+
+  dressCode: attire || null,
+
+  maxParticipants: maxParticipants
+    ? Number(maxParticipants)
+    : null,
+
+  includesDoorPrize: showLootBags,
+
+  registrationStart:
+    showAcceptResponses && registrationStart
       ? registrationStart.replace("T", " ")
       : null,
-    registrationEnd: registrationEnd
+
+  registrationEnd:
+    showAcceptResponses && registrationEnd
       ? registrationEnd.replace("T", " ")
       : null,
-  };
-
+};
   try {
     // ======================
     // UPDATE EXISTING EVENT
@@ -268,6 +293,11 @@ useEffect(() => {
 
       // setMaxParticipants(event.maxParticipants || "");
       setShowMenuInForm(event.requiresMealPreference || false);
+      setMenuOptions(event.mealPreferences || []);
+      setAttire(event.dressCode || "");
+      setMaxParticipants(event.maxParticipants || "");
+      setShowLootBags(event.includesDoorPrize || false);
+      setShowAcceptResponses(!!event.registrationStart);
     } catch (err) {
       console.error(err);
     }
@@ -279,7 +309,7 @@ useEffect(() => {
   return (
     <div className="w-[100%] !h-[100%] w-4/5 h-screen bg-white p-6 text-[12px] ">
        <div className="flex items-center justify-between  !h-[95px] mb-6  bg-border-[#c30d2e] p-4 shadow-md">
-              <h1 className="text-white text-xl font-semibold tracking-wide">{isEdit ? "Edit Event" : "Create Event"} </h1>
+              <h1 className="text-xl font-semibold tracking-wide">{isEdit ? "Edit Event Form" : "Create Event Registration Form"} </h1>
        </div>
          <div className="w-full flex justify-center px-6 pt-2">
   <div className="grid grid-cols-1 md:grid-cols-2 gap-10 h-[600px] overflow-y-auto bg-white rounded-lg shadow-md p-10">
@@ -359,6 +389,17 @@ useEffect(() => {
                         value={maxParticipants}
                         onChange={(e) => setMaxParticipants(e.target.value)}
                         placeholder="Enter maximum attendees"
+                        className="form-input"
+                      />
+                    </div>
+                  {/* Attire */}
+                    <div className="space-y-3">
+                      <h2 className="section-title">Attire (Optional)</h2>
+                      <input
+                        type="text"
+                        value={attire}
+                        onChange={(e) => setAttire(e.target.value)}
+                        placeholder="Enter attire requirements"
                         className="form-input"
                       />
                     </div>
@@ -578,10 +619,16 @@ useEffect(() => {
                    <div className="template-actions">
                     <button
                       type="button"
-                      onClick={handleSaveDraft}
                       className="draft-btn"
+                      onClick={() => {
+                        if (isEdit) {
+                          navigate("/draft-events");
+                        } else {
+                          handleSaveDraft();
+                        }
+                      }}
                     >
-                      Save Draft
+                      {isEdit ? "Cancel" : "Save Draft"}
                     </button>
 
                     <button

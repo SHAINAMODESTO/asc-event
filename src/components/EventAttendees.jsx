@@ -353,7 +353,7 @@ const EventAttendees = () => {
         </div>
 
         <div className="dashboard-card">
-          <h3>Called by Coordinator</h3>
+          <h3>Pending Confirmations</h3>
           <p>{calledCount}</p>
         </div>
       </div>
@@ -428,12 +428,12 @@ const EventAttendees = () => {
           ) : attendees.length === 0 ? (
             <p>No attendees found.</p>
           ) : (
-            <table className="attendees-table">
+            <table className="attendees-table max-h-[600px] overflow-auto">
               <thead>
                 <tr>
                   <th>First Name</th>
                   <th>Last Name</th>
-                  <th>Preferred Name</th>
+                  <th>ID Name</th>
                   <th>Email</th>
                   <th>Company</th>
                   <th>Position</th>
