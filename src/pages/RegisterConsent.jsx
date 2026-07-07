@@ -54,7 +54,7 @@ const RegisterConsent = ({
             <InfoCard
               icon={FaCalendarAlt}
               title="Schedule"
-              value={`${event.startDate} - ${event.endDate}`}
+              value={`${event.startDate}`}
             />
 
             {/* <InfoCard icon={FaPhoneAlt} title="Contact" value={contact} /> */}

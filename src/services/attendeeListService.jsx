@@ -1,7 +1,7 @@
 import axios from "axios";
 
- const BASE_URL = "https://api.asconlineportal.com/api-event";
-//const BASE_URL = "http://localhost:3021/api-event";
+//  const BASE_URL = "https://api.asconlineportal.com/api-event";
+const BASE_URL = "http://localhost:3021/api-event";
 
 // Create attendee
 export const createAttendee = async (attendeeData) => {
@@ -23,7 +23,7 @@ export const assignTable = async (attendeeId, tableNumber) => {
     `${BASE_URL}/attendee/${attendeeId}/table`,
     {
       tableNumber,
-    }
+    },
   );
 
   return response.data;

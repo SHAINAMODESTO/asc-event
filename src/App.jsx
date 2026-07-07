@@ -27,6 +27,7 @@ function App() {
       <Route path="/registration" element={<Registration />} />
       <Route path="/registration/:eventId" element={<RegisterV3 />} />
       <Route path="/thankyou" element={<ThankYou />} />
+      <Route path="/not-found" element={<NotFound />} />
 
       {/* CREATE / EDIT EVENT */}
       <Route path="/create-event" element={<CreateForm />} />

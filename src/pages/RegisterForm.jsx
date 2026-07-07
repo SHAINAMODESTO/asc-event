@@ -108,10 +108,7 @@ const RegisterForm = ({
           description="Complete all required fields below."
         />
 
-        <EventSummary
-          venue={event.venue}
-          schedule={`${event.startDate} - ${event.endDate}`}
-        />
+        <EventSummary venue={event.venue} schedule={`${event.startDate} `} />
 
         <ContactSection contacts={contacts.data} />
 
