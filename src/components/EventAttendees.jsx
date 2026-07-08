@@ -300,35 +300,51 @@ const EventAttendees = () => {
   };
 //Save table assignment to the backend
  const handleAssignTable = async () => {
+  if (!selectedAttendee) {
+    alert("Please select an attendee.");
+    return;
+  }
+
+  if (!tableNumber || Number(tableNumber) <= 0) {
+    alert("Please enter a valid table number.");
+    return;
+  }
+
   try {
-    console.log("Assigning:", {
+    console.log("Assigning Table:", {
       attendeeId: selectedAttendee.id,
-      tableNumber,
+      tableNumber: Number(tableNumber),
     });
 
     const response = await assignTable(
       selectedAttendee.id,
-      tableNumber
+      Number(tableNumber)
     );
 
     console.log("Assign Table Response:", response);
 
-    // Refresh attendees from the API
-    await fetchAttendees();
+    if (response.success) {
+      // Refresh attendees
+      await fetchAttendees();
 
-    // Update the modal
-    setSelectedAttendee((prev) => ({
-      ...prev,
-      tableNumber,
-    }));
+      // Update selected attendee in the modal
+      setSelectedAttendee((prev) => ({
+        ...prev,
+        tableNumber: Number(tableNumber),
+      }));
 
-    setShowAssignForm(false);
-    setTableNumber("");
+      setShowAssignForm(false);
+      setTableNumber("");
 
-    alert("Table assigned successfully.");
+      alert(response.message || "Table assigned successfully.");
+    }
   } catch (error) {
     console.error("Assign Table Error:", error.response?.data || error);
-    alert("Failed to assign table.");
+
+    alert(
+      error.response?.data?.message ||
+      "Failed to assign table."
+    );
   }
 };
 
