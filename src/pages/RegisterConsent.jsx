@@ -5,6 +5,12 @@ import {
   FaShieldAlt,
 } from "react-icons/fa";
 import CompanyLogo from "../assets/asc-monogram.svg";
+import {
+  formatEventDate,
+  formattedDateTime,
+  formatTime,
+} from "../helper/date.helper";
+import InfoCardMultiText from "../components/register/InfoCardMultiText";
 
 const RegisterConsent = ({
   event,
@@ -36,7 +42,7 @@ const RegisterConsent = ({
                 {event.title}
               </h1>
 
-              <p className="mt-3 max-w-3xl text-slate-600">
+              <p className="mt-3 max-w-2xl text-slate-600">
                 {event.description}
               </p>
 
@@ -48,13 +54,26 @@ const RegisterConsent = ({
 
           {/* Event Information */}
 
-          <div className="grid gap-6 border-b border-slate-200 p-8 md:grid-cols-2">
+          <div className="grid gap-6 border-b border-slate-200 p-4 md:grid-cols-2">
             <InfoCard icon={FaMapMarkerAlt} title="Venue" value={event.venue} />
 
-            <InfoCard
+            <InfoCardMultiText
               icon={FaCalendarAlt}
               title="Schedule"
-              value={`${event.startDate}`}
+              items={[
+                {
+                  label: "Date",
+                  value: formatEventDate(event.startDate),
+                },
+                {
+                  label: "Registration",
+                  value: formatTime(event.checkInTime),
+                },
+                {
+                  label: "Launch",
+                  value: formatTime(event.launchTime),
+                },
+              ]}
             />
 
             {/* <InfoCard icon={FaPhoneAlt} title="Contact" value={contact} /> */}
@@ -62,7 +81,7 @@ const RegisterConsent = ({
 
           {/* Privacy */}
 
-          <div className="space-y-8 p-8">
+          <div className="space-y-8 p-4">
             <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
               <div className="flex items-start gap-5">
                 <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-red-100">
@@ -106,7 +125,7 @@ const RegisterConsent = ({
 
             {/* Footer */}
 
-            <div className="flex justify-end gap-3 border-t border-slate-200 pt-6">
+            <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">
               <button
                 onClick={onCancel}
                 className="rounded-xl border border-slate-300 px-7 py-3 font-medium text-slate-700 transition hover:bg-slate-100"
@@ -144,5 +163,21 @@ const InfoCard = ({ icon: Icon, title, value }) => (
     </div>
   </div>
 );
+
+// const InfoCardMultiText = ({ icon: Icon, title, [Key,value] }) => (
+//   <div className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:border-red-200 hover:shadow-sm">
+//     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-100">
+//       <Icon className="text-red-600" />
+//     </div>
+
+//     <div className="min-w-0">
+//       <h3 className="font-semibold text-slate-900">{title}</h3>
+
+//       <p className="mt-1 break-words text-sm leading-6 text-slate-500">
+//         {value}
+//       </p>
+//     </div>
+//   </div>
+// );
 
 export default RegisterConsent;

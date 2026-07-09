@@ -20,7 +20,7 @@ export default function useRegisterForm(eventId, navigate) {
     contactNumber: "",
     companyName: "",
     position: "",
-    selectedMenu: "",
+    mealPreference: "",
   });
 
   const handleChange = (e) => {
@@ -71,6 +71,8 @@ export default function useRegisterForm(eventId, navigate) {
         company: formData.companyName,
 
         position: formData.position,
+
+        mealPreference: formData.mealPreference,
       });
 
       navigate("/thankyou", {

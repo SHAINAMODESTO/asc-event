@@ -2,10 +2,22 @@ import SectionHeader from "../components/register/SectionHeader ";
 import EventSummary from "../components/register/EventSummary";
 import InputField from "../components/register/InputField";
 import PrivacyAgreement from "../components/register/PrivacyAgreement";
-import { FaUser, FaEnvelope, FaBuilding, FaIdBadge } from "react-icons/fa";
+import {
+  FaUser,
+  FaEnvelope,
+  FaBuilding,
+  FaIdBadge,
+  FaCalendarAlt,
+} from "react-icons/fa";
 import ContactSection from "../components/register/ContactSection";
 import { useState, useEffect } from "react";
 import { getContacts } from "../services/contactListService";
+import {
+  formatEventDate,
+  formattedDateTime,
+  formatTime,
+} from "../helper/date.helper";
+import InfoCardMultiText from "../components/register/InfoCardMultiText";
 
 const formFields = [
   {
@@ -107,8 +119,6 @@ const RegisterForm = ({
           title="Personal Information"
           description="Complete all required fields below."
         />
-
-        <EventSummary venue={event.venue} schedule={`${event.startDate} `} />
 
         <ContactSection contacts={contacts.data} />
 
