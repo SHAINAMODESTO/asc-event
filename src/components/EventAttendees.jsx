@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getAttendees,  assignTable} from "../services/attendeeListService";
 import { getEventById } from "../services/eventService";
 import "./EventAttendees.css";
+import { Icon } from "lucide-react";
 
 const EventAttendees = () => {
   const navigate = useNavigate();
@@ -300,35 +301,51 @@ const EventAttendees = () => {
   };
 //Save table assignment to the backend
  const handleAssignTable = async () => {
+  if (!selectedAttendee) {
+    alert("Please select an attendee.");
+    return;
+  }
+
+  if (!tableNumber || Number(tableNumber) <= 0) {
+    alert("Please enter a valid table number.");
+    return;
+  }
+
   try {
-    console.log("Assigning:", {
+    console.log("Assigning Table:", {
       attendeeId: selectedAttendee.id,
-      tableNumber,
+      tableNumber: Number(tableNumber),
     });
 
     const response = await assignTable(
       selectedAttendee.id,
-      tableNumber
+      Number(tableNumber)
     );
 
     console.log("Assign Table Response:", response);
 
-    // Refresh attendees from the API
-    await fetchAttendees();
+    if (response.success) {
+      // Refresh attendees
+      await fetchAttendees();
 
-    // Update the modal
-    setSelectedAttendee((prev) => ({
-      ...prev,
-      tableNumber,
-    }));
+      // Update selected attendee in the modal
+      setSelectedAttendee((prev) => ({
+        ...prev,
+        tableNumber: Number(tableNumber),
+      }));
 
-    setShowAssignForm(false);
-    setTableNumber("");
+      setShowAssignForm(false);
+      setTableNumber("");
 
-    alert("Table assigned successfully.");
+      alert(response.message || "Table assigned successfully.");
+    }
   } catch (error) {
     console.error("Assign Table Error:", error.response?.data || error);
-    alert("Failed to assign table.");
+
+    alert(
+      error.response?.data?.message ||
+      "Failed to assign table."
+    );
   }
 };
 
@@ -489,7 +506,9 @@ const EventAttendees = () => {
             className="modal-box"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2>Attendee Details</h2>
+             
+            <label className="text-blue-500 text-lg font-bold">Attendee Details:</label>
+            <hr className="my-2 border-red-300 border-t-2" />
 
             <p><b>First Name:</b> {selectedAttendee.firstName}</p>
             <p><b>Last Name:</b> {selectedAttendee.lastName}</p>
@@ -497,7 +516,15 @@ const EventAttendees = () => {
             <p><b>Email:</b> {selectedAttendee.emailAddress}</p>
             <p><b>Company:</b> {selectedAttendee.company}</p>
             <p><b>Position:</b> {selectedAttendee.position}</p>
-            <p><b>Status:</b> {selectedAttendee.status}</p>
+            <p><b>Status: </b> 
+             <span  className={
+                  selectedAttendee.status === "CONFIRMED"
+                    ? "text-green-600 font-bold"
+                    : selectedAttendee.status === "PENDING"
+                    ? "text-yellow-600 font-bold"
+                    : "text-red-600 font-bold"
+                }> 
+              {selectedAttendee.status}</span></p>
             <p><b>Table Number:</b> {selectedAttendee.tableNumber || "-"}</p>
 
             {/* Assign Table Form */}

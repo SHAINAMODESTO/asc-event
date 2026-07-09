@@ -15,7 +15,7 @@ export const createAttendee = async (attendeeData) => {
     throw error;
   }
 };
-// Asign table number to attendee
+// Assign Table Number
 export const assignTable = async (attendeeId, tableNumber) => {
   const response = await axios.patch(
     `${BASE_URL}/attendee/${attendeeId}/table`,
@@ -23,8 +23,19 @@ export const assignTable = async (attendeeId, tableNumber) => {
       tableNumber,
     },
   );
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/attendee/${attendeeId}/assign-table`,
+      {
+        tableNumber,
+      },
+    );
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    console.error("Assign Table Error:", error.response?.data || error.message);
+    throw error;
+  }
 };
 
 // Get attendees with pagination, search, filter

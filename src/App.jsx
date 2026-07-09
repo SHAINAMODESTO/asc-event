@@ -11,6 +11,7 @@ import AllEventsList from "./components/AllEventsList";
 import NotFound from "./pages/NotFound";
 import EventSummary from "./components/register/EventSummary";
 import Login from "./components/Login";
+import UserAdminTable from "./components/UserAdminTable";
 
 const ProtectedRoute = ({ children }) => {
   const isLoggedIn = localStorage.getItem("isLoggedIn");
@@ -57,10 +58,19 @@ function App() {
       <Route path="/create-event" element={<CreateForm />} />
       <Route path="/create-event/:id" element={<CreateForm />} />
 
+<<<<<<< HEAD
       {/* Attendees */}
       <Route path="/attendees" element={<AttendeesList />} />
       <Route path="/attendees/:eventId" element={<EventAttendees />} />
     </Routes>
+=======
+          {/* Attendees */}
+          <Route path="/attendees" element={<AttendeesList />} />
+          <Route path="/attendees/:eventId" element={<EventAttendees />} />
+
+        </Routes>
+   
+>>>>>>> 538e1cbb9779b2cacbe16df675542abe46f99399
   );
 }
 

@@ -138,9 +138,20 @@ const removeLootBagOption = (index) => {
 const formatDateTime = (date) => {
   if (!date) return "";
 
-  return new Date(date)
-    .toISOString()
-    .slice(0, 16);
+  // Convert "July 25, 2026 at 08:00 AM"
+  const formatted =
+    typeof date === "string"
+      ? date.replace(" at ", " ")
+      : date;
+
+  const d = new Date(formatted);
+
+  if (isNaN(d.getTime())) {
+    console.error("Invalid date:", date);
+    return "";
+  }
+
+  return d.toISOString().slice(0, 16);
 };
 
 //Save Draft
@@ -285,6 +296,11 @@ useEffect(() => {
       setEventName(event.title || "");
       setEventVenue(event.venue || "");
       setEventDescription(event.description || "");
+
+      console.log("startDate:", event.startDate);
+      console.log("endDate:", event.endDate);
+      console.log("registrationStart:", event.registrationStart);
+      console.log("registrationEnd:", event.registrationEnd);
 
       setEventStart(formatDateTime(event.startDate));
       setEventEnd(formatDateTime(event.endDate));

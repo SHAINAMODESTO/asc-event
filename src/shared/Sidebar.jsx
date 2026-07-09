@@ -11,9 +11,7 @@ const sectionItems = {
     "Published Events List",
   ],
   "User Management": [
-    "Admin users",
-    "Event organizers",
-    "Roles & permissions",
+    "Admin users"
   ],
   Settings: [
     "Profile settings",
@@ -79,7 +77,11 @@ const loadDashboard = async () => {
     } else if (path.includes("/published-events")) {
       setSelectedSection("Events");
       setActiveItem("Published Events List");
+    } else if (path.includes("/useradmin-table")) {
+      setSelectedSection("User Management");
+      setActiveItem("Admin users");
     } 
+    
   }, [location.pathname]);
 
   const handleLogout = () => {
@@ -103,6 +105,10 @@ const loadDashboard = async () => {
 
       case "Published Events List":
         navigate("/published-events");
+        break;
+
+      case "Admin users":
+        navigate("/useradmin-table");
         break;
 
       default:
