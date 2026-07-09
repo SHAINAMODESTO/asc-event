@@ -70,8 +70,8 @@ const RegisterConsent = ({
                   value: formatTime(event.checkInTime),
                 },
                 {
-                  label: "Launch",
-                  value: formatTime(event.launchTime),
+                  label: "Lunch",
+                  value: formatTime(event.lunchTime),
                 },
               ]}
             />

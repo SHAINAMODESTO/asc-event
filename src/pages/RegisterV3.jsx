@@ -50,7 +50,7 @@ const RegisterV3 = () => {
         venue={event.venue}
         startDate={event.startDate}
         checkInTime={event.checkInTime}
-        launchTime={event.launchTime}
+        lunchTime={event.lunchTime}
       />
 
       <RegisterForm {...register} event={event} />

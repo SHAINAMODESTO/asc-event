@@ -7,7 +7,7 @@ const Hero = ({
   venue,
   startDate,
   checkInTime,
-  launchTime,
+  lunchTime,
 }) => {
   return (
     <section className="relative h-[250px] overflow-hidden">
@@ -41,7 +41,7 @@ const Hero = ({
           <p className="text-lg leading-8 text-slate-200">
             <strong>Schedule Date:</strong> {formatEventDate(startDate)} |{" "}
             <strong>Registration:</strong> {formatTime(checkInTime)} |{" "}
-            <strong>Launch:</strong> {formatTime(launchTime)}
+            <strong>Lunch:</strong> {formatTime(lunchTime)}
           </p>
         </div>
       </div>
