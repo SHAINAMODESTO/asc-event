@@ -1,8 +1,7 @@
 import axios from "axios";
-
- const BASE_URL = "https://api.asconlineportal.com/api-event";
-//const BASE_URL = "http://localhost:3021/api-event";
-
+// const BASE_URL = "https://api.asconlineportal.com/api-event";
+// const BASE_URL = "http://localhost:3021/api-event";
+const BASE_URL = import.meta.env.VITE_API_URL;
 // Create Event
 export const createEvent = async (eventData) => {
   try {
@@ -18,15 +17,13 @@ export const createEvent = async (eventData) => {
 // Publish Event
 export const publishEvent = async (eventId) => {
   try {
-    const response = await axios.patch(
-      `${BASE_URL}/event/${eventId}/publish`
-    );
+    const response = await axios.patch(`${BASE_URL}/event/${eventId}/publish`);
 
     return response.data;
   } catch (error) {
     console.error(
       "Publish Event Error:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     throw error;
   }
@@ -60,15 +57,12 @@ export const updateEvent = async (eventId, eventData) => {
   try {
     const response = await axios.patch(
       `${BASE_URL}/event/${eventId}`,
-      eventData
+      eventData,
     );
 
     return response.data;
   } catch (error) {
-    console.error(
-      "Update Event Error:",
-      error.response?.data || error.message
-    );
+    console.error("Update Event Error:", error.response?.data || error.message);
     throw error;
   }
 };

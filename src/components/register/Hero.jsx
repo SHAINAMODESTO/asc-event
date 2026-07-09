@@ -1,6 +1,16 @@
-const Hero = ({ banner, title, description }) => {
+import { formatEventDate, formatTime } from "../../helper/date.helper";
+
+const Hero = ({
+  banner,
+  title,
+  description,
+  venue,
+  startDate,
+  checkInTime,
+  lunchTime,
+}) => {
   return (
-    <section className="relative h-[180px] overflow-hidden">
+    <section className="relative h-[250px] overflow-hidden">
       {banner ? (
         <img
           src={banner}
@@ -15,13 +25,24 @@ const Hero = ({ banner, title, description }) => {
 
       <div className="relative mx-auto flex h-full max-w-6xl items-center px-6">
         <div className="max-w-3xl">
-          <span className="rounded-full bg-white/20 px-4 py-2 text-sm text-white backdrop-blur">
+          {/* <span className="rounded-full bg-white/20 px-4 py-2 text-sm text-white backdrop-blur">
             EVENT REGISTRATION
-          </span>
+          </span> */}
 
-          <h1 className="mt-6 text-5xl font-bold text-white">{title}</h1>
+          <h1 className="mt-6 text-3xl font-bold text-white">{title}</h1>
 
-          <p className="mt-3 text-lg leading-8 text-slate-200">{description}</p>
+          <p className="mt-2 text-lg leading-6 text-slate-200">{description}</p>
+
+          <p className="mt-2 text-lg leading-8 text-slate-200">
+            <strong>Venue: </strong>
+            {venue}
+          </p>
+
+          <p className="text-lg leading-8 text-slate-200">
+            <strong>Schedule Date:</strong> {formatEventDate(startDate)} |{" "}
+            <strong>Registration:</strong> {formatTime(checkInTime)} |{" "}
+            <strong>Lunch:</strong> {formatTime(lunchTime)}
+          </p>
         </div>
       </div>
     </section>

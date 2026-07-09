@@ -47,6 +47,10 @@ const RegisterV3 = () => {
         banner={event.banner}
         title={event.title}
         description={event.description}
+        venue={event.venue}
+        startDate={event.startDate}
+        checkInTime={event.checkInTime}
+        lunchTime={event.lunchTime}
       />
 
       <RegisterForm {...register} event={event} />

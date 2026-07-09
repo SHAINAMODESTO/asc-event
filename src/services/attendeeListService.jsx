@@ -1,8 +1,6 @@
 import axios from "axios";
 
- const BASE_URL = "https://api.asconlineportal.com/api-event";
-//const BASE_URL = "http://localhost:3021/api-event";
-
+const BASE_URL = import.meta.env.VITE_API_URL;
 // Create attendee
 export const createAttendee = async (attendeeData) => {
   try {
@@ -19,20 +17,23 @@ export const createAttendee = async (attendeeData) => {
 };
 // Assign Table Number
 export const assignTable = async (attendeeId, tableNumber) => {
+  const response = await axios.patch(
+    `${BASE_URL}/attendee/${attendeeId}/table`,
+    {
+      tableNumber,
+    },
+  );
   try {
     const response = await axios.patch(
       `${BASE_URL}/attendee/${attendeeId}/assign-table`,
       {
         tableNumber,
-      }
+      },
     );
 
     return response.data;
   } catch (error) {
-    console.error(
-      "Assign Table Error:",
-      error.response?.data || error.message
-    );
+    console.error("Assign Table Error:", error.response?.data || error.message);
     throw error;
   }
 };
