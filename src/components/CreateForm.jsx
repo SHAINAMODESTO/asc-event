@@ -46,6 +46,8 @@ Inquiry Contact:
   // NEW: Attire
   const [attire, setAttire] = useState("");
 
+  const [checkInTime, setCheckInTime] = useState("");
+const [lunchTime, setLunchTime] = useState("");
   // Event Dates
   const [eventStart, setEventStart] = useState("");
   const [eventEnd, setEventEnd] = useState("");
@@ -175,6 +177,10 @@ const formatDateTime = (date) => {
     ? Number(maxParticipants)
     : null,
 
+ checkInTime: checkInTime || null,
+
+lunchTime: lunchTime || null,
+
   includesDoorPrize: showLootBags,
 
   registrationStart:
@@ -206,6 +212,7 @@ const formatDateTime = (date) => {
     }
   } catch (error) {
     console.error(error.response?.data || error);
+    console.table(event);
     alert(error.response?.data?.message || "Failed to save draft");
   }
 };
@@ -226,6 +233,11 @@ const handleSaveTemplate = async () => {
   isRegistrationRequired: true,
 
   dressCode: attire || null,
+   
+  checkInTime: checkInTime || null,
+
+lunchTime: lunchTime || null,
+
 
   maxParticipants: maxParticipants
     ? Number(maxParticipants)
@@ -306,6 +318,9 @@ useEffect(() => {
       setEventEnd(formatDateTime(event.endDate));
       setRegistrationStart(formatDateTime(event.registrationStart));
       setRegistrationEnd(formatDateTime(event.registrationEnd));
+
+      setCheckInTime(event.checkInTime || "");
+      setLunchTime(event.lunchTime || "");
 
       // setMaxParticipants(event.maxParticipants || "");
       setShowMenuInForm(event.requiresMealPreference || false);
@@ -408,7 +423,12 @@ useEffect(() => {
                         className="form-input"
                       />
                     </div>
-                  {/* Attire */}
+                
+                </div>
+   {/* Column 2 */}
+                  {/* Menu */}
+                  <div className="space-y-1">
+                    {/* Attire */}
                     <div className="space-y-3">
                       <h2 className="section-title">Attire (Optional)</h2>
                       <input
@@ -419,11 +439,26 @@ useEffect(() => {
                         className="form-input"
                       />
                     </div>
-
-                </div>
-   {/* Column 2 */}
-                  {/* Menu */}
-                  <div className="space-y-1">
+                    {/* Registration Time Starts */}
+                    <div className="space-y-3">
+                      <h2 className="section-title">Registration Starts:</h2>
+                      <input
+                            type="time"
+                            value={checkInTime}
+                            onChange={(e) => setCheckInTime(e.target.value)}
+                          className="form-input !w-[480px]"
+                          />
+                    </div>
+                    {/* Lunch Time Starts */}
+                    <div className="space-y-3">
+                      <h2 className="section-title">Lunch Time Starts:</h2>
+                      <input
+                            type="time"
+                            value={lunchTime}
+                            onChange={(e) => setLunchTime(e.target.value)}
+                          className="form-input !w-[480px]"
+                          />
+                    </div>
                        <h2 className="other-title">Other Settings</h2>
                     <div className="flex items-center justify-between gap-2">
                       

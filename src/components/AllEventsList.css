@@ -268,6 +268,20 @@
   background: #15803d;
 }
 
+.generate-url-button {
+  padding: 0.75rem 1rem;
+  border-radius: 0.85rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  background: #2daa6c;
+  color: #ffffff;
+  transition: background 0.2s ease;
+}
+.generate-url-button:hover {
+  background: #88d8a5;
+}
+
 
 /* =========================
    EMPTY STATE
@@ -299,4 +313,65 @@
   .all-event-card {
     min-width: 100%;
   }
+}
+/* =========================
+   GENERATE URL MODAL
+========================= */
+.modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.45);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+}
+
+.modal-box{
+    background:#fff;
+    width:550px;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
+
+.url-container{
+    display:flex;
+    align-items:center;
+    margin-top:20px;
+    gap:10px;
+}
+
+.url-input{
+    flex:1;
+    padding:12px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    background:#f8f8f8;
+}
+
+.copy-btn{
+    width:45px;
+    height:45px;
+    border:none;
+    background:#0dc37a;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.copy-btn:hover{
+    background:#8fe0cc;
+}
+.close-modal-btn{
+    margin-top:20px;
+    padding:10px 20px;
+    border:none;
+    background:#c30d2e;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
 }

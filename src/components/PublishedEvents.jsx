@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Copy } from "lucide-react";
 
 import { getEvents, deleteEvent } from "../services/eventService";
 import "./AllEventsList.css";
@@ -21,6 +22,9 @@ const PublishedEvents = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+
+const [showUrlModal, setShowUrlModal] = useState(false);
+const [generatedUrl, setGeneratedUrl] = useState("");
 
   useEffect(() => {
     fetchEvents();
@@ -85,6 +89,23 @@ const PublishedEvents = () => {
   const viewTemplate = (eventTemplate) => {
     navigate("/registration", { state: eventTemplate });
   };
+
+  const generateEventURL = (event) => {
+  const url = `${window.location.origin}/registration/${event.id}`;
+
+  setGeneratedUrl(url);
+  setShowUrlModal(true);
+};
+
+const copyToClipboard = async () => {
+  try {
+    await navigator.clipboard.writeText(generatedUrl);
+    alert("Registration URL copied!");
+  } catch (error) {
+    console.error(error);
+    alert("Failed to copy.");
+  }
+};
 
   return (
     <div className="all-events-list">
@@ -166,7 +187,14 @@ const PublishedEvents = () => {
                   className="event-button"
                   onClick={() => viewAttendees(event)}
                 >
-                  View Attendees
+                  Attendees
+                </button>
+                <button
+                  type="button"
+                  className="generate-url-button"
+                  onClick={() => generateEventURL(event)}
+                >
+                  Generate URL
                 </button>
 
                 <button
@@ -181,6 +209,46 @@ const PublishedEvents = () => {
           ))}
         </div>
       )}
+      {showUrlModal && (
+  <div
+    className="modal-overlay"
+    onClick={() => setShowUrlModal(false)}
+  >
+    <div
+      className="modal-box"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h2>Registration Link</h2>
+
+      <p>
+        Share this link with attendees to register for the event.
+      </p>
+
+      <div className="url-container">
+        <input
+          type="text"
+          value={generatedUrl}
+          readOnly
+          className="url-input"
+        />
+
+        <button
+          className="copy-btn"
+          onClick={copyToClipboard}
+        >
+          <Copy size={18} />
+        </button>
+      </div>
+
+      <button
+        className="close-modal-btn"
+        onClick={() => setShowUrlModal(false)}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 };

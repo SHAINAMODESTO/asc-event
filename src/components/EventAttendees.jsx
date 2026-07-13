@@ -1,9 +1,26 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getAttendees,  assignTable} from "../services/attendeeListService";
+import { getAttendees,  assignTable, checkInAttendee} from "../services/attendeeListService";
 import { getEventById } from "../services/eventService";
 import "./EventAttendees.css";
-import { Icon } from "lucide-react";
+import {
+  Users,
+  CheckCircle2,
+  Armchair,
+  Hourglass,
+  CalendarDays,
+  Clock3,
+  MapPin,
+  ArrowLeft,
+  Search,
+  Plus,
+  Printer,
+  Download,
+  Upload,
+   ArrowUpDown,
+  Eye,
+  EllipsisVertical
+} from "lucide-react";
 
 const EventAttendees = () => {
   const navigate = useNavigate();
@@ -16,7 +33,8 @@ const EventAttendees = () => {
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
-  const [eventName, setEventName] = useState("");
+
+  const [eventDetails, setEventDetails] = useState(null);
 
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -26,6 +44,13 @@ const EventAttendees = () => {
   const [selectedAttendee, setSelectedAttendee] = useState(null);
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [tableNumber, setTableNumber] = useState("");
+
+  const [activeTab, setActiveTab] = useState("details");
+//assign table modal
+  const [showAssignModal, setShowAssignModal] = useState(false);
+
+  //check in
+  const [checkingIn, setCheckingIn] = useState(false);
 
  const handlePrint = () => {
   const printWindow = window.open("", "_blank");
@@ -42,11 +67,7 @@ const EventAttendees = () => {
           <td>${attendee.company || "-"}</td>
           <td>${attendee.position || "-"}</td>
           <td>${attendee.status || "-"}</td>
-          <td>${
-            attendee.createdAt
-              ? new Date(attendee.createdAt).toLocaleString()
-              : "-"
-          }</td>
+          <td>${attendee.mealPreference || "-"}</td>
         </tr>
       `
     )
@@ -56,7 +77,7 @@ const EventAttendees = () => {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>${eventName} Attendees</title>
+        <title>${eventDetails?.title || "Event"} Attendees</title>
 
         <style>
           *{
@@ -126,7 +147,7 @@ const EventAttendees = () => {
 
       <body>
 
-        <h1>${eventName}</h1>
+       <h1>${eventDetails?.title || "Event"}</h1>
         <h3>Attendees List</h3>
 
         <table>
@@ -140,7 +161,8 @@ const EventAttendees = () => {
               <th>Company</th>
               <th>Position</th>
               <th>Status</th>
-              <th>Created Date</th>
+              <th>Preferred Meal</th>
+             
             </tr>
           </thead>
 
@@ -163,17 +185,16 @@ const EventAttendees = () => {
 };
 
   const fetchEventDetails = async () => {
-    try {
-      const response = await getEventById(eventId);
+  try {
+    const response = await getEventById(eventId);
 
-      console.log("Event details:", response);
+    const event = response.data;
 
-      setEventName(response.data?.title || "Event");
-    } catch (error) {
-      console.error("Fetch event details error:", error);
-      setEventName("Event");
-    }
-  };
+    setEventDetails(event);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const fetchAttendees = async () => {
     if (!eventId) {
@@ -193,6 +214,8 @@ const EventAttendees = () => {
       });
 
       console.log("API Response:", response);
+      console.log(response.data[0]);
+      console.log("checkInAt:", response.data[0]?.checkInAt);
 
       setAttendees(response.data || []);
       setTotalPages(response.meta?.totalPages || 1);
@@ -220,7 +243,7 @@ const EventAttendees = () => {
         "Position",
         "Status",
         "Table Number",
-        "Created Date",
+        "Preferred Meal",
       ],
       ...attendees.map((attendee) => [
         attendee.firstName || "",
@@ -231,9 +254,7 @@ const EventAttendees = () => {
         attendee.position || "",
         attendee.status || "",
         attendee.tableNumber || "",
-        attendee.createdAt
-          ? new Date(attendee.createdAt).toLocaleString()
-          : "",
+        attendee.mealPreference || "",
       ]),
     ];
 
@@ -264,6 +285,18 @@ const EventAttendees = () => {
     (a) => a.status === "CALLED"
   ).length;
 
+  const assignedTables = attendees.filter(
+  (a) => a.tableNumber
+).length;
+
+const unassignedTables =
+  totalAttendees - assignedTables;
+
+const pendingConfirmation =
+  attendees.filter(
+    (a) => a.status === "PENDING"
+  ).length;
+
   const handleBulkUpload = (e) => {
     const file = e.target.files[0];
 
@@ -289,7 +322,7 @@ const EventAttendees = () => {
           company: row[4]?.trim(),
           position: row[5]?.trim(),
           status: "PENDING",
-          createdAt: new Date().toISOString(),
+          mealPreference: row[6]?.trim() || "",
         }));
 
       setAttendees((prev) => [...prev, ...newAttendees]);
@@ -299,8 +332,8 @@ const EventAttendees = () => {
 
     reader.readAsText(file);
   };
-//Save table assignment to the backend
- const handleAssignTable = async () => {
+// Save table assignment to the backend
+const handleAssignTable = async () => {
   if (!selectedAttendee) {
     alert("Please select an attendee.");
     return;
@@ -312,6 +345,8 @@ const EventAttendees = () => {
   }
 
   try {
+    setLoading(true);
+
     console.log("Assigning Table:", {
       attendeeId: selectedAttendee.id,
       tableNumber: Number(tableNumber),
@@ -324,258 +359,1071 @@ const EventAttendees = () => {
 
     console.log("Assign Table Response:", response);
 
-    if (response.success) {
-      // Refresh attendees
-      await fetchAttendees();
+    // Refresh attendee list from backend
+    await fetchAttendees();
 
-      // Update selected attendee in the modal
-      setSelectedAttendee((prev) => ({
-        ...prev,
-        tableNumber: Number(tableNumber),
-      }));
+    // Update currently opened attendee details
+    setSelectedAttendee((prev) => ({
+      ...prev,
+      tableNumber: Number(tableNumber),
+    }));
 
-      setShowAssignForm(false);
-      setTableNumber("");
+    // Close Assign Table modal
+    setShowAssignModal(false);
 
-      alert(response.message || "Table assigned successfully.");
-    }
+    // Reset input
+    setTableNumber("");
+
+    alert(response?.message || "Table assigned successfully.");
   } catch (error) {
-    console.error("Assign Table Error:", error.response?.data || error);
+    console.error(
+      "Assign Table Error:",
+      error.response?.data || error
+    );
 
     alert(
       error.response?.data?.message ||
       "Failed to assign table."
     );
+  } finally {
+    setLoading(false);
+  }
+};
+const handleCheckIn = async () => {
+  if (!selectedAttendee) return;
+
+  // Require table assignment
+  if (!selectedAttendee.tableNumber) {
+    alert("Please assign a table before checking in.");
+    return;
+  }
+
+  // Prevent duplicate check-in
+  if (selectedAttendee.status === "CHECKED_IN") {
+    alert("Attendee is already checked in.");
+    return;
+  }
+
+  try {
+    setCheckingIn(true);
+
+    const response = await checkInAttendee(selectedAttendee.id);
+
+    if (response.success) {
+      await fetchAttendees();
+
+      setSelectedAttendee((prev) => ({
+        ...prev,
+        status: "CHECKED_IN",
+        checkedInTime: new Date().toISOString(),
+      }));
+
+      alert(response.message || "Attendee checked in successfully.");
+    }
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      error.response?.data?.message ||
+      "Unable to check in attendee."
+    );
+  } finally {
+    setCheckingIn(false);
   }
 };
 
-
   return (
     <div className="event-attendees-page">
-      <div className="attendees-header">
-        <h1>{eventName} Attendees</h1>
-        <p>{attendees.length} attendee(s)</p>
-      </div>
+      <div className="event-header">
+
+    <button
+        className="back-button"
+        onClick={() => navigate("/published-events")}
+    >
+        <ArrowLeft size={18} />
+        Back
+    </button>
+   
+
+    <div className="event-title-section">
+
+        <h2>
+            {eventDetails?.title || "Loading Event..."}
+        </h2>
+
+        <div className="event-meta">
+
+            <span>
+                <CalendarDays size={16}/>
+                {eventDetails?.startDate || "-"}
+            </span>
+
+            <span>
+                <Clock3 size={16}/>
+                {eventDetails?.checkInTime || "-"} - {eventDetails?.lunchTime || "-"}
+            </span>
+
+            <span>
+                <MapPin size={16}/>
+                {eventDetails?.venue || "-"}
+            </span>
+
+        </div>
+
+    </div>
+
+    <div className="header-attendees">
+
+        <Users size={30}/>
+
+        {totalAttendees} Attendees
+
+    </div>
+
+</div>
 
       {/* Dashboard */}
-      <div className="attendees-dashboard">
-        <div className="dashboard-card">
-          <h3>Total Attendees</h3>
-          <p>{totalAttendees}</p>
+      <div className="dashboard-grid">
+
+    <div className="dashboard-card">
+
+        <div className="dashboard-icon blue">
+
+            <Users size={30}/>
+
         </div>
 
-        <div className="dashboard-card">
-          <h3>Checked-in Rate</h3>
-          <p>{checkedInPercentage}%</p>
+        <div>
+
+            <h1>
+                Total Attendees
+            </h1>
+
+            <h2>{totalAttendees}</h2>
+
+            <span>
+                {totalAttendees} Registered
+            </span>
+
         </div>
 
-        <div className="dashboard-card">
-          <h3>Pending Confirmations</h3>
-          <p>{calledCount}</p>
+    </div>
+
+    <div className="dashboard-card">
+
+        <div className="dashboard-icon green">
+
+            <CheckCircle2 size={30}/>
+
         </div>
-      </div>
+
+        <div>
+
+           <h1>
+                Checked In
+           </h1>
+            <h2>
+
+                {checkedInCount} / {totalAttendees}
+
+            </h2>
+
+            <div className="progress">
+
+                <div
+
+                    className="progress-fill"
+
+                    style={{
+                        width:`${checkedInPercentage}%`
+                    }}
+
+                />
+
+            </div>
+
+            <span>
+
+                {checkedInPercentage}% Check-in Rate
+
+            </span>
+
+        </div>
+
+    </div>
+
+    <div className="dashboard-card">
+
+        <div className="dashboard-icon orange">
+
+            <Armchair size={30}/>
+
+        </div>
+
+        <div>
+
+            <h1>Table Assigned</h1>
+
+            <h2>
+
+                {assignedTables}
+
+            </h2>
+
+            <span>
+
+                {unassignedTables} Not Assigned
+
+            </span>
+
+        </div>
+
+    </div>
+
+    <div className="dashboard-card">
+
+        <div className="dashboard-icon purple">
+
+            <Hourglass size={30}/>
+
+        </div>
+
+        <div>
+
+      
+            <h1> 
+                Pending Confirmations
+            </h1>     
+
+            <h2>
+
+                {pendingConfirmation}
+
+            </h2>
+
+            <span>
+
+                {pendingConfirmation === 0
+
+                    ? "All Confirmed"
+
+                    : `${pendingConfirmation} Pending`
+
+                }
+
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
 
       {/* Controls */}
-      <div className="attendees-controls">
-        <button
-          className="back-btn"
-          onClick={() => navigate("/published-events")}
+      <div className="toolbar">
+
+    <div className="toolbar-left">
+
+        <div className="search-box">
+
+            <Search size={18} />
+
+            <input
+                type="text"
+                placeholder="Search by name, email or company..."
+                value={search}
+                onChange={(e) => {
+                    setPage(1);
+                    setSearch(e.target.value);
+                }}
+            />
+
+        </div>
+
+        <select
+            value={status}
+            onChange={(e) => {
+                setStatus(e.target.value);
+                setPage(1);
+            }}
         >
-          ← Back
+            <option value="">All Status</option>
+            <option value="CONFIRMED">Confirmed</option>
+            <option value="PENDING">Pending</option>
+            <option value="CHECKED_IN">Checked In</option>
+            <option value="CANCELLED">Cancelled</option>
+            <option value="DECLINED">Declined</option>
+            <option value="NO_SHOW">No Show</option>
+        </select>
+
+    </div>
+
+    <div className="toolbar-right">
+
+        <button className="blue-btn">
+
+            <Plus size={18}/>
+
+            Add Attendee
+
+        </button>
+
+        <button
+            className="white-btn"
+            onClick={handlePrint}
+        >
+            <Printer size={17}/>
+
+            Print
+
+        </button>
+
+        <button
+            className="white-btn"
+            onClick={handleExport}
+        >
+            <Download size={17}/>
+
+            Export
+
+        </button>
+
+        <button
+            className="white-btn"
+            onClick={() => fileInputRef.current.click()}
+        >
+            <Upload size={17}/>
+
+            Bulk Upload
+
         </button>
 
         <input
-          type="text"
-          placeholder="Search attendees..."
-          value={search}
-          onChange={(e) => {
-            setPage(1);
-            setSearch(e.target.value);
-          }}
-        />
-
-        <select
-          value={status}
-          onChange={(e) => {
-            setPage(1);
-            setStatus(e.target.value);
-          }}
-        >
-          <option value="">All Status</option>
-          <option value="PENDING">Pending</option>
-          <option value="CHECKED_IN">Checked In</option>
-          <option value="CONFIRMED">Confirmed</option>
-          <option value="CANCELLED">Cancelled</option>
-          <option value="DECLINED">Declined</option>
-          <option value="NO_SHOW">No Show</option>
-        </select>
-
-        <div className="attendee-actions">
-          <button className="print-btn" onClick={handlePrint}>
-            Print
-          </button>
-
-          <button className="export-btn" onClick={handleExport}>
-            Export
-          </button>
-
-          <button
-            className="bulk-upload-btn"
-            onClick={() => fileInputRef.current.click()}
-          >
-            Bulk Upload
-          </button>
-
-          <input
+            ref={fileInputRef}
             type="file"
             accept=".csv"
-            ref={fileInputRef}
-            style={{ display: "none" }}
+            hidden
             onChange={handleBulkUpload}
-          />
-        </div>
-      </div>
+        />
 
+    </div>
+
+</div>
       {/* Table */}
     
-       <div className="table-wrapper overflow-auto max-h-[600px] rounded-lg border border-gray-200">
-          <div ref={printRef}>
-          {loading ? (
-            <p>Loading attendees...</p>
-          ) : attendees.length === 0 ? (
-            <p>No attendees found.</p>
-          ) : (
-            <table className="attendees-table max-h-[600px] overflow-auto">
-              <thead>
-                <tr>
-                  <th>First Name</th>
-                  <th>Last Name</th>
-                  <th>ID Name</th>
-                  <th>Email</th>
-                  <th>Company</th>
-                  <th>Position</th>
-                  <th>Status</th>
-                  <th>Table No.</th>
-                  <th>Created Date</th>
-                </tr>
-              </thead>
+       <div className="modern-table-wrapper">
+           <div className="table-scroll" ref={printRef}>
+  
+    {loading ? (
+                <table className="modern-table">
+                  <thead>
+                    <tr>
+                      <th>
+                        <div className="th-content">
+                          Name
+                          <ArrowUpDown size={13} />
+                        </div>
+                      </th>
 
-              <tbody>
-                {attendees.map((attendee) => (
-                  <tr
-                    key={attendee.id}
-                    onClick={() => setSelectedAttendee(attendee)}
-                    className="clickable-row"
+                      <th>
+                        <div className="th-content">
+                          Email
+                          <ArrowUpDown size={13} />
+                        </div>
+                      </th>
+
+                      <th>
+                        <div className="th-content">
+                          Company
+                          <ArrowUpDown size={13} />
+                        </div>
+                      </th>
+
+                      <th>
+                        <div className="th-content">
+                          Position
+                          <ArrowUpDown size={13} />
+                        </div>
+                      </th>
+
+                      <th>
+                        <div className="th-content">
+                          Registration Status
+                          <ArrowUpDown size={13} />
+                        </div>
+                      </th>
+
+                      <th>
+                        <div className="th-content">
+                          Table No.
+                          <ArrowUpDown size={13} />
+                        </div>
+                      </th>
+
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {loading ? (
+                      <tr>
+                        <td colSpan="7" className="table-empty">
+                          Loading attendees...
+                        </td>
+                      </tr>
+                    ) : attendees.length === 0 ? (
+                      <tr>
+                        <td colSpan="7" className="table-empty">
+                          Loading Attendees . . .
+                        </td>
+                      </tr>
+                    ) : (
+                      attendees.map((attendee) => (
+                        <tr key={attendee.id}>
+                          {/* your existing row */}
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+    ) : attendees.length === 0 ? (
+                              <table className="modern-table">
+                      <thead>
+                        <tr>
+                          <th>
+                            <div className="th-content">
+                              Name
+                              <ArrowUpDown size={13} />
+                            </div>
+                          </th>
+
+                          <th>
+                            <div className="th-content">
+                              Email
+                              <ArrowUpDown size={13} />
+                            </div>
+                          </th>
+
+                          <th>
+                            <div className="th-content">
+                              Company
+                              <ArrowUpDown size={13} />
+                            </div>
+                          </th>
+
+                          <th>
+                            <div className="th-content">
+                              Position
+                              <ArrowUpDown size={13} />
+                            </div>
+                          </th>
+
+                          <th>
+                            <div className="th-content">
+                              Registration Status
+                              <ArrowUpDown size={13} />
+                            </div>
+                          </th>
+
+                          <th>
+                            <div className="th-content">
+                              Table No.
+                              <ArrowUpDown size={13} />
+                            </div>
+                          </th>
+
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {loading ? (
+                          <tr>
+                            <td colSpan="7" className="table-empty">
+                              Loading attendees...
+                            </td>
+                          </tr>
+                        ) : attendees.length === 0 ? (
+                          <tr>
+                            <td colSpan="7" className="table-empty">
+                              No attendees found.
+                            </td>
+                          </tr>
+                        ) : (
+                          attendees.map((attendee) => (
+                            <tr key={attendee.id}>
+                              {/* your existing row */}
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                        ) : (
+      <table className="modern-table">
+        <thead>
+          <tr>
+            <th>
+                    <div className="th-content">
+                      Name
+                      <ArrowUpDown size={13} />
+                    </div>
+                  </th>
+
+                  <th>
+                    <div className="th-content">
+                      Email
+                      <ArrowUpDown size={13} />
+                    </div>
+                  </th>
+
+                  <th>
+                    <div className="th-content">
+                      Company
+                      <ArrowUpDown size={13} />
+                    </div>
+                  </th>
+
+                  <th>
+                    <div className="th-content">
+                      Position
+                      <ArrowUpDown size={13} />
+                    </div>
+                  </th>
+
+                  <th>
+                    <div className="th-content">
+                      Registration Status
+                      <ArrowUpDown size={13} />
+                    </div>
+                  </th>
+
+                  
+
+                  <th>
+                    <div className="th-content">
+                      Table No.
+                      <ArrowUpDown size={13} />
+                    </div>
+                  </th>
+
+                  <th>Actions</th>
+                            </tr>
+        </thead>
+
+        <tbody>
+            {attendees.map((attendee) => (
+              <tr key={attendee.id}>
+
+                {/* Name */}
+                <td>
+                  <div className="attendee-info">
+                    <div className="avatar">
+                      {(attendee.firstName?.[0] || "")}
+                      {(attendee.lastName?.[0] || "")}
+                    </div>
+
+                    <div>
+                      <div className="attendee-name">
+                        {attendee.firstName} {attendee.lastName}
+                      </div>
+
+                      <div className="attendee-nickname">
+                        {attendee.preferredNameOnBadge || "-"}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+
+                {/* Email */}
+                <td>{attendee.emailAddress}</td>
+
+                {/* Company */}
+                <td>{attendee.company || "-"}</td>
+
+                {/* Position */}
+                <td>{attendee.position || "-"}</td>
+
+                {/* Registration Status */}
+                <td>
+                  <span
+                    className={`status-badge ${
+                      attendee.status === "CONFIRMED"
+                        ? "confirmed"
+                        : attendee.status === "CHECKED_IN"
+                        ? "checkedin"
+                        : attendee.status === "PENDING"
+                        ? "pending"
+                        : attendee.status === "DECLINED"
+                        ? "declined"
+                        : attendee.status === "NO_SHOW"
+                        ? "noshow"
+                        : "cancelled"
+                    }`}
                   >
-                    <td>{attendee.firstName || "-"}</td>
-                    <td>{attendee.lastName || "-"}</td>
-                    <td>{attendee.preferredNameOnBadge || "-"}</td>
-                    <td>{attendee.emailAddress || "-"}</td>
-                    <td>{attendee.company || "-"}</td>
-                    <td>{attendee.position || "-"}</td>
-                    <td>{attendee.status || "-"}</td>
-                    <td>
-                      {attendee.tableNumber
-                        ? attendee.tableNumber
-                        : "-"}
-                    </td>
-                    <td>
-                      {attendee.createdAt
-                        ? new Date(attendee.createdAt).toLocaleString()
-                        : "-"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
+                    {attendee.status?.replace("_", " ")}
+                  </span>
+                </td>
+              
 
+                {/* Table */}
+                <td>
+                  {attendee.tableNumber || "Not Assigned"}
+                </td>
+
+                {/* Actions */}
+                <td>
+                      <div className="table-actions">
+
+                          <button
+                              className="icon-btn"
+                              onClick={() => setSelectedAttendee(attendee)}
+                          >
+                              <Eye size={17}/>
+                          </button>
+
+                          <button
+                              className="icon-btn"
+                              onClick={handlePrint}
+                          >
+                              <Printer size={17}/>
+                          </button>
+
+                          <button className="icon-btn">
+                              <EllipsisVertical size={17}/>
+                          </button>
+
+                      </div>
+                  </td>
+
+              </tr>
+            ))}
+          </tbody>
+      </table>
+      
+    )}
+  </div>
+  
+  
+</div>
       {/* Modal */}
       {selectedAttendee && (
-        <div
-          className="modal-overlay"
+  <div
+    className="attendee-modal-overlay"
+    onClick={() => {
+      setSelectedAttendee(null);
+      setShowAssignForm(false);
+      setTableNumber("");
+      setActiveTab("details");
+    }}
+  >
+    <div
+      className="attendee-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div className="attendee-modal-header">
+        <h2>Attendee Details</h2>
+
+        <button
+          className="close-icon"
           onClick={() => {
             setSelectedAttendee(null);
             setShowAssignForm(false);
             setTableNumber("");
+            setActiveTab("details");
           }}
         >
-          <div
-            className="modal-box"
-            onClick={(e) => e.stopPropagation()}
-          >
-             
-            <label className="text-blue-500 text-lg font-bold">Attendee Details:</label>
-            <hr className="my-2 border-red-300 border-t-2" />
+          ✕
+        </button>
+      </div>
 
-            <p><b>First Name:</b> {selectedAttendee.firstName}</p>
-            <p><b>Last Name:</b> {selectedAttendee.lastName}</p>
-            <p><b>Preferred Name:</b> {selectedAttendee.preferredNameOnBadge}</p>
-            <p><b>Email:</b> {selectedAttendee.emailAddress}</p>
-            <p><b>Company:</b> {selectedAttendee.company}</p>
-            <p><b>Position:</b> {selectedAttendee.position}</p>
-            <p><b>Status: </b> 
-             <span  className={
-                  selectedAttendee.status === "CONFIRMED"
-                    ? "text-green-600 font-bold"
-                    : selectedAttendee.status === "PENDING"
-                    ? "text-yellow-600 font-bold"
-                    : "text-red-600 font-bold"
-                }> 
-              {selectedAttendee.status}</span></p>
-            <p><b>Table Number:</b> {selectedAttendee.tableNumber || "-"}</p>
+      {/* Tabs */}
+      <div className="attendee-tabs">
+        <button
+          className={activeTab === "details" ? "active" : ""}
+          onClick={() => setActiveTab("details")}
+        >
+          Details
+        </button>
 
-            {/* Assign Table Form */}
-            {showAssignForm && (
-              <div className="assign-form">
-                <label>Table Number</label>
-                <input
-                  type="text"
-                  value={tableNumber}
-                  onChange={(e) => setTableNumber(e.target.value)}
-                  placeholder="Enter table number"
-                />
+        <button
+          className={activeTab === "attendance" ? "active" : ""}
+          onClick={() => setActiveTab("attendance")}
+        >
+          Attendance
+        </button>
 
-                  <button
-                    className="save-table-btn"
-                    onClick={async () => {
-                      if (!tableNumber.trim()) {
-                        alert("Please enter a table number.");
-                        return;
-                      }
+        <button
+          className={activeTab === "activity" ? "active" : ""}
+          onClick={() => setActiveTab("activity")}
+        >
+          Activity
+        </button>
+      </div>
 
-                      await handleAssignTable();
-                    }}
-                  >
-                    Save Table
-                  </button>
-              </div>
-            )}
+      {/* Body */}
+      <div className="attendee-modal-body">
 
-            <div className="modal-actions">
-              <button
-                className="assign-btn"
-                onClick={() => setShowAssignForm(true)}
-              >
-                Assign Table
-              </button>
+       {activeTab === "details" && (
+  <div className="details-layout">
 
-              <button
-                className="close-btn"
-                onClick={() => {
-                  setSelectedAttendee(null);
-                  setShowAssignForm(false);
-                  setTableNumber("");
-                }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
+    {/* LEFT CARD */}
+    <div className="profile-card">
+
+      <div className="avatar-circle">
+        {selectedAttendee.firstName?.charAt(0)}
+        {selectedAttendee.lastName?.charAt(0)}
+      </div>
+
+      <h3>
+        {selectedAttendee.firstName} {selectedAttendee.lastName}
+      </h3>
+
+      <p className="preferred-name">
+        {selectedAttendee.preferredNameOnBadge}
+      </p>
+
+      <span className="status-badge confirmed">
+        {selectedAttendee.status}
+      </span>
+
+      <p className="attendee-id">
+        ID: {selectedAttendee.id?.slice(0,8)}
+      </p>
+
+      <div className="qr-card">
+
+          <img
+
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${selectedAttendee.id}`}
+
+                alt="QR Code"
+
+                className="qr-image"
+
+            />
+
+        <small>Scan to view badge</small>
+
+      </div>
+
+    </div>
+
+    {/* RIGHT SIDE */}
+    <div className="details-right">
+
+  <h4 className="section-heading">
+    👤 Personal Information
+  </h4>
+
+  <div className="info-grid">
+
+    <label>First Name</label>
+    <span>{selectedAttendee.firstName || "-"}</span>
+
+    <label>Last Name</label>
+    <span>{selectedAttendee.lastName || "-"}</span>
+
+    <label>Preferred Name</label>
+    <span>{selectedAttendee.preferredNameOnBadge || "-"}</span>
+
+    <label>Email</label>
+    <span className="email-text">
+      {selectedAttendee.emailAddress || "-"}
+    </span>
+
+    <label>Company</label>
+    <span>{selectedAttendee.company || "-"}</span>
+
+    <label>Position</label>
+    <span>{selectedAttendee.position || "-"}</span>
+
+  </div>
+
+  <hr className="section-divider" />
+
+    <h4 className="section-heading">
+          📋 Attendance Information
+        </h4>
+
+        <div className="info-grid">
+
+          <label>Status</label>
+
+          <span>
+            <span
+              className={`status-badge ${
+                selectedAttendee.status === "CONFIRMED"
+                  ? "confirmed"
+                  : selectedAttendee.status === "PENDING"
+                  ? "pending"
+                  : "cancelled"
+              }`}
+            >
+              {selectedAttendee.status}
+            </span>
+          </span>
+
+          <label>Check-in Status</label>
+
+          <span>
+            {selectedAttendee.status === "CHECKED_IN"
+              ? "Checked In"
+              : "Not Checked In"}
+          </span>
+
+          <label>Check-in Time</label>
+
+          <span>
+            {selectedAttendee.checkInAt
+              ? new Date(selectedAttendee.checkInAt).toLocaleString()
+              : "-"}
+          </span>
+
+          <label>Checked In By</label>
+
+          <span>
+            {selectedAttendee.checkedInBy || "-"}
+          </span>
+
+          <label>
+            Table Number
+          </label>
+
+          <span className="table-row">
+
+            {selectedAttendee.tableNumber || "-"}
+
+            <button
+              className="edit-table-btn"
+              onClick={() => setShowAssignForm(true)}
+            >
+            </button>
+
+          </span>
+
         </div>
-      )}
+
+
+        </div>
+
+          </div>
+        )}
+        {activeTab === "attendance" && (
+
+<div className="attendance-tab">
+
+    <h3>Attendance Summary</h3>
+
+    <div className="attendance-grid">
+
+        <div className="attendance-card">
+
+            <label>Status</label>
+
+            <strong>{selectedAttendee.status}</strong>
+
+        </div>
+
+        <div className="attendance-card">
+
+            <label>Table Number</label>
+
+            <strong>{selectedAttendee.tableNumber || "-"}</strong>
+
+        </div>
+
+        <div className="attendance-card">
+
+            <label>Meal Preference</label>
+
+            <strong>{selectedAttendee.mealPreference || "-"}</strong>
+
+        </div>
+
+        <div className="attendance-card">
+
+            <label>Check In Time</label>
+
+            <strong>
+
+                {selectedAttendee.checkedInAt
+                    ? new Date(selectedAttendee.checkedInAt).toLocaleString()
+                    : "-"}
+
+            </strong>
+
+        </div>
+
+    </div>
+
+</div>
+
+)}
+
+{activeTab === "activity" && (
+
+<div className="activity-tab">
+
+<h3>Activity Timeline</h3>
+
+<div className="timeline">
+
+<div className="timeline-item">
+
+<div className="timeline-dot"></div>
+
+<div>
+
+<strong>Registered</strong>
+
+<p>
+
+{selectedAttendee.createdAt
+? new Date(selectedAttendee.createdAt).toLocaleString()
+: "-"}
+
+</p>
+
+</div>
+
+</div>
+
+<div className="timeline-item">
+
+<div className="timeline-dot blue"></div>
+
+<div>
+
+<strong>Checked In</strong>
+
+<p>
+
+{selectedAttendee.checkedInAt
+? new Date(selectedAttendee.checkedInAt).toLocaleString()
+: "Not yet checked in"}
+
+</p>
+
+</div>
+
+</div>
+
+<div className="timeline-item">
+
+<div className="timeline-dot green"></div>
+
+<div>
+
+<strong>Assigned Table</strong>
+
+<p>
+
+{selectedAttendee.tableNumber
+? `Table ${selectedAttendee.tableNumber}`
+: "Not assigned"}
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+)}
+{showAssignModal && (
+  <div
+    className="modal-overlay"
+    onClick={() => setShowAssignModal(false)}
+  >
+    <div
+      className="assign-table-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h2>Assign Table</h2>
+
+      <p className="assign-subtitle">
+        {selectedAttendee.firstName} {selectedAttendee.lastName}
+      </p>
+
+      <label>Table Number</label>
+
+      <input
+        type="number"
+        min="1"
+        value={tableNumber}
+        onChange={(e) => setTableNumber(e.target.value)}
+        placeholder="Enter table number"
+      />
+
+      <div className="assign-actions">
+        <button
+          className="cancel-btn"
+          onClick={() => setShowAssignModal(false)}
+        >
+          Cancel
+        </button>
+
+        <button
+          className="save-btn"
+          onClick={handleAssignTable}
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+              </div>
+
+      {/* Footer */}
+      <div className="attendee-modal-footer">
+
+        <button
+          className="modal-cancel-btn"
+          onClick={() => {
+            setSelectedAttendee(null);
+            setShowAssignForm(false);
+            setTableNumber("");
+            setActiveTab("details");
+          }}
+        >
+          Cancel
+        </button>
+
+        <button className="modal-assign-btn"
+         onClick={() => {
+        setTableNumber(selectedAttendee.tableNumber || "");
+        setShowAssignModal(true);
+      }}
+        >
+          Assign Table
+        </button>
+
+        <button className="modal-checkin-btn"
+                  disabled={
+                  checkingIn ||
+                  selectedAttendee?.status === "CHECKED_IN"
+              }
+              onClick={handleCheckIn}
+          >
+              {selectedAttendee?.status === "CHECKED_IN"
+                  ? "Already Checked In"
+                  : checkingIn
+                  ? "Checking In..."
+                  : "Check In"}
+                  
+        </button>
+
+      </div>
+    </div>
+  </div>
+)}
+
+            
 
       {/* Pagination */}
       <div className="pagination">
