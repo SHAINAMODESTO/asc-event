@@ -50,6 +50,22 @@ export const checkInAttendee = async (attendeeId) => {
     throw error;
   }
 };
+// Get attendee by ID
+export const getAttendeeById = async (attendeeId) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/attendee/${attendeeId}`
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Get attendee error:",
+      error.response?.data || error
+    );
+    throw error;
+  }
+};
 
 // Get attendees with pagination, search, filter
 export const getAttendees = async ({

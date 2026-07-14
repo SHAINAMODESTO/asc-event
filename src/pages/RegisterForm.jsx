@@ -93,7 +93,10 @@ const RegisterForm = ({
   handleChange,
   handleSubmit,
   setFormData,
+  isAdminRegistration,
 }) => {
+
+  console.log("isAdminRegistration:", isAdminRegistration);
   const [contacts, setContacts] = useState([]);
 
   useEffect(() => {
@@ -108,6 +111,32 @@ const RegisterForm = ({
       console.error("Failed to fetch contacts:", error);
     }
   }
+  //FOR VIP
+  const [attendeeType, setAttendeeType] = useState("REGULAR");
+  const [companions, setCompanions] = useState([]);
+      const addCompanion = () => {
+      if (companions.length >= 5) return;
+
+      setCompanions([
+        ...companions,
+        {
+          fullName: "",
+          relationship: "",
+        },
+      ]);
+    };
+
+    const removeCompanion = (index) => {
+      setCompanions(companions.filter((_, i) => i !== index));
+    };
+
+    const updateCompanion = (index, field, value) => {
+      const updated = [...companions];
+
+      updated[index][field] = value;
+
+      setCompanions(updated);
+    };
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
       <form
@@ -119,7 +148,112 @@ const RegisterForm = ({
           title="Personal Information"
           description="Complete all required fields below."
         />
+       {isAdminRegistration && ( 
+          <div className="mb-6">
 
+                    <label className="mb-3 block text-sm font-semibold text-slate-700">
+                      Attendee Type
+                    </label>
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                      {/* Regular */}
+                      <label
+                        className={`cursor-pointer rounded-2xl border-2 p-5 transition-all duration-200 ${
+                          attendeeType === "REGULAR"
+                            ? "border-red-600 bg-red-50 shadow-md"
+                            : "border-slate-200 bg-white hover:border-red-300 hover:bg-slate-50"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="attendeeType"
+                          value="REGULAR"
+                          checked={attendeeType === "REGULAR"}
+                          onChange={() => {
+                            setAttendeeType("REGULAR");
+                            setCompanions([]);
+                          }}
+                          className="hidden"
+                        />
+
+                        <div className="flex items-center justify-between">
+
+                          <div>
+                            <h3 className="text-base font-semibold text-slate-800">
+                              Regular
+                            </h3>
+
+                            <p className="mt-1 text-sm text-slate-500">
+                              Register without companions.
+                            </p>
+                          </div>
+
+                          <div
+                            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
+                              attendeeType === "REGULAR"
+                                ? "border-red-600 bg-red-600"
+                                : "border-slate-300"
+                            }`}
+                          >
+                            {attendeeType === "REGULAR" && (
+                              <div className="h-2.5 w-2.5 rounded-full bg-white" />
+                            )}
+                          </div>
+
+                        </div>
+
+                      </label>
+
+                      {/* VIP */}
+                      <label
+                        className={`cursor-pointer rounded-2xl border-2 p-5 transition-all duration-200 ${
+                          attendeeType === "VIP"
+                            ? "border-red-600 bg-red-50 shadow-md"
+                            : "border-slate-200 bg-white hover:border-red-300 hover:bg-slate-50"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="attendeeType"
+                          value="VIP"
+                          checked={attendeeType === "VIP"}
+                          onChange={() => setAttendeeType("VIP")}
+                          className="hidden"
+                        />
+
+                        <div className="flex items-center justify-between">
+
+                          <div>
+                            <h3 className="text-base font-semibold text-slate-800">
+                              VIP
+                            </h3>
+
+                            <p className="mt-1 text-sm text-slate-500">
+                              Register with up to 5 companions.
+                            </p>
+                          </div>
+
+                          <div
+                            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
+                              attendeeType === "VIP"
+                                ? "border-red-600 bg-red-600"
+                                : "border-slate-300"
+                            }`}
+                          >
+                            {attendeeType === "VIP" && (
+                              <div className="h-2.5 w-2.5 rounded-full bg-white" />
+                            )}
+                          </div>
+
+                        </div>
+
+                      </label>
+
+                    </div>
+
+                  </div>
+        )}
         <ContactSection contacts={contacts.data} />
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -147,9 +281,101 @@ const RegisterForm = ({
                 error={fieldErrors[field.name]}
               />
             ))}
+         
+            {isAdminRegistration && attendeeType === "VIP" && (
+          <div className="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-6">
+
+            {/* Header */}
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+              <div>
+                <h3 className="text-lg font-semibold text-slate-800">
+                  Companion Information
+                </h3>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  You may add up to 5 companions.
+                </p>
+              </div>
+
+              {companions.length < 5 && (
+                <button
+                  type="button"
+                  onClick={addCompanion}
+                  className="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+                >
+                  + Add Companion
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-4">
+
+              {companions.map((companion, index) => (
+
+                <div
+                  key={index}
+                  className="grid gap-4 rounded-xl border border-slate-200 bg-white p-5 md:grid-cols-[2fr_1fr_auto]"
+                >
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Full Name
+                    </label>
+
+                    <input
+                      type="text"
+                      placeholder="Enter full name"
+                      value={companion.fullName}
+                      onChange={(e) =>
+                        updateCompanion(index, "fullName", e.target.value)
+                      }
+                      className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Relationship
+                    </label>
+
+                    <input
+                      type="text"
+                      placeholder="Relationship"
+                      value={companion.relationship}
+                      onChange={(e) =>
+                        updateCompanion(index, "relationship", e.target.value)
+                      }
+                      className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                    />
+                  </div>
+
+                  <div className="flex items-end">
+                    <button
+                      type="button"
+                      onClick={() => removeCompanion(index)}
+                      className="w-full rounded-xl bg-red-500 px-4 py-3 font-medium text-white transition hover:bg-red-600 md:w-auto"
+                    >
+                      Remove
+                    </button>
+                  </div>
+
+                </div>
+
+              ))}
+    </div>
+   
+  </div>
+
+)}
+                
+                  
+          
+
+        
         </div>
 
-        {/* MealSelection */}
+      
 
         {/* PrivacyAgreement */}
         <PrivacyAgreement

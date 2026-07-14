@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getAttendees,  assignTable, checkInAttendee} from "../services/attendeeListService";
+import { getAttendees,  assignTable, checkInAttendee, getAttendeeById} from "../services/attendeeListService";
 import { getEventById } from "../services/eventService";
 import "./EventAttendees.css";
 import {
@@ -51,6 +51,9 @@ const EventAttendees = () => {
 
   //check in
   const [checkingIn, setCheckingIn] = useState(false);
+
+  const [checkInSuccess, setCheckInSuccess] = useState(false);
+
 
  const handlePrint = () => {
   const printWindow = window.open("", "_blank");
@@ -389,46 +392,25 @@ const handleAssignTable = async () => {
     setLoading(false);
   }
 };
-const handleCheckIn = async () => {
-  if (!selectedAttendee) return;
-
-  // Require table assignment
-  if (!selectedAttendee.tableNumber) {
-    alert("Please assign a table before checking in.");
-    return;
-  }
-
-  // Prevent duplicate check-in
-  if (selectedAttendee.status === "CHECKED_IN") {
-    alert("Attendee is already checked in.");
-    return;
-  }
-
+ const handleCheckIn = async () => {
   try {
-    setCheckingIn(true);
-
     const response = await checkInAttendee(selectedAttendee.id);
 
     if (response.success) {
+      // Refresh table
       await fetchAttendees();
 
-      setSelectedAttendee((prev) => ({
-        ...prev,
-        status: "CHECKED_IN",
-        checkedInTime: new Date().toISOString(),
-      }));
+      // Get updated attendee
+      const updatedAttendee = await getAttendeeById(selectedAttendee.id);
 
-      alert(response.message || "Attendee checked in successfully.");
+      console.log("Updated Attendee:", updatedAttendee);
+
+      setSelectedAttendee(updatedAttendee.data);
+
+      setCheckInSuccess(true);
     }
   } catch (error) {
     console.error(error);
-
-    alert(
-      error.response?.data?.message ||
-      "Unable to check in attendee."
-    );
-  } finally {
-    setCheckingIn(false);
   }
 };
 
@@ -660,7 +642,11 @@ const handleCheckIn = async () => {
 
     <div className="toolbar-right">
 
-        <button className="blue-btn">
+        <button
+         className="blue-btn"
+         onClick={() =>
+          navigate(`/registration/${eventId}?mode=admin`)
+          }>
 
             <Plus size={18}/>
 
@@ -1373,9 +1359,31 @@ const handleCheckIn = async () => {
         >
           Save
         </button>
+
+                
       </div>
     </div>
   </div>
+)}
+ {checkInSuccess && (
+<div className="checkin-success">
+
+    <CheckCircle2
+        size={18}
+        className="success-icon"
+    />
+
+    <div>
+        <div className="success-title">
+            Successfully Checked In
+        </div>
+
+        <div className="success-message">
+            Thank you!
+        </div>
+    </div>
+
+</div>
 )}
               </div>
 
@@ -1417,6 +1425,7 @@ const handleCheckIn = async () => {
                   : "Check In"}
                   
         </button>
+        
 
       </div>
     </div>
