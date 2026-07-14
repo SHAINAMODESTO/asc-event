@@ -38,29 +38,34 @@ body,
 /* =========================
    FORM WRAPPER
 ========================= */
-.form-wrapper {
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 0 1rem;
-}
 
+/* =========================
+   FORM WRAPPER
+========================= */
+
+.form-wrapper{
+    width:100%;
+    max-width:1800px;
+
+    margin:0 auto;
+    padding:0 clamp(20px,3vw,50px);
+}
 /* =========================
    FORM CONTAINER
 ========================= */
-.form-container {
-  background: #ffffff;
-  border-radius: 1.5rem;
-  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
-  padding: clamp(1rem, 2vw, 2rem);
-  border: 1px solid rgba(15, 23, 42, 0.06);
+.form-container{
+    width:100%;
+    min-height:calc(100vh - 140px);
 
-  width: 100%;
-  margin: 0 auto;
-  margin-top: -40px;
+    margin:0 auto;
+    margin-top:-20px;
 
-  overflow-x: hidden;
-  overflow-y: visible;
+    padding:clamp(24px,2vw,40px);
+
+    border-radius:20px;
+
+    overflow-y:auto;
+    overflow-x:hidden;
 }
 
 /* =========================
@@ -112,28 +117,24 @@ body,
 /* =========================
    TEXTAREA
 ========================= */
-textarea.form-input {
-  width: 60%;
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding: 0.9rem 1rem;
-  resize: vertical;
-  line-height: 1.5;
-  display: block;
-  overflow-y: auto;
+
+textarea.form-input{
+    width:100%;
+    min-height:100px;
+    resize:vertical;
 }
 
 /* =========================
    GRID LAYOUT
 ========================= */
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(300px, 1fr));
-  gap: clamp(1rem, 2vw, 2rem);
-  align-items: start;
-}
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
 
+    gap:clamp(25px,2vw,50px);
+
+    align-items:start;
+}
 .form-grid > div {
   display: flex;
   flex-direction: column;
@@ -141,17 +142,32 @@ textarea.form-input {
 }
 
 /* =========================
-   DATE GROUP
+   EVENT DATE
 ========================= */
-.date-group {
-  display: flex;
-  gap: 1rem;
+.event-date-group{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:16px;
+    width:100%;
 }
 
-.date-group > div {
-  flex: 1;
+.event-date-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
 }
 
+.event-date-item label{
+    white-space:nowrap;
+    font-weight:600;
+}
+
+.event-date-item .form-input{
+    flex:1;
+    width:100%;
+    min-width:0;
+}
 /* =========================
    MENU CARD
 ========================= */
@@ -209,79 +225,115 @@ textarea.form-input {
   color: white;
 }
 
-.template-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 1rem;
+.template-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-top:32px;
 }
 
-/* =========================
-   TABLET
-========================= */
-@media (max-width: 1200px) {
-  .form-wrapper {
-    max-width: 95%;
-    padding: 0 1.5rem;
-  }
+.delete-btn,
+.primary-btn,
+.draft-btn,
+.generate-btn{
+    min-width:170px;
+    width:auto;
+}
+@media (min-width:1400px){
+
+.form-wrapper{
+    max-width:1700px;
 }
 
-@media (max-width: 1024px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .form-wrapper {
-    max-width: 100%;
-  }
+.form-grid{
+    grid-template-columns:1fr 1fr;
+    gap:40px;
 }
 
-/* =========================
-   MOBILE
-========================= */
-@media (max-width: 768px) {
-  .create-form-page {
-    padding: 1rem;
-  }
-
-  .date-group {
-    flex-direction: column;
-  }
-
-  .menu-card {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .template-actions {
-    flex-direction: column;
-  }
-
-  .delete-btn,
-  .primary-btn,
-  .draft-btn,
-  .generate-btn {
-    width: 100%;
-    max-width: 100%;
-  }
+.form-container{
+    padding:48px;
 }
 
-/* =========================
-   SMALL PHONES
-========================= */
-@media (max-width: 480px) {
-  .form-container {
-    padding: 0.75rem;
-    border-radius: 1rem;
-  }
+.form-input,
+.form-select{
+    padding:16px 18px;
+}
 
-  .form-title {
-    text-align: center;
-  }
+}
+@media (max-width:1024px){
 
-  .form-input {
-    font-size: 12px;
-  }
+.form-wrapper{
+    padding:0 24px;
+}
+
+.form-grid{
+    grid-template-columns:1fr;
+}
+
+.date-group{
+    flex-direction:column;
+}
+
+textarea.form-input{
+    width:100%;
+}
+
+}
+@media (max-width:768px){
+
+.create-form-page{
+    padding:16px;
+}
+
+.form-wrapper{
+    padding:0;
+}
+
+.form-container{
+    padding:20px;
+    border-radius:16px;
+    margin-top:0;
+}
+
+.template-actions{
+    flex-direction:column;
+}
+
+.delete-btn,
+.primary-btn,
+.draft-btn,
+.generate-btn{
+    width:100%;
+}
+
+.menu-card{
+    flex-direction:column;
+    align-items:flex-start;
+}
+@media (max-width:1200px){
+
+.event-date-group{
+    grid-template-columns:1fr;
+}
+
+}
+
+}
+@media (max-width:480px){
+
+.form-title{
+    font-size:18px;
+}
+
+.section-title{
+    font-size:16px;
+}
+
+.form-input,
+.form-select{
+    font-size:14px;
+    padding:14px;
+}
+
 }

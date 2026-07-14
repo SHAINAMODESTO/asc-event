@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Plus, Trash2, SquarePen } from "lucide-react";
+import { Plus, Trash2, SquarePen, Users } from "lucide-react";
 import {
   createEvent,
   publishEvent,
@@ -46,6 +46,8 @@ Inquiry Contact:
   // NEW: Attire
   const [attire, setAttire] = useState("");
 
+  const [checkInTime, setCheckInTime] = useState("");
+const [lunchTime, setLunchTime] = useState("");
   // Event Dates
   const [eventStart, setEventStart] = useState("");
   const [eventEnd, setEventEnd] = useState("");
@@ -175,6 +177,10 @@ const formatDateTime = (date) => {
     ? Number(maxParticipants)
     : null,
 
+ checkInTime: checkInTime || null,
+
+lunchTime: lunchTime || null,
+
   includesDoorPrize: showLootBags,
 
   registrationStart:
@@ -206,6 +212,7 @@ const formatDateTime = (date) => {
     }
   } catch (error) {
     console.error(error.response?.data || error);
+    console.table(event);
     alert(error.response?.data?.message || "Failed to save draft");
   }
 };
@@ -226,6 +233,11 @@ const handleSaveTemplate = async () => {
   isRegistrationRequired: true,
 
   dressCode: attire || null,
+   
+  checkInTime: checkInTime || null,
+
+lunchTime: lunchTime || null,
+
 
   maxParticipants: maxParticipants
     ? Number(maxParticipants)
@@ -307,6 +319,9 @@ useEffect(() => {
       setRegistrationStart(formatDateTime(event.registrationStart));
       setRegistrationEnd(formatDateTime(event.registrationEnd));
 
+      setCheckInTime(event.checkInTime || "");
+      setLunchTime(event.lunchTime || "");
+
       // setMaxParticipants(event.maxParticipants || "");
       setShowMenuInForm(event.requiresMealPreference || false);
       setMenuOptions(event.mealPreferences || []);
@@ -323,12 +338,20 @@ useEffect(() => {
 }, [editEvent]);
 
   return (
-    <div className="w-[100%] !h-[100%] w-4/5 h-screen bg-white p-6 text-[12px] ">
+    <div className="w-[100%] h-[100%] w-4/5 h-screen bg-white p-6 text-[12px] ">
        <div className="flex items-center justify-between  !h-[95px] mb-6  bg-border-[#c30d2e] p-4 shadow-md">
-              <h1 className="text-xl font-semibold tracking-wide">{isEdit ? "Edit Event Form" : "Create Event Registration Form"} </h1>
+              <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight text-slate-800">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                          <Users size={24} />
+                        </div>
+
+                        <span>
+                          {isEdit ? "Edit Event Form" : "Create Event Registration Form"}
+                        </span>
+              </h1>
        </div>
          <div className="w-full flex justify-center px-6 pt-2">
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-10 h-[600px] overflow-y-auto bg-white rounded-lg shadow-md p-10">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-10 h-[700px] overflow-y-auto bg-white rounded-lg shadow-md p-10">
       
                   {/* LEFT SIDE */}
                   <div>
@@ -351,7 +374,7 @@ useEffect(() => {
                       value={eventDescription}
                       onChange={(e) => setEventDescription(e.target.value)}
                       placeholder="Enter event description"
-                      className="form-input !w-[490px] !h-[80px]"
+                      className="form-input w-[490px] h-[80px]"
                       rows="4"
                     />
                     </div>
@@ -366,34 +389,35 @@ useEffect(() => {
                         placeholder="Enter event venue"
                         className="form-input"
                       />
+                      
                     </div>
-                      <br></br>
-                    {/* Event Date */}
-                    <div className="space-y-3">
-                      <h2 className="section-title">Event Date</h2>
-
-                      <div className="flex flex-col gap-4 md:flex-row md:items-end">
-                        <div className="flex flex-col md:flex-row md:items-center gap-2 flex-1">
+                     <h2 className="section-title">Event Date and Time</h2>
+                     
+                    <div className="event-date-group">
+                       <div className="event-date-item">
+                     
                           <label>From</label>
+
                           <input
                             type="datetime-local"
                             value={eventStart}
                             onChange={(e) => setEventStart(e.target.value)}
-                            className="form-input !w-[200px]"
+                            className="form-input"
                           />
                         </div>
 
-                        <div className="flex flex-col md:flex-row md:items-center gap-2 flex-1">
+                        <div className="event-date-item">
                           <label>To</label>
+
                           <input
                             type="datetime-local"
                             value={eventEnd}
                             onChange={(e) => setEventEnd(e.target.value)}
-                          className="form-input !w-[210px]"
+                            className="form-input"
                           />
                         </div>
+
                       </div>
-                    </div>
                
                      <br></br>
                   
@@ -408,7 +432,12 @@ useEffect(() => {
                         className="form-input"
                       />
                     </div>
-                  {/* Attire */}
+                
+                </div>
+   {/* Column 2 */}
+                  {/* Menu */}
+                  <div className="space-y-1">
+                    {/* Attire */}
                     <div className="space-y-3">
                       <h2 className="section-title">Attire (Optional)</h2>
                       <input
@@ -419,11 +448,26 @@ useEffect(() => {
                         className="form-input"
                       />
                     </div>
-
-                </div>
-   {/* Column 2 */}
-                  {/* Menu */}
-                  <div className="space-y-1">
+                    {/* Registration Time Starts */}
+                    <div className="space-y-3">
+                      <h2 className="section-title">Registration Starts:</h2>
+                      <input
+                            type="time"
+                            value={checkInTime}
+                            onChange={(e) => setCheckInTime(e.target.value)}
+                          className="form-input w-[480px]"
+                          />
+                    </div>
+                    {/* Lunch Time Starts */}
+                    <div className="space-y-3">
+                      <h2 className="section-title">Lunch Time Starts:</h2>
+                      <input
+                            type="time"
+                            value={lunchTime}
+                            onChange={(e) => setLunchTime(e.target.value)}
+                          className="form-input w-[480px]"
+                          />
+                    </div>
                        <h2 className="other-title">Other Settings</h2>
                     <div className="flex items-center justify-between gap-2">
                       
@@ -457,7 +501,7 @@ useEffect(() => {
                           <input
                             value={option}
                             onChange={(e) => updateMenuOption(index, e.target.value)}
-                            className="form-input !w-[250px] !h-[40px]"
+                            className="form-input !w-[350px] h-[40px]"
                           />
 
                           <button
@@ -500,27 +544,32 @@ useEffect(() => {
                     </div>
 
                     {showAcceptResponses && (
-                      <div className="flex flex-col gap-4 md:flex-row md:items-end">
-                        <div className="flex flex-col md:flex-row md:items-center gap-2 flex-1">
+                       <div className="event-date-group">
+                       <div className="event-date-item">
+                     
                           <label>From</label>
+
                           <input
                             type="datetime-local"
                             value={registrationStart}
                             onChange={(e) => setRegistrationStart(e.target.value)}
-                            className="form-input !w-[200px]"
+                            className="form-input"
                           />
                         </div>
 
-                        <div className="flex flex-col md:flex-row md:items-center gap-2 flex-1">
+                        <div className="event-date-item">
                           <label>To</label>
+
                           <input
                             type="datetime-local"
                             value={registrationEnd}
                             onChange={(e) => setRegistrationEnd(e.target.value)}
-                            className="form-input !w-[210px]"
+                            className="form-input"
                           />
-                          </div>
                         </div>
+
+                      </div>
+               
                       )}
                     </div>
               

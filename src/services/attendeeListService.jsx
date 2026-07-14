@@ -17,23 +17,52 @@ export const createAttendee = async (attendeeData) => {
 };
 // Assign Table Number
 export const assignTable = async (attendeeId, tableNumber) => {
-  const response = await axios.patch(
-    `${BASE_URL}/attendee/${attendeeId}/table`,
-    {
-      tableNumber,
-    },
-  );
   try {
     const response = await axios.patch(
       `${BASE_URL}/attendee/${attendeeId}/assign-table`,
       {
         tableNumber,
-      },
+      }
     );
 
     return response.data;
   } catch (error) {
-    console.error("Assign Table Error:", error.response?.data || error.message);
+    console.error(
+      "Assign Table Error:",
+      error.response?.data || error
+    );
+    throw error;
+  }
+};
+//Check in 
+export const checkInAttendee = async (attendeeId) => {
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/attendee/${attendeeId}/check-in`
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Check In Error:",
+      error.response?.data || error
+    );
+    throw error;
+  }
+};
+// Get attendee by ID
+export const getAttendeeById = async (attendeeId) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/attendee/${attendeeId}`
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Get attendee error:",
+      error.response?.data || error
+    );
     throw error;
   }
 };

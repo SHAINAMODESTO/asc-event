@@ -49,62 +49,66 @@
 /* =========================
    SEARCH
 ========================= */
+
 .all-events-search {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  flex-wrap: nowrap; /* keeps everything in one line */
+  gap: 16px;
+  margin-bottom: 24px;
+  width: 100%;
 }
 
 .search-input {
-  width: 100%;
-  max-width: 420px;
-  background: #ffffff;
+  flex: 1;
+  min-width: 450px;
+  max-width: 850px;
+  background: #fff;
   border: 1px solid #cbd5e1;
-  border-radius: 0.85rem;
-  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  padding: 12px 16px;
   color: #0f172a;
   outline: none;
-  flex-shrink: 0;
 }
 
 .search-input:focus {
   border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+  box-shadow: 0 0 0 4px rgba(59,130,246,.12);
 }
 
-/* Date Range Wrapper */
+/* Date Range */
+
 .date-range-wrapper {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  white-space: nowrap; /* prevents wrapping */
+  gap: 10px;
+  flex-wrap: nowrap;
 }
 
 .date-range-label {
   font-weight: 700;
   color: #0f172a;
+  white-space: nowrap;
 }
 
 .date-text {
-  font-size: 0.95rem;
-  color: #475569;
-  font-weight: 500;
+  font-size: 14px;
+  color: #64748b;
+  white-space: nowrap;
 }
 
 .date-input {
-  width: 150px;
-  padding: 0.75rem 1rem;
+  width: 260px;
+  padding: 12px 14px;
   border: 1px solid #cbd5e1;
-  border-radius: 0.85rem;
-  background: #ffffff;
-  color: #0f172a;
+  border-radius: 12px;
+  background: #fff;
   outline: none;
 }
 
 .date-input:focus {
   border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+  box-shadow: 0 0 0 4px rgba(59,130,246,.12);
 }
 /* =========================
    EVENTS GRID
@@ -225,20 +229,28 @@
 ========================= */
 .event-actions {
   display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
   margin-top: 1rem;
+  margin-right: 1rem;
 }
-
-.event-button {
-  padding: 0.75rem 1rem;
-  border-radius: 0.85rem;
+.event-actions button {
+  flex: 1;
+  white-space: nowrap;
+}
+.event-button,
+.generate-url-button {
+  padding: 12px 16px;
+  border-radius: 12px;
   font-weight: 700;
   border: none;
   cursor: pointer;
+  color: #fff;
+  transition: 0.2s;
+}
+
+.event-button {
   background: #2563eb;
-  color: #ffffff;
-  transition: background 0.2s ease;
 }
 
 .event-button:hover {
@@ -260,6 +272,7 @@
 .event-button-delete:hover {
   background: #dc2626;
 }
+
 .event-button-publish {
   background: #16a34a;
 }
@@ -268,6 +281,13 @@
   background: #15803d;
 }
 
+.generate-url-button {
+  background: #2daa6c;
+}
+
+.generate-url-button:hover {
+  background: #23975d;
+}
 
 /* =========================
    EMPTY STATE
@@ -298,5 +318,80 @@
 
   .all-event-card {
     min-width: 100%;
+  }
+}
+/* =========================
+   GENERATE URL MODAL
+========================= */
+.modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.45);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+}
+
+.modal-box{
+    background:#fff;
+    width:550px;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
+
+.url-container{
+    display:flex;
+    align-items:center;
+    margin-top:20px;
+    gap:10px;
+}
+
+.url-input{
+    flex:1;
+    padding:12px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    background:#f8f8f8;
+}
+
+.copy-btn{
+    width:45px;
+    height:45px;
+    border:none;
+    background:#0dc37a;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.copy-btn:hover{
+    background:#8fe0cc;
+}
+.close-modal-btn{
+    margin-top:20px;
+    padding:10px 20px;
+    border:none;
+    background:#c30d2e;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
+}
+/* =========================
+   Responsive Buttons
+========================= */
+
+@media (max-width: 1024px) {
+  .event-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .event-actions button {
+    width: 100%;
   }
 }
