@@ -70,6 +70,7 @@ const EventAttendees = () => {
           <td>${attendee.company || "-"}</td>
           <td>${attendee.position || "-"}</td>
           <td>${attendee.status || "-"}</td>
+          <td>${attendee.checkInAt || "-"}</td>
           <td>${attendee.mealPreference || "-"}</td>
         </tr>
       `
@@ -164,6 +165,7 @@ const EventAttendees = () => {
               <th>Company</th>
               <th>Position</th>
               <th>Status</th>
+              <th>Checked In/th>
               <th>Preferred Meal</th>
              
             </tr>
@@ -245,6 +247,7 @@ const EventAttendees = () => {
         "Company",
         "Position",
         "Status",
+        "Checked In",
         "Table Number",
         "Preferred Meal",
       ],
@@ -256,6 +259,7 @@ const EventAttendees = () => {
         attendee.company || "",
         attendee.position || "",
         attendee.status || "",
+        attendee.checkInAt || "",
         attendee.tableNumber || "",
         attendee.mealPreference || "",
       ]),
@@ -741,6 +745,13 @@ const handleAssignTable = async () => {
 
                       <th>
                         <div className="th-content">
+                          Checked In Time
+                          <ArrowUpDown size={13} />
+                        </div>
+                      </th>
+
+                      <th>
+                        <div className="th-content">
                           Table No.
                           <ArrowUpDown size={13} />
                         </div>
@@ -807,6 +818,12 @@ const handleAssignTable = async () => {
                           <th>
                             <div className="th-content">
                               Registration Status
+                              <ArrowUpDown size={13} />
+                            </div>
+                          </th>
+                          <th>
+                          <div className="th-content">
+                              Checkin Status
                               <ArrowUpDown size={13} />
                             </div>
                           </th>
@@ -882,9 +899,14 @@ const handleAssignTable = async () => {
                       <ArrowUpDown size={13} />
                     </div>
                   </th>
+                   <th>
+                    <div className="th-content">
+                     Checked In Time
+                    <ArrowUpDown size={13} />
+                    </div>
+                  </th>
 
-                  
-
+            
                   <th>
                     <div className="th-content">
                       Table No.
@@ -950,6 +972,8 @@ const handleAssignTable = async () => {
                   </span>
                 </td>
               
+                 {/* Check In Time */}
+                <td>{attendee.checkInAt || "-"}</td>
 
                 {/* Table */}
                 <td>
@@ -1365,26 +1389,7 @@ const handleAssignTable = async () => {
     </div>
   </div>
 )}
- {checkInSuccess && (
-<div className="checkin-success">
-
-    <CheckCircle2
-        size={18}
-        className="success-icon"
-    />
-
-    <div>
-        <div className="success-title">
-            Successfully Checked In
-        </div>
-
-        <div className="success-message">
-            Thank you!
-        </div>
-    </div>
-
-</div>
-)}
+    
               </div>
 
       {/* Footer */}
