@@ -23,6 +23,9 @@ export default function useRegisterForm(eventId, navigate) {
     mealPreference: "",
   });
 
+  const [attendeeType, setAttendeeType] = useState("REGULAR");
+  const [companions, setCompanions] = useState([]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -55,26 +58,22 @@ export default function useRegisterForm(eventId, navigate) {
     try {
       setLoading(true);
 
-      await createAttendee({
-        eventId,
+       const payload = {
+          eventId,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          emailAddress: formData.email,
+          contactNumber: formData.contactNumber,
+          preferredNameOnBadge: formData.preferredName,
+          company: formData.companyName,
+          position: formData.position,
+          mealPreference: formData.mealPreference,
+          ...(attendeeType === "VIP" && {
+            companions,
+          }),
+        };
 
-        firstName: formData.firstName,
-
-        lastName: formData.lastName,
-
-        emailAddress: formData.email,
-
-        contactNumber: formData.contactNumber,
-
-        preferredNameOnBadge: formData.preferredName,
-
-        company: formData.companyName,
-
-        position: formData.position,
-
-        mealPreference: formData.mealPreference,
-      });
-
+await createAttendee(payload);
       navigate("/thankyou", {
         replace: true,
         state: {
@@ -97,23 +96,22 @@ export default function useRegisterForm(eventId, navigate) {
     }
   };
 
-  return {
-    formData,
+      return {
+        formData,
+        setFormData,
 
-    setFormData,
+        attendeeType,
+        setAttendeeType,
 
-    loading,
+        companions,
+        setCompanions,
 
-    fieldErrors,
-
-    validationErrors,
-
-    showValidation,
-
-    setShowValidation,
-
-    handleChange,
-
-    handleSubmit,
-  };
+        loading,
+        fieldErrors,
+        validationErrors,
+        showValidation,
+        setShowValidation,
+        handleChange,
+        handleSubmit,
+      };
 }

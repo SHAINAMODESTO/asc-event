@@ -12,6 +12,7 @@ import {
 import ContactSection from "../components/register/ContactSection";
 import { useState, useEffect } from "react";
 import { getContacts } from "../services/contactListService";
+import { createAttendeeWithCompanions } from "../services/attendeeListService";
 import {
   formatEventDate,
   formattedDateTime,
@@ -82,20 +83,23 @@ const formFields = [
     required: true,
   },
 ];
+       const RegisterForm = ({
+            event,
+            formData,
+            fieldErrors,
+            loading,
+            handleChange,
+            handleSubmit,
+            setFormData,
 
-const RegisterForm = ({
-  event,
-  formData,
-  fieldErrors,
-  loading,
-  menuOptions,
-  showMenuInForm,
-  handleChange,
-  handleSubmit,
-  setFormData,
-  isAdminRegistration,
-}) => {
+            attendeeType,
+            setAttendeeType,
 
+            companions,
+            setCompanions,
+
+            isAdminRegistration,
+          }) => {
   console.log("isAdminRegistration:", isAdminRegistration);
   const [contacts, setContacts] = useState([]);
 
@@ -112,8 +116,6 @@ const RegisterForm = ({
     }
   }
   //FOR VIP
-  const [attendeeType, setAttendeeType] = useState("REGULAR");
-  const [companions, setCompanions] = useState([]);
       const addCompanion = () => {
       if (companions.length >= 5) return;
 

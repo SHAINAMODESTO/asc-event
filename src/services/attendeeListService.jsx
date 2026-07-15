@@ -56,6 +56,7 @@ export const getAttendeeById = async (attendeeId) => {
     const response = await axios.get(
       `${BASE_URL}/attendee/${attendeeId}`
     );
+    console.log("Attendee API Response:", response.data);
 
     return response.data;
   } catch (error) {
@@ -64,6 +65,25 @@ export const getAttendeeById = async (attendeeId) => {
       error.response?.data || error
     );
     throw error;
+  }
+};
+// Register attendee with companions
+export const createAttendeeWithCompanions = async (data) => {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/attendee/create`,
+      data
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Create attendee failed:", error);
+
+    throw (
+      error.response?.data || {
+        message: "Unable to register attendee.",
+      }
+    );
   }
 };
 
