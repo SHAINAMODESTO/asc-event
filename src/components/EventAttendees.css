@@ -81,7 +81,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 15px;
-  margin-bottom: 15px;
+  margin-bottom: 18px;
 }
 
 .dashboard-card {
@@ -89,13 +89,14 @@
   border-radius: 14px;
   padding: 20px;
   box-shadow: 0 4px 12px rgba(247, 48, 48, 0.05);
+  height: 120px;
 }
 
 .dashboard-card {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: bold;
   color: #090606;
-  margin-bottom: 10px;
+  margin-bottom: 3px;
 }
 
 .dashboard-card p {
@@ -113,7 +114,7 @@ TOOLBAR
     justify-content:space-between;
     align-items:center;
     gap:20px;
-    margin-bottom:24px;
+    margin-bottom:8px;
     width:100%;
 }
 .toolbar-left{
@@ -228,7 +229,7 @@ TABLE
     width:100%;
     overflow-x:auto;
     overflow-y:auto;
-    max-height:350px;
+    max-height:530px;
 }
 
 
@@ -254,7 +255,7 @@ TABLE
 
 .modern-table th {
   text-align: left;
-  padding: 18px;
+  padding: 10px;
   font-size: 13px;
   color: #64748b;
   font-weight: 700;
@@ -263,7 +264,7 @@ TABLE
 }
 
 .modern-table td {
-  padding: 10px;
+  padding: 1px;
   border-top: 1px solid #f1f5f9;
   font-size: 12px;
 }
@@ -1377,6 +1378,34 @@ background:#16a34a;
 .save-btn:hover{
     background:#1d4ed8;
 }
+
+.save-table-btn{
+    padding:12px 24px;
+    border:none;
+    border-radius:10px;
+    background:#0b883d;
+    color:white;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.save-table-btn:hover{
+    background:#25c876;
+}
+.cancel-table-btn{
+    padding:12px 24px;
+    border:none;
+    border-radius:10px;
+    background:#d02929;
+    color:white;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.cancel-table-btn:hover{
+    background:#cb8695;
+}
+
 
 @keyframes popup{
     from{
