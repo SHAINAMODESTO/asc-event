@@ -1,4 +1,4 @@
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams, useSearchParams, } from "react-router-dom";
 import { useState } from "react";
 
 import Hero from "../components/register/Hero";
@@ -19,7 +19,20 @@ const RegisterV3 = () => {
   const [privacyChecked, setPrivacyChecked] = useState(false);
 
   const register = useRegisterForm(eventId, navigate);
+  const [searchParams] = useSearchParams();
 
+
+  console.log("URL:", window.location.href);
+  console.log("mode:", searchParams.get("mode"));
+
+  const isAdminRegistration =
+    searchParams.get("mode") === "admin";
+
+  console.log("isAdminRegistration:", isAdminRegistration);
+
+
+
+   
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -41,6 +54,8 @@ const RegisterV3 = () => {
     );
   }
 
+  
+
   return (
     <>
       <Hero
@@ -53,7 +68,12 @@ const RegisterV3 = () => {
         lunchTime={event.lunchTime}
       />
 
-      <RegisterForm {...register} event={event} />
+    
+      <RegisterForm
+         {...register}
+          event={event}
+         isAdminRegistration={isAdminRegistration}
+          />
 
       <ValidationModal
         open={register.showValidation}

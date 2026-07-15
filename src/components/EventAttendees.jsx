@@ -1,9 +1,26 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getAttendees,  assignTable} from "../services/attendeeListService";
+import { getAttendees,  assignTable, checkInAttendee, getAttendeeById} from "../services/attendeeListService";
 import { getEventById } from "../services/eventService";
 import "./EventAttendees.css";
-import { Icon } from "lucide-react";
+import {
+  Users,
+  CheckCircle2,
+  Armchair,
+  Hourglass,
+  CalendarDays,
+  Clock3,
+  MapPin,
+  ArrowLeft,
+  Search,
+  Plus,
+  Printer,
+  Download,
+  Upload,
+   ArrowUpDown,
+  Eye,
+  EllipsisVertical
+} from "lucide-react";
 
 const EventAttendees = () => {
   const navigate = useNavigate();
@@ -16,164 +33,200 @@ const EventAttendees = () => {
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
-  const [eventName, setEventName] = useState("");
 
+  const [eventDetails, setEventDetails] = useState(null);
+ //pagination
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
+//total attendees
+ const [totalAttendees, setTotalAttendees] = useState(0);
+  const [checkedInCount, setCheckedInCount] = useState(0);
+//const [assignedTables, setAssignedTables] = useState(0);
+//const [pendingConfirmation, setPendingConfirmation] = useState(0);
+  //check in count  
+ 
+  const checkedInPercentage =
+    totalAttendees > 0
+      ? ((checkedInCount / totalAttendees) * 100).toFixed(1)
+      : 0;
+
+  const assignedTables = attendees.filter(
+  (a) => a.tableNumber
+).length;
+
+const unassignedTables =
+  totalAttendees - assignedTables;
+
+const pendingConfirmation =
+  attendees.filter(
+    (a) => a.status === "PENDING"
+  ).length;
+
+  //Selected Rows using Checkbox
+  const [selectedRows, setSelectedRows] = useState([]);
 
   // Modal states
   const [selectedAttendee, setSelectedAttendee] = useState(null);
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [tableNumber, setTableNumber] = useState("");
 
+  const [activeTab, setActiveTab] = useState("details");
+//assign table modal
+  const [showAssignModal, setShowAssignModal] = useState(false);
+
+  //check in
+  const [checkingIn, setCheckingIn] = useState(false);
+
+  const [checkInSuccess, setCheckInSuccess] = useState(false);
+
+  
+
+//For Printing
  const handlePrint = () => {
-  const printWindow = window.open("", "_blank");
+    const printWindow = window.open("", "_blank");
 
-  const tableRows = attendees
-    .map(
-      (attendee, index) => `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${attendee.firstName || "-"}</td>
-          <td>${attendee.lastName || "-"}</td>
-          <td>${attendee.preferredNameOnBadge || "-"}</td>
-          <td>${attendee.emailAddress || "-"}</td>
-          <td>${attendee.company || "-"}</td>
-          <td>${attendee.position || "-"}</td>
-          <td>${attendee.status || "-"}</td>
-          <td>${
-            attendee.createdAt
-              ? new Date(attendee.createdAt).toLocaleString()
-              : "-"
-          }</td>
-        </tr>
-      `
-    )
-    .join("");
-
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>${eventName} Attendees</title>
-
-        <style>
-          *{
-            box-sizing:border-box;
-          }
-
-          body{
-            font-family:Arial, Helvetica, sans-serif;
-            margin:20px;
-            color:#222;
-          }
-
-          h1{
-            text-align:center;
-            margin-bottom:5px;
-            font-size:24px;
-          }
-
-          h3{
-            text-align:center;
-            margin-top:0;
-            margin-bottom:20px;
-            color:#555;
-            font-weight:normal;
-          }
-
-          table{
-            width:100%;
-            border-collapse:collapse;
-            table-layout:auto;
-          }
-
-          thead{
-            background:#f5f5f5;
-          }
-
-          th,
-          td{
-            border:1px solid #999;
-            padding:8px;
-            font-size:11px;
-            text-align:left;
-            vertical-align:top;
-            word-break:break-word;
-          }
-
-          th{
-            font-weight:bold;
-          }
-
-          td:first-child,
-          th:first-child{
-            width:45px;
-            text-align:center;
-          }
-
-          tr{
-            page-break-inside:avoid;
-          }
-
-          @page{
-            size:landscape;
-            margin:10mm;
-          }
-        </style>
-      </head>
-
-      <body>
-
-        <h1>${eventName}</h1>
-        <h3>Attendees List</h3>
-
-        <table>
-          <thead>
+    const tableRows = attendees
+        .map(
+          (attendee, index) => `
             <tr>
-              <th>No.</th>
-              <th>First Name</th>
-              <th>Last Name</th>
-              <th>Preferred Name</th>
-              <th>Email</th>
-              <th>Company</th>
-              <th>Position</th>
-              <th>Status</th>
-              <th>Created Date</th>
+              <td>${index + 1}</td>
+              <td>${attendee.firstName || "-"}</td>
+              <td>${attendee.lastName || "-"}</td>
+              <td>${attendee.preferredNameOnBadge || "-"}</td>
+              <td>${attendee.emailAddress || "-"}</td>
+              <td>${attendee.company || "-"}</td>
+              <td>${attendee.position || "-"}</td>
+              <td>${attendee.status || "-"}</td>
+              <td>${attendee.checkInAt || "-"}</td>
+              <td>${attendee.mealPreference || "-"}</td>
             </tr>
-          </thead>
+          `
+        )
+        .join("");
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <title>${eventDetails?.title || "Event"} Attendees</title>
 
-          <tbody>
-            ${tableRows}
-          </tbody>
-        </table>
+                <style>
+                  *{
+                    box-sizing:border-box;
+                  }
 
-      </body>
-    </html>
-  `);
+                  body{
+                    font-family:Arial, Helvetica, sans-serif;
+                    margin:20px;
+                    color:#222;
+                  }
 
-  printWindow.document.close();
-  printWindow.focus();
+                  h1{
+                    text-align:center;
+                    margin-bottom:5px;
+                    font-size:24px;
+                  }
 
-  setTimeout(() => {
-    printWindow.print();
-    printWindow.close();
-  }, 500);
-};
+                  h3{
+                    text-align:center;
+                    margin-top:0;
+                    margin-bottom:20px;
+                    color:#555;
+                    font-weight:normal;
+                  }
+
+                  table{
+                    width:100%;
+                    border-collapse:collapse;
+                    table-layout:auto;
+                  }
+
+                  thead{
+                    background:#f5f5f5;
+                  }
+
+                  th,
+                  td{
+                    border:1px solid #999;
+                    padding:8px;
+                    font-size:11px;
+                    text-align:left;
+                    vertical-align:top;
+                    word-break:break-word;
+                  }
+
+                  th{
+                    font-weight:bold;
+                  }
+
+                  td:first-child,
+                  th:first-child{
+                    width:45px;
+                    text-align:center;
+                  }
+
+                  tr{
+                    page-break-inside:avoid;
+                  }
+
+                  @page{
+                    size:landscape;
+                    margin:10mm;
+                  }
+                </style>
+              </head>
+
+              <body>
+
+              <h1>${eventDetails?.title || "Event"}</h1>
+                <h3>Attendees List</h3>
+
+                <table>
+                  <thead>
+                    <tr>
+                      <th>No.</th>
+                      <th>First Name</th>
+                      <th>Last Name</th>
+                      <th>Preferred Name</th>
+                      <th>Email</th>
+                      <th>Company</th>
+                      <th>Position</th>
+                      <th>Status</th>
+                      <th>Checked In/th>
+                      <th>Preferred Meal</th>
+                    
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    ${tableRows}
+                  </tbody>
+                </table>
+
+              </body>
+            </html>
+          `);
+
+          printWindow.document.close();
+          printWindow.focus();
+
+          setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+          }, 500);
+        };
 
   const fetchEventDetails = async () => {
-    try {
-      const response = await getEventById(eventId);
+      try {
+        const response = await getEventById(eventId);
 
-      console.log("Event details:", response);
+        const event = response.data;
 
-      setEventName(response.data?.title || "Event");
-    } catch (error) {
-      console.error("Fetch event details error:", error);
-      setEventName("Event");
-    }
-  };
+        setEventDetails(event);
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
   const fetchAttendees = async () => {
     if (!eventId) {
@@ -193,10 +246,16 @@ const EventAttendees = () => {
       });
 
       console.log("API Response:", response);
+      console.log(response.data[0]);
+      console.log("checkInAt:", response.data[0]?.checkInAt);
+      console.log(response.data[0]);
 
+     console.log("Pagination:", response.pagination);
+console.log("Total Records:", response.pagination?.totalRecords);
       setAttendees(response.data || []);
-      setTotalPages(response.meta?.totalPages || 1);
-    } catch (error) {
+      setTotalPages(response.pagination?.totalPages || 1);
+      setTotalAttendees(response.pagination?.totalRecords || 0);
+      } catch (error) {
       console.error("Fetch attendees error:", error);
       alert("Failed to load attendees");
     } finally {
@@ -204,10 +263,41 @@ const EventAttendees = () => {
     }
   };
 
-  useEffect(() => {
-    fetchEventDetails();
-    fetchAttendees();
-  }, [eventId, page, search, status]);
+  
+
+  const fetchDashboardStats = async () => {
+  try {
+    const response = await getAttendees({
+      eventId,
+      page: 1,
+      limit: 10000, // fetch all attendees
+      search: "",
+      status: "",
+    });
+
+    const allAttendees = response.data || [];
+
+    setCheckedInCount(
+      allAttendees.filter(a => a.status === "CHECKED_IN").length
+    );
+
+    setAssignedTables(
+      allAttendees.filter(a => a.tableNumber).length
+    );
+
+    setPendingConfirmation(
+      allAttendees.filter(a => a.status === "PENDING").length
+    );
+
+  } catch (err) {
+    console.error("Dashboard stats error:", err);
+  }
+};
+useEffect(() => {
+  fetchEventDetails();
+  fetchAttendees();
+  fetchDashboardStats();
+}, [eventId, page, search, status]);
 
   const handleExport = () => {
     const csvRows = [
@@ -219,8 +309,9 @@ const EventAttendees = () => {
         "Company",
         "Position",
         "Status",
+        "Checked In",
         "Table Number",
-        "Created Date",
+        "Preferred Meal",
       ],
       ...attendees.map((attendee) => [
         attendee.firstName || "",
@@ -230,10 +321,9 @@ const EventAttendees = () => {
         attendee.company || "",
         attendee.position || "",
         attendee.status || "",
+        attendee.checkInAt || "",
         attendee.tableNumber || "",
-        attendee.createdAt
-          ? new Date(attendee.createdAt).toLocaleString()
-          : "",
+        attendee.mealPreference || "",
       ]),
     ];
 
@@ -249,58 +339,45 @@ const EventAttendees = () => {
     link.click();
   };
 
-  const totalAttendees = attendees.length;
 
-  const checkedInCount = attendees.filter(
-    (a) => a.status === "CHECKED_IN"
-  ).length;
-
-  const checkedInPercentage =
-    totalAttendees > 0
-      ? ((checkedInCount / totalAttendees) * 100).toFixed(1)
-      : 0;
-
-  const calledCount = attendees.filter(
-    (a) => a.status === "CALLED"
-  ).length;
-
+ 
   const handleBulkUpload = (e) => {
     const file = e.target.files[0];
 
-    if (!file) return;
+        if (!file) return;
 
-    const reader = new FileReader();
+        const reader = new FileReader();
 
-    reader.onload = (event) => {
-      const text = event.target.result;
-      const rows = text.split("\n").map((row) => row.split(","));
+        reader.onload = (event) => {
+          const text = event.target.result;
+          const rows = text.split("\n").map((row) => row.split(","));
 
-      const dataRows = rows.slice(1);
+          const dataRows = rows.slice(1);
 
-      const newAttendees = dataRows
-        .filter((row) => row.length >= 6)
-        .map((row, index) => ({
-          id: `${eventId}-${Date.now()}-${index}`,
-          eventId,
-          firstName: row[0]?.trim(),
-          lastName: row[1]?.trim(),
-          preferredNameOnBadge: row[2]?.trim(),
-          emailAddress: row[3]?.trim(),
-          company: row[4]?.trim(),
-          position: row[5]?.trim(),
-          status: "PENDING",
-          createdAt: new Date().toISOString(),
-        }));
+          const newAttendees = dataRows
+            .filter((row) => row.length >= 6)
+            .map((row, index) => ({
+              id: `${eventId}-${Date.now()}-${index}`,
+              eventId,
+              firstName: row[0]?.trim(),
+              lastName: row[1]?.trim(),
+              preferredNameOnBadge: row[2]?.trim(),
+              emailAddress: row[3]?.trim(),
+              company: row[4]?.trim(),
+              position: row[5]?.trim(),
+              status: "PENDING",
+              mealPreference: row[6]?.trim() || "",
+            }));
 
-      setAttendees((prev) => [...prev, ...newAttendees]);
+          setAttendees((prev) => [...prev, ...newAttendees]);
 
-      alert(`${newAttendees.length} attendees uploaded successfully.`);
-    };
+          alert(`${newAttendees.length} attendees uploaded successfully.`);
+        };
 
-    reader.readAsText(file);
-  };
-//Save table assignment to the backend
- const handleAssignTable = async () => {
+        reader.readAsText(file);
+      };
+// Save table assignment to the backend
+const handleAssignTable = async () => {
   if (!selectedAttendee) {
     alert("Please select an attendee.");
     return;
@@ -312,6 +389,8 @@ const EventAttendees = () => {
   }
 
   try {
+    setLoading(true);
+
     console.log("Assigning Table:", {
       attendeeId: selectedAttendee.id,
       tableNumber: Number(tableNumber),
@@ -324,258 +403,945 @@ const EventAttendees = () => {
 
     console.log("Assign Table Response:", response);
 
-    if (response.success) {
-      // Refresh attendees
-      await fetchAttendees();
+    // Refresh attendee list from backend
+    await fetchAttendees();
 
-      // Update selected attendee in the modal
-      setSelectedAttendee((prev) => ({
-        ...prev,
-        tableNumber: Number(tableNumber),
-      }));
+    // Update currently opened attendee details
+    setSelectedAttendee((prev) => ({
+      ...prev,
+      tableNumber: Number(tableNumber),
+    }));
 
-      setShowAssignForm(false);
-      setTableNumber("");
+    // Close Assign Table modal
+    setShowAssignModal(false);
 
-      alert(response.message || "Table assigned successfully.");
-    }
+    // Reset input
+    setTableNumber("");
+
+    alert(response?.message || "Table assigned successfully.");
   } catch (error) {
-    console.error("Assign Table Error:", error.response?.data || error);
+    console.error(
+      "Assign Table Error:",
+      error.response?.data || error
+    );
 
     alert(
       error.response?.data?.message ||
       "Failed to assign table."
     );
+  } finally {
+    setLoading(false);
   }
 };
+//Checking In
 
+    const handleCheckIn = async () => {
+      try {
+        const response = await checkInAttendee(selectedAttendee.id);
 
-  return (
+        if (response.success) {
+          // Refresh table
+          await fetchAttendees();
+
+          // Get updated attendee
+          const updatedAttendee = await getAttendeeById(selectedAttendee.id);
+
+          console.log("Updated Attendee:", updatedAttendee);
+
+          setSelectedAttendee(updatedAttendee.data);
+
+          setCheckInSuccess(true);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+return (
     <div className="event-attendees-page">
-      <div className="attendees-header">
-        <h1>{eventName} Attendees</h1>
-        <p>{attendees.length} attendee(s)</p>
-      </div>
+      <div className="event-header">
+
+        <button
+            className="back-button"
+            onClick={() => navigate("/published-events")}
+        >
+            <ArrowLeft size={18} />
+            Back
+        </button>
+  
+        <div className="event-title-section">
+            <h2>
+                {eventDetails?.title || "Loading Event..."}
+            </h2>
+            <div className="event-meta">
+                <span>
+                    <CalendarDays size={16}/>
+                    {eventDetails?.startDate || "-"}
+                </span>
+                <span>
+                    <Clock3 size={16}/>
+                    {eventDetails?.checkInTime || "-"} - {eventDetails?.lunchTime || "-"}
+                </span>
+                <span>
+                    <MapPin size={16}/>
+                    {eventDetails?.venue || "-"}
+                </span>
+            </div>
+          </div>
+
+          <div className="header-attendees">
+              <Users size={30}/>
+              {totalAttendees} Attendees
+          </div>
+        </div>
 
       {/* Dashboard */}
-      <div className="attendees-dashboard">
-        <div className="dashboard-card">
-          <h3>Total Attendees</h3>
-          <p>{totalAttendees}</p>
+      <div className="dashboard-grid">
+       <div className="dashboard-card">
+            <div className="dashboard-icon blue">
+                <Users size={30}/>
+            </div>
+            <div>
+                <h1>
+                    Total Attendees
+                </h1>
+                <h3>{totalAttendees}</h3>
+                <span>
+                    {totalAttendees} Registered
+                </span>
+            </div>
+        </div>
+      <div className="dashboard-card">
+          <div className="dashboard-icon green">
+              <CheckCircle2 size={30}/>
+          </div>
+      <div>
+           <h1>
+                Checked In
+           </h1>
+            <h3>
+                {checkedInCount} / {totalAttendees}
+            </h3>
+            <div className="progress">
+                  <div
+                      className="progress-fill"
+
+                      style={{
+                          width:`${checkedInPercentage}%`
+                      }}
+                  />
+            </div>
+                  <span>
+                      {checkedInPercentage}% Check-in Rate
+                  </span>
         </div>
 
-        <div className="dashboard-card">
-          <h3>Checked-in Rate</h3>
-          <p>{checkedInPercentage}%</p>
+    </div>
+    <div className="dashboard-card">
+        <div className="dashboard-icon orange">
+            <Armchair size={30}/>
         </div>
+        <div>
+            <h1>Table Assigned</h1>
+            <h3>
+                {assignedTables}
+            </h3>
+            <span>
+                {unassignedTables} Not Assigned
+            </span>
+        </div>
+    </div>
+    <div className="dashboard-card">
+        <div className="dashboard-icon purple">
+            <Hourglass size={30}/>
+        </div>
+        <div>
+            <h1> 
+                Pending Confirmations
+            </h1>     
+            <h3>
+                {pendingConfirmation}
+            </h3>
+            <span>
+                {pendingConfirmation === 0
+                    ? "All Confirmed"
+                    : `${pendingConfirmation} Pending`
+                }
+            </span>
+        </div>
+    </div>
+  </div>
+      {/* Controls */}
+      <div className="toolbar">
+          <div className="toolbar-left">
+            <div className="search-box">
+                <Search size={18} />
+                <input
+                    type="text"
+                    placeholder="Search by name, email or company..."
+                    value={search}
+                    onChange={(e) => {
+                        setPage(1);
+                        setSearch(e.target.value);
+                    }}
+                />
+            </div>
+                <select
+                    value={status}
+                    onChange={(e) => {
+                        setStatus(e.target.value);
+                        setPage(1);
+                    }}
+                >
+                    <option value="">All Status</option>
+                    <option value="CONFIRMED">Confirmed</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="CHECKED_IN">Checked In</option>
+                    <option value="CANCELLED">Cancelled</option>
+                    <option value="DECLINED">Declined</option>
+                    <option value="NO_SHOW">No Show</option>
+                </select>
 
-        <div className="dashboard-card">
-          <h3>Pending Confirmations</h3>
-          <p>{calledCount}</p>
-        </div>
       </div>
 
-      {/* Controls */}
-      <div className="attendees-controls">
+    <div className="toolbar-right">
         <button
-          className="back-btn"
-          onClick={() => navigate("/published-events")}
-        >
-          ← Back
+         className="blue-btn"
+         onClick={() =>
+          navigate(`/registration/${eventId}?mode=admin`)
+          }>
+            <Plus size={18}/>
+            Add Attendee
         </button>
-
-        <input
-          type="text"
-          placeholder="Search attendees..."
-          value={search}
-          onChange={(e) => {
-            setPage(1);
-            setSearch(e.target.value);
-          }}
-        />
-
-        <select
-          value={status}
-          onChange={(e) => {
-            setPage(1);
-            setStatus(e.target.value);
-          }}
+        <button
+            className="white-btn"
+            onClick={handlePrint}
         >
-          <option value="">All Status</option>
-          <option value="PENDING">Pending</option>
-          <option value="CHECKED_IN">Checked In</option>
-          <option value="CONFIRMED">Confirmed</option>
-          <option value="CANCELLED">Cancelled</option>
-          <option value="DECLINED">Declined</option>
-          <option value="NO_SHOW">No Show</option>
-        </select>
-
-        <div className="attendee-actions">
-          <button className="print-btn" onClick={handlePrint}>
-            Print
-          </button>
-
-          <button className="export-btn" onClick={handleExport}>
+            <Printer size={17}/>
+              Print
+        </button>
+        <button
+            className="white-btn"
+            onClick={handleExport}
+        >
+            <Download size={17}/>
             Export
-          </button>
-
-          <button
-            className="bulk-upload-btn"
+        </button>
+        <button
+            className="white-btn"
             onClick={() => fileInputRef.current.click()}
-          >
+        >
+            <Upload size={17}/>
             Bulk Upload
-          </button>
-
-          <input
+        </button>
+        <input
+            ref={fileInputRef}
             type="file"
             accept=".csv"
-            ref={fileInputRef}
-            style={{ display: "none" }}
+            hidden
             onChange={handleBulkUpload}
-          />
-        </div>
-      </div>
-
+        />
+    </div>
+ </div>
       {/* Table */}
-    
-       <div className="table-wrapper overflow-auto max-h-[600px] rounded-lg border border-gray-200">
-          <div ref={printRef}>
-          {loading ? (
-            <p>Loading attendees...</p>
-          ) : attendees.length === 0 ? (
-            <p>No attendees found.</p>
-          ) : (
-            <table className="attendees-table max-h-[600px] overflow-auto">
+       <div className="modern-table-wrapper">
+           <div className="table-scroll" ref={printRef}>
+              {loading ? (
+                          <table className="modern-table">
+                            <thead>
+                              <tr>
+                                <th>
+                                  <div className="th-content">
+                                    No.
+                                    <ArrowUpDown size={13} />
+                                  </div>
+                                </th>
+                                <th>
+                                  <div className="th-content">
+                                    Name
+                                    <ArrowUpDown size={13} />
+                                  </div>
+                                </th>
+
+                                <th>
+                                  <div className="th-content">
+                                    Email
+                                    <ArrowUpDown size={13} />
+                                  </div>
+                                </th>
+
+                                <th>
+                                  <div className="th-content">
+                                    Company
+                                    <ArrowUpDown size={13} />
+                                  </div>
+                                </th>
+
+                                <th>
+                                  <div className="th-content">
+                                    Position
+                                    <ArrowUpDown size={13} />
+                                  </div>
+                                </th>
+
+                                <th>
+                                  <div className="th-content">
+                                    Registration Status
+                                    <ArrowUpDown size={13} />
+                                  </div>
+                                </th>
+
+                                
+
+                                <th>
+                                  <div className="th-content">
+                                    Table No.
+                                    <ArrowUpDown size={13} />
+                                  </div>
+                                </th>
+                                <th>
+                                  <div className="th-content">
+                                    Meal Preferred
+                                    <ArrowUpDown size={13} />
+                                  </div>
+                                </th>
+                               
+                              </tr>
+                            </thead>
+
+                            <tbody>
+                              {loading ? (
+                                <tr>
+                                  <td colSpan="7" className="table-empty">
+                                    Loading attendees...
+                                  </td>
+                                </tr>
+                              ) : attendees.length === 0 ? (
+                                <tr>
+                                  <td colSpan="7" className="table-empty">
+                                    Loading Attendees . . .
+                                  </td>
+                                </tr>
+                              ) : (
+                                attendees.map((attendee) => (
+                                  <tr key={attendee.id}>
+                                    {/* your existing row */}
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+              ) : attendees.length === 0 ? (
+                          <table className="modern-table">
+                                <thead>
+                                  <tr>
+                                    <th>
+                                      <div className="th-content">
+                                        No.
+                                        <ArrowUpDown size={13} />
+                                      </div>
+                                    </th>
+                                    <th>
+                                      <div className="th-content">
+                                        Name
+                                        <ArrowUpDown size={13} />
+                                      </div>
+                                    </th>
+
+                                    <th>
+                                      <div className="th-content">
+                                        Email
+                                        <ArrowUpDown size={13} />
+                                      </div>
+                                    </th>
+
+                                    <th>
+                                      <div className="th-content">
+                                        Company
+                                        <ArrowUpDown size={13} />
+                                      </div>
+                                    </th>
+
+                                    <th>
+                                      <div className="th-content">
+                                        Position
+                                        <ArrowUpDown size={13} />
+                                      </div>
+                                    </th>
+
+                                    <th>
+                                      <div className="th-content">
+                                        Registration Status
+                                        <ArrowUpDown size={13} />
+                                      </div>
+                                    </th>
+                                    <th>
+                                    <div className="th-content">
+                                        Checkin Status
+                                        <ArrowUpDown size={13} />
+                                      </div>
+                                    </th>
+
+                                    <th>
+                                      <div className="th-content">
+                                        Table No.
+                                        <ArrowUpDown size={13} />
+                                      </div>
+                                    </th>
+                                    <th>Meal Preferred</th>
+                                  </tr>
+                                </thead>
+
+                                <tbody>
+                                  {loading ? (
+                                    <tr>
+                                      <td colSpan="7" className="table-empty">
+                                        Loading attendees...
+                                      </td>
+                                    </tr>
+                                  ) : attendees.length === 0 ? (
+                                    <tr>
+                                      <td colSpan="7" className="table-empty">
+                                        No attendees found.
+                                      </td>
+                                    </tr>
+                                  ) : (
+                                    attendees.map((attendee) => (
+                                      <tr key={attendee.id}>
+                                        {/* your existing row */}
+                                      </tr>
+                                    ))
+                                  )}
+                                </tbody>
+                              </table>
+                                  ) : (
+            <table className="modern-table">
               <thead>
-                <tr>
-                  <th>First Name</th>
-                  <th>Last Name</th>
-                  <th>ID Name</th>
-                  <th>Email</th>
-                  <th>Company</th>
-                  <th>Position</th>
-                  <th>Status</th>
-                  <th>Table No.</th>
-                  <th>Created Date</th>
+                <tr>   
+                  <th className="w-12 px-4 py-3 text-center">
+                      <input
+                        type="checkbox"
+                        checked ={
+                          attendees.length > 0 &&
+                          selectedRows.length == attendees.length
+                        }
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                              setSelectedRows(attendees.map(a => a.id));
+                            } else {
+                              setSelectedRows([]);
+                            } 
+                          }
+                        }
+                        className="h-4 w-4 cursor-pointer accent-red-600"
+                      />
+                  </th>
+                  {/*<th className="w-12 px-4 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={
+                            attendees.length > 0 &&
+                            selectedRows.length === attendees.length
+                          }
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedRows(attendees.map(a => a.id));
+                            } else {
+                              setSelectedRows([]);
+                            }
+                          }}
+                          className="h-4 w-4 cursor-pointer accent-red-600"
+                        />
+                      </th>*/}
+                  <th>
+                    <div className="th-content">
+                      Name
+                      <ArrowUpDown size={13} />
+                    </div>
+                  </th>
+
+                  <th>
+                    <div className="th-content">
+                      Email
+                      <ArrowUpDown size={13} />
+                    </div>
+                  </th>
+
+                  <th>
+                    <div className="th-content">
+                      Company
+                      <ArrowUpDown size={13} />
+                    </div>
+                  </th>
+
+                  <th>
+                    <div className="th-content">
+                      Position
+                      <ArrowUpDown size={13} />
+                    </div>
+                  </th>
+
+                  <th>
+                    <div className="th-content">
+                      Registration Status
+                      <ArrowUpDown size={13} />
+                    </div>
+                  </th>
+                   
+
+            
+                  <th>
+                    <div className="th-content">
+                      Table No.
+                      <ArrowUpDown size={13} />
+                    </div>
+                  </th>
+
+                  <th>Meal Preferred</th>
                 </tr>
-              </thead>
+            </thead>
+        <tbody>
+            {attendees.map((attendee) => (
+              <tr
+                  key={attendee.id}
+                  className="clickable-row"
+                  onClick={() => setSelectedAttendee(attendee)}
+                >
 
-              <tbody>
-                {attendees.map((attendee) => (
-                  <tr
-                    key={attendee.id}
-                    onClick={() => setSelectedAttendee(attendee)}
-                    className="clickable-row"
+               {/* Select checkbox */}  
+                <td className="text-center">
+                  <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-red-600"
+                      checked={selectedRows.includes(attendee.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedRows([...selectedRows, attendee.id]);
+                        } else {
+                          setSelectedRows(selectedRows.filter(id => id !== attendee.id));
+                        }
+                      }}
+                    />
+                </td>
+                {/*<input
+                    type="checkbox"
+                     className="h-4 w-4 accent-red-600"
+                    checked={selectedRows.includes(attendee.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedRows([...selectedRows, attendee.id]);
+                      } else {
+                        setSelectedRows(
+                          selectedRows.filter(id => id !== attendee.id)
+                        );
+                      }
+                    }}
+                  />  className="h-4 w-4 accent-red-600"*/}
+
+                {/* Name */}
+                <td>
+                  <div className="attendee-info">
+                    
+
+                    <div>
+                      <div className="attendee-name">
+                        {attendee.firstName} {attendee.lastName}
+                      </div>
+                    {/* Name 
+                      <div className="attendee-nickname">
+                        {attendee.preferredNameOnBadge || "-"}
+                      </div> */}
+                    </div>
+                  </div>
+                </td>
+
+                {/* Email */}
+                <td>{attendee.emailAddress}</td>
+
+                {/* Company */}
+                <td>{attendee.company || "-"}</td>
+
+                {/* Position */}
+                <td>{attendee.position || "-"}</td>
+
+                {/* Registration Status */}
+                <td>
+                  <span
+                    className={`status-badge ${
+                      attendee.status === "CONFIRMED"
+                        ? "confirmed"
+                        : attendee.status === "CHECKED_IN"
+                        ? "checkedin"
+                        : attendee.status === "PENDING"
+                        ? "pending"
+                        : attendee.status === "DECLINED"
+                        ? "declined"
+                        : attendee.status === "NO_SHOW"
+                        ? "noshow"
+                        : "cancelled"
+                    }`}
                   >
-                    <td>{attendee.firstName || "-"}</td>
-                    <td>{attendee.lastName || "-"}</td>
-                    <td>{attendee.preferredNameOnBadge || "-"}</td>
-                    <td>{attendee.emailAddress || "-"}</td>
-                    <td>{attendee.company || "-"}</td>
-                    <td>{attendee.position || "-"}</td>
-                    <td>{attendee.status || "-"}</td>
-                    <td>
-                      {attendee.tableNumber
-                        ? attendee.tableNumber
-                        : "-"}
-                    </td>
-                    <td>
-                      {attendee.createdAt
-                        ? new Date(attendee.createdAt).toLocaleString()
-                        : "-"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
+                    {attendee.status?.replace("_", " ")}
+                  </span>
+                </td>
+              
+                 
 
-      {/* Modal */}
-      {selectedAttendee && (
-        <div
-          className="modal-overlay"
+                {/* Table */}
+                <td>
+                  {attendee.tableNumber || "Not Assigned"}
+                </td>
+                {/* Table */}
+                <td>
+                  {attendee.mealPreference || "Not Assigned"}
+                </td>
+               
+
+              </tr>
+            ))}
+          </tbody>
+      </table>
+      
+    )}
+  </div>           
+</div>
+       {/* Modal */}
+        {selectedAttendee && (
+            <div
+              className="attendee-modal-overlay"
+              onClick={() => {
+                setSelectedAttendee(null);
+                setShowAssignForm(false);
+                setTableNumber("");
+                setActiveTab("details");
+              }}
+            >
+              <div
+                className="attendee-modal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="attendee-modal-header">
+                  <h2>Attendee Details</h2>
+
+                  <button
+                    className="close-icon"
+                    onClick={() => {
+                      setSelectedAttendee(null);
+                      setShowAssignForm(false);
+                      setTableNumber("");
+                      setActiveTab("details");
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+      {/* Tabs */}
+              <div className="attendee-tabs">
+                <button
+                  className={activeTab === "details" ? "active" : ""}
+                  onClick={() => setActiveTab("details")}
+                >
+                  Details
+                </button>
+
+                <button
+                  className={activeTab === "attendance" ? "active" : ""}
+                  onClick={() => setActiveTab("attendance")}
+                >
+                  Attendance
+                </button>
+
+                <button
+                  className={activeTab === "companion" ? "active" : ""}
+                  onClick={() => setActiveTab("companion")}
+                >
+                  Companion
+                </button>
+              </div>
+
+      {/* Body */}
+            <div className="attendee-modal-body">
+
+            {activeTab === "details" && (
+                <div className="details-layout">
+
+            {/* LEFT CARD */}
+            <div className="profile-card">
+
+              <div className="avatar-circle">
+                {selectedAttendee.firstName?.charAt(0)}
+                {selectedAttendee.lastName?.charAt(0)}
+              </div>
+
+              <h3>
+                {selectedAttendee.firstName} {selectedAttendee.lastName}
+              </h3>
+
+              <p className="preferred-name">
+                {selectedAttendee.preferredNameOnBadge}
+              </p>
+
+              <span className="status-badge confirmed">
+                {selectedAttendee.status}
+              </span>
+
+              <p className="attendee-id">
+                ID: {selectedAttendee.id?.slice(0,8)}
+              </p>
+
+              <div className="qr-card">
+                  <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${selectedAttendee.id}`}
+                        alt="QR Code"
+                        className="qr-image"
+                    />
+                <small>Scan to view badge</small>
+              </div>
+          </div>
+
+    {/* RIGHT SIDE */}
+    <div className="details-right">
+      <h4 className="section-heading">
+        👤 Personal Information
+      </h4>
+        <div className="info-grid">
+
+          <label>First Name</label>
+          <span>{selectedAttendee.firstName || "-"}</span>
+
+          <label>Last Name</label>
+          <span>{selectedAttendee.lastName || "-"}</span>
+
+          <label>Preferred Name</label>
+          <span>{selectedAttendee.preferredNameOnBadge || "-"}</span>
+
+          <label>Email</label>
+          <span className="email-text">
+            {selectedAttendee.emailAddress || "-"}
+          </span>
+
+          <label>Company</label>
+          <span>{selectedAttendee.company || "-"}</span>
+
+          <label>Position</label>
+          <span>{selectedAttendee.position || "-"}</span>
+
+        </div>
+
+      <hr className="section-divider" />
+        <h4 className="section-heading">
+              📋 Attendance Information
+        </h4>
+            <div className="info-grid">
+              <label>Status</label>
+              <span>
+                <span
+                  className={`status-badge ${
+                    selectedAttendee.status === "CONFIRMED"
+                      ? "confirmed"
+                      : selectedAttendee.status === "PENDING"
+                      ? "pending"
+                      : "cancelled"
+                  }`}
+                >
+                  {selectedAttendee.status}
+                </span>
+              </span>
+              <label>Check-in Status</label>
+              <span>
+                {selectedAttendee.status === "CHECKED_IN"
+                  ? "Checked In"
+                  : "Not Checked In"}
+              </span>
+              <label>Check-in Time</label>
+              <span>
+                {selectedAttendee.checkInAt
+                  ? new Date(selectedAttendee.checkInAt).toLocaleString()
+                  : "-"}
+              </span>
+
+              <label>Checked In By</label>
+
+              <span>
+                {selectedAttendee.checkedInBy || "-"}
+              </span>
+
+              <label>
+                Table Number
+              </label>
+
+              <span className="table-row">
+
+                {selectedAttendee.tableNumber || "-"}
+
+                <button
+                  className="edit-table-btn"
+                  onClick={() => setShowAssignForm(true)}
+                >
+                </button>
+
+              </span>
+
+            </div>
+        </div>
+
+          </div>
+        )}
+        {activeTab === "attendance" && (
+
+<div className="attendance-tab">
+
+    <h3>Attendance Summary</h3>
+
+    <div className="attendance-grid">
+
+        <div className="attendance-card">
+
+            <label>Status</label>
+
+            <strong>{selectedAttendee.status}</strong>
+
+        </div>
+
+        <div className="attendance-card">
+
+            <label>Table Number</label>
+
+            <strong>{selectedAttendee.tableNumber || "-"}</strong>
+
+        </div>
+
+        <div className="attendance-card">
+
+            <label>Meal Preference</label>
+
+            <strong>{selectedAttendee.mealPreference || "-"}</strong>
+
+        </div>
+
+        <div className="attendance-card">
+
+            <label>Check In Time</label>
+
+            <strong>
+
+                {selectedAttendee.checkedInAt
+                    ? new Date(selectedAttendee.checkedInAt).toLocaleString()
+                    : "-"}
+
+            </strong>
+
+        </div>
+
+    </div>
+
+</div>
+
+)}
+
+{activeTab === "companion" && (
+
+<div className="activity-tab">
+
+<h3>Attendee Companion Details</h3>
+
+</div>
+)}
+{showAssignModal && (
+  <div
+    className="modal-overlay"
+    onClick={() => setShowAssignModal(false)}
+  >
+    <div
+      className="assign-table-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h2>Assign Table</h2>
+
+      <p className="assign-subtitle">
+        {selectedAttendee.firstName} {selectedAttendee.lastName}
+      </p>
+
+      <label>Table Number</label>
+
+      <input
+        type="number"
+        min="1"
+        value={tableNumber}
+        onChange={(e) => setTableNumber(e.target.value)}
+        placeholder="Enter table number"
+      />
+
+      <div className="assign-actions">
+        <button
+          className="cancel-table-btn"
+          onClick={() => setShowAssignModal(false)}
+        >
+          Cancel
+        </button>
+
+        <button
+          className="save-table-btn"
+          onClick={handleAssignTable}
+        >
+          Save
+        </button>
+
+                
+      </div>
+    </div>
+  </div>
+)}
+    
+</div>
+
+      {/* Footer */}
+      <div className="attendee-modal-footer">
+
+        <button
+          className="modal-cancel-btn"
           onClick={() => {
             setSelectedAttendee(null);
             setShowAssignForm(false);
             setTableNumber("");
+            setActiveTab("details");
           }}
         >
-          <div
-            className="modal-box"
-            onClick={(e) => e.stopPropagation()}
+          Cancel
+        </button>
+
+        <button className="modal-assign-btn"
+         onClick={() => {
+        setTableNumber(selectedAttendee.tableNumber || "");
+        setShowAssignModal(true);
+      }}
+        >
+          Assign Table
+        </button>
+
+        <button className="modal-checkin-btn"
+                  disabled={
+                  checkingIn ||
+                  selectedAttendee?.status === "CHECKED_IN"
+              }
+              onClick={handleCheckIn}
           >
-             
-            <label className="text-blue-500 text-lg font-bold">Attendee Details:</label>
-            <hr className="my-2 border-red-300 border-t-2" />
+              {selectedAttendee?.status === "CHECKED_IN"
+                  ? "Already Checked In"
+                  : checkingIn
+                  ? "Checking In..."
+                  : "Check In"}
+                  
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
-            <p><b>First Name:</b> {selectedAttendee.firstName}</p>
-            <p><b>Last Name:</b> {selectedAttendee.lastName}</p>
-            <p><b>Preferred Name:</b> {selectedAttendee.preferredNameOnBadge}</p>
-            <p><b>Email:</b> {selectedAttendee.emailAddress}</p>
-            <p><b>Company:</b> {selectedAttendee.company}</p>
-            <p><b>Position:</b> {selectedAttendee.position}</p>
-            <p><b>Status: </b> 
-             <span  className={
-                  selectedAttendee.status === "CONFIRMED"
-                    ? "text-green-600 font-bold"
-                    : selectedAttendee.status === "PENDING"
-                    ? "text-yellow-600 font-bold"
-                    : "text-red-600 font-bold"
-                }> 
-              {selectedAttendee.status}</span></p>
-            <p><b>Table Number:</b> {selectedAttendee.tableNumber || "-"}</p>
-
-            {/* Assign Table Form */}
-            {showAssignForm && (
-              <div className="assign-form">
-                <label>Table Number</label>
-                <input
-                  type="text"
-                  value={tableNumber}
-                  onChange={(e) => setTableNumber(e.target.value)}
-                  placeholder="Enter table number"
-                />
-
-                  <button
-                    className="save-table-btn"
-                    onClick={async () => {
-                      if (!tableNumber.trim()) {
-                        alert("Please enter a table number.");
-                        return;
-                      }
-
-                      await handleAssignTable();
-                    }}
-                  >
-                    Save Table
-                  </button>
-              </div>
-            )}
-
-            <div className="modal-actions">
-              <button
-                className="assign-btn"
-                onClick={() => setShowAssignForm(true)}
-              >
-                Assign Table
-              </button>
-
-              <button
-                className="close-btn"
-                onClick={() => {
-                  setSelectedAttendee(null);
-                  setShowAssignForm(false);
-                  setTableNumber("");
-                }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            
 
       {/* Pagination */}
       <div className="pagination">
