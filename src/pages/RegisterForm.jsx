@@ -310,7 +310,7 @@ const formFields = [
                 </button>
               )}
             </div>
-
+   {/* Companion Area */}
             <div className="space-y-4">
 
               {companions.map((companion, index) => (
@@ -338,12 +338,12 @@ const formFields = [
 
                   <div>
                     <label className="mb-2 block text-sm font-medium text-slate-700">
-                      Relationship
+                      Relationship/Position
                     </label>
 
                     <input
                       type="text"
-                      placeholder="Relationship"
+                      placeholder="Relationship/Position"
                       value={companion.relationship}
                       onChange={(e) =>
                         updateCompanion(index, "relationship", e.target.value)
@@ -351,6 +351,36 @@ const formFields = [
                       className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
                     />
                   </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Preferred Name on Badge
+                    </label>
+
+                    <input
+                      type="text"
+                      placeholder="Preferred Name"
+                      value={companion.preferredNameOnBadge}
+                      onChange={(e) =>
+                        updateCompanion(index, "", e.target.value)
+                      }
+                      className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                    />
+                  </div>
+                  <select
+                      value={companion.mealPreference || ""}
+                      onChange={(e) =>
+                        updateCompanion(index, "mealPreference", e.target.value)
+                      }
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                    >
+                      <option value="">Select Meal Preference</option>
+
+                      {(event?.mealPreferences ?? []).map((meal, idx) => (
+                        <option key={idx} value={meal}>
+                          {meal}
+                        </option>
+                      ))}
+                    </select>
 
                   <div className="flex items-end">
                     <button
