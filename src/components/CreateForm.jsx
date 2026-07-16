@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Plus, Trash2, SquarePen, Users } from "lucide-react";
+import { Plus, Trash2, SquarePen, Users, CalendarDays, Clock, Settings} from "lucide-react";
 import {
   createEvent,
   publishEvent,
@@ -17,16 +17,7 @@ const CreateForm = () => {
 
   const [formTitle] = useState("Registration Form");
 
-  const [description, setDescription] = useState(
-    `Event Date: August 27, 2025 - 9AM-5PM (Registration and Breakfast: 8:00 - 9:00 AM)
-
-Event Venue: Rizal Ballroom, Makati Shangri-La Hotel
-
-Inquiry Contact:
-- Digna Santos +639189032173 or digna.santos@asc.com.ph
-- Bree Muyco +639561503875 or breanna.muyco@asc.com.ph
-- Patricia Tombo +639171248773 or patricia.tombo@asc.com.ph`
-  );
+  const [description, setDescription] = useState();
 
   // Event Description
   const [eventDescription, setEventDescription] = useState(
@@ -55,21 +46,18 @@ const [lunchTime, setLunchTime] = useState("");
   // Registration Dates (Accept Responses)
   const [registrationStart, setRegistrationStart] = useState("");
   const [registrationEnd, setRegistrationEnd] = useState("");
+//Lootbags and Souvenir
+const [includesLootBag, setIncludesLootBag] = useState(false);
 
+const [includesSouvenir, setIncludesSouvenir] = useState(false);
   // Banner
   const [banner, setBanner] = useState("");
 
   // Inquiry Contacts
-  const [eventInquiryContact, setEventInquiryContact] = useState(
-    `- Digna Santos +639189032173 or digna.santos@asc.com.ph
-- Bree Muyco +639561503875 or breanna.muyco@asc.com.ph
-- Patricia Tombo +639171248773 or patricia.tombo@asc.com.ph`
-  );
+  const [eventInquiryContact, setEventInquiryContact] = useState();
 
   // Consent Message
-  const [eventConsentMessage, setEventConsentMessage] = useState(
-    `By accepting this Event Consent form, I willingly authorize its Organizers to process my personal data for the sole purpose of achieving the objectives of this event.`
-  );
+  const [eventConsentMessage, setEventConsentMessage] = useState();
 
   const fileInputRef = useRef(null);
 
@@ -97,7 +85,12 @@ const [lunchTime, setLunchTime] = useState("");
   const [lootBagOptions, setLootBagOptions] = useState([""]);
   const [showBannerUpload, setShowBannerUpload] = useState(false);
 const [bannerText, setBannerText] = useState("");
+const formatDateTimeForAPI = (date) => {
+  if (!date) return null;
 
+  // 2026-08-10T08:00 -> 2026-08-10 08:00:00
+  return date.replace("T", " ") + ":00";
+};
 
   const addLootBagOption = () => {
   setLootBagOptions([...lootBagOptions, ""]);
@@ -183,15 +176,9 @@ lunchTime: lunchTime || null,
 
   includesDoorPrize: showLootBags,
 
-  registrationStart:
-    showAcceptResponses && registrationStart
-      ? registrationStart.replace("T", " ")
-      : null,
+  registrationStart: formatDateTimeForAPI(registrationStart),
 
-  registrationEnd:
-    showAcceptResponses && registrationEnd
-      ? registrationEnd.replace("T", " ")
-      : null,
+registrationEnd: formatDateTimeForAPI(registrationEnd),
 };
 
   try {
@@ -245,15 +232,9 @@ lunchTime: lunchTime || null,
 
   includesDoorPrize: showLootBags,
 
-  registrationStart:
-    showAcceptResponses && registrationStart
-      ? registrationStart.replace("T", " ")
-      : null,
+  registrationStart: formatDateTimeForAPI(registrationStart),
 
-  registrationEnd:
-    showAcceptResponses && registrationEnd
-      ? registrationEnd.replace("T", " ")
-      : null,
+registrationEnd: formatDateTimeForAPI(registrationEnd),
 };
   try {
     // ======================
@@ -309,11 +290,6 @@ useEffect(() => {
       setEventVenue(event.venue || "");
       setEventDescription(event.description || "");
 
-      console.log("startDate:", event.startDate);
-      console.log("endDate:", event.endDate);
-      console.log("registrationStart:", event.registrationStart);
-      console.log("registrationEnd:", event.registrationEnd);
-
       setEventStart(formatDateTime(event.startDate));
       setEventEnd(formatDateTime(event.endDate));
       setRegistrationStart(formatDateTime(event.registrationStart));
@@ -338,350 +314,451 @@ useEffect(() => {
 }, [editEvent]);
 
   return (
-    <div className="w-[100%] h-[100%] w-4/5 h-screen bg-white p-6 text-[12px] ">
-       <div className="flex items-center justify-between  !h-[95px] mb-6  bg-border-[#c30d2e] p-4 shadow-md">
-              <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight text-slate-800">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-                          <Users size={24} />
+    <div className="create-event-page">
+      <div className="page-header">
+        <div>
+          <span>{isEdit ? "Edit Event Form" : "Create Event Registration Form"}</span>
+        </div>
+      </div>
+
+      <div className="create-event-wrapper">
+          <div className="create-form-layout">
+
+            {/* LEFT COLUMN */}
+              <div className="left-column">
+
+                  {/* Event Information Card */}
+                  <div className="form-card">
+                      {/* existing Event Information fields go here */}
+                      <div className="card-header">
+                        <div className="card-icon blue">
+                            <CalendarDays size={26}/>
                         </div>
 
-                        <span>
-                          {isEdit ? "Edit Event Form" : "Create Event Registration Form"}
-                        </span>
-              </h1>
-       </div>
-         <div className="w-full flex justify-center px-6 pt-2">
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-10 h-[700px] overflow-y-auto bg-white rounded-lg shadow-md p-10">
-      
-                  {/* LEFT SIDE */}
-                  <div>
-                    <div className="space-y-3">
-                    <h2 className="section-title">Event Name</h2>
-                    <input
-                      type="text"
-                      value={eventName}
-                      onChange={(e) => setEventName(e.target.value)}
-                      placeholder="Enter event name"
-                      className="form-input"
-                      required
-                    />
-                    </div>
-                    {/* Event Description */}
-                     <br></br>
-                     <div className="space-y-3">
-                    <h2 className="section-title">Event Description</h2>
-                    <textarea
-                      value={eventDescription}
-                      onChange={(e) => setEventDescription(e.target.value)}
-                      placeholder="Enter event description"
-                      className="form-input w-[490px] h-[80px]"
-                      rows="4"
-                    />
-                    </div>
-                     <br></br>
-                    {/* Event Venue */}
-                    <div className="space-y-3">
-                      <h2 className="section-title">Event Venue</h2>
-                      <input
-                        type="text"
-                        value={eventVenue}
-                        onChange={(e) => setEventVenue(e.target.value)}
-                        placeholder="Enter event venue"
-                        className="form-input"
-                      />
-                      
-                    </div>
-                     <h2 className="section-title">Event Date and Time</h2>
-                     
-                    <div className="event-date-group">
-                       <div className="event-date-item">
-                     
-                          <label>From</label>
-
-                          <input
-                            type="datetime-local"
-                            value={eventStart}
-                            onChange={(e) => setEventStart(e.target.value)}
-                            className="form-input"
-                          />
+                        <div>
+                            <h3>Event Information</h3>
+                            <p>Provide the basic details of your event.</p>
                         </div>
-
-                        <div className="event-date-item">
-                          <label>To</label>
-
-                          <input
-                            type="datetime-local"
-                            value={eventEnd}
-                            onChange={(e) => setEventEnd(e.target.value)}
-                            className="form-input"
-                          />
-                        </div>
-
-                      </div>
-               
-                     <br></br>
+                    </div>
                   
-                    {/* Maximum Attendees */}
-                    <div className="space-y-3">
-                      <h2 className="section-title">Maximum Attendees (Optional)</h2>
-                      <input
-                        type="number"
-                        value={maxParticipants}
-                        onChange={(e) => setMaxParticipants(e.target.value)}
-                        placeholder="Enter maximum attendees"
-                        className="form-input"
-                      />
-                    </div>
-                
-                </div>
-   {/* Column 2 */}
-                  {/* Menu */}
-                  <div className="space-y-1">
-                    {/* Attire */}
-                    <div className="space-y-3">
-                      <h2 className="section-title">Attire (Optional)</h2>
-                      <input
-                        type="text"
-                        value={attire}
-                        onChange={(e) => setAttire(e.target.value)}
-                        placeholder="Enter attire requirements"
-                        className="form-input"
-                      />
-                    </div>
-                    {/* Registration Time Starts */}
-                    <div className="space-y-3">
-                      <h2 className="section-title">Registration Starts:</h2>
-                      <input
-                            type="time"
-                            value={checkInTime}
-                            onChange={(e) => setCheckInTime(e.target.value)}
-                          className="form-input w-[480px]"
+                    <div className="form-content">
+                      {/* Event Name */}
+                        <div className="form-group">
+                            <label>
+                                Event Name <span>*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                className="form-input"
+
+                                value={eventName}
+                                onChange={(e)=>setEventName(e.target.value)}
+                                placeholder="Enter event name"
+                                required
+                            />
+                        </div>
+                      {/* Description */}
+                        <div className="form-group">
+                            <label>Event Description</label>
+                            <textarea
+                                className="form-textarea"
+                                value={eventDescription}
+                                onChange={(e)=>setEventDescription(e.target.value)}
+                                placeholder="Enter event description"
+                            />
+                        </div>
+                      {/* Venue + Event Type */}
+                        <div className="row-2">
+                          <div className="form-group">
+                                <label>
+                                    Event Venue <span>*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={eventVenue}
+                                    onChange={(e)=>setEventVenue(e.target.value)}
+                                    placeholder="Enter venue"
+                                    required
+                                />
+                          </div> 
+                          <div className="form-group">
+                                <label>
+                                    Attire 
+                                </label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={attire}
+                                    onChange={(e)=>setAttire(e.target.value)}
+                                    placeholder="Enter attire requirements"
+                                 
+                                />
+                          </div>  
+                        </div>  
+                        {/* Start / End */}
+
+                      <div className="row-2">
+                        <div className="form-group">
+                          <label>
+                              Start Date <span>*</span>
+                          </label>
+                          <input
+                              type="datetime-local"
+                              value={eventStart}
+                              onChange={(e) => setEventStart(e.target.value)}
+                              className="form-input"
+                              required
                           />
-                    </div>
-                    {/* Lunch Time Starts */}
-                    <div className="space-y-3">
-                      <h2 className="section-title">Lunch Time Starts:</h2>
-                      <input
-                            type="time"
-                            value={lunchTime}
-                            onChange={(e) => setLunchTime(e.target.value)}
-                          className="form-input w-[480px]"
-                          />
-                    </div>
-                       <h2 className="other-title">Other Settings</h2>
-                    <div className="flex items-center justify-between gap-2">
+                        </div>
+                        <div className="form-group">
+                            <label>
+                                End Date <span>*</span>
+                            </label>
+                            <input
+                                type="datetime-local"
+                                value={eventEnd}
+                                onChange={(e) => setEventEnd(e.target.value)}
+                                className="form-input"
+                            />
+                        </div>
+                      </div>
                       
-                      <div>
-                        <h2 className="section-title">Menu Preference</h2>
-                      </div>
-
-                     <label className="flex items-center gap-3 cursor-pointer">
-                        <span className="text-sm font-medium">
-                          {showMenuInForm ? "On" : "Off"}
-                        </span>
-
-                        <div className="relative">
-                          <input
-                            type="checkbox"
-                            checked={showMenuInForm}
-                            onChange={(e) => setShowMenuInForm(e.target.checked)}
-                            className="sr-only peer"
-                          />
-
-                          <div className="w-12 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors duration-300"></div>
-
-                          <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 peer-checked:translate-x-6"></div>
-                        </div>
-                      </label>
-                    </div>
-
-                    {showMenuInForm &&
-                      menuOptions.map((option, index) => (
-                        <div key={index} className="menu-card">
-                          <input
-                            value={option}
-                            onChange={(e) => updateMenuOption(index, e.target.value)}
-                            className="form-input !w-[350px] h-[40px]"
-                          />
-
-                          <button
-                            onClick={() => removeMenuOption(index)}
-                            className="delete-btn !w-[80px] !h-[40px]"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-
-                          <button onClick={addMenuOption} className="primary-btn !w-[80px] !h-[40px]">
-                            <Plus size={19} />
-                          
-                          </button>
-                        </div>
-                      ))}
-                       {/* Accept Responses */}
-                
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h2 className="section-title">Accept Responses</h2>
-
-                      <label className="flex items-center gap-3 cursor-pointer">
-                          <span className="text-sm font-medium">
-                            {showAcceptResponses ? "On" : "Off"}
-                          </span>
-
-                          <div className="relative">
-                            <input
-                              type="checkbox"
-                              checked={showAcceptResponses}
-                              onChange={(e) => setShowAcceptResponses(e.target.checked)}
-                              className="sr-only peer"
-                            />
-
-                            <div className="w-12 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-500 transition-colors duration-300"></div>
-
-                            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 peer-checked:translate-x-6"></div>
-                          </div>
+                      {/* Maximum */}
+                      <div className="form-group">
+                        <label>
+                            Maximum Attendees
                         </label>
-                    </div>
-
-                    {showAcceptResponses && (
-                       <div className="event-date-group">
-                       <div className="event-date-item">
-                     
-                          <label>From</label>
-
                           <input
-                            type="datetime-local"
-                            value={registrationStart}
-                            onChange={(e) => setRegistrationStart(e.target.value)}
-                            className="form-input"
+                              type="number"
+                              value={maxParticipants}
+                              onChange={(e) => setMaxParticipants(e.target.value)}
+                              placeholder="Enter maximum attendees"
+                              className="form-input"
                           />
-                        </div>
-
-                        <div className="event-date-item">
-                          <label>To</label>
-
-                          <input
-                            type="datetime-local"
-                            value={registrationEnd}
-                            onChange={(e) => setRegistrationEnd(e.target.value)}
-                            className="form-input"
-                          />
-                        </div>
-
                       </div>
-               
-                      )}
-                    </div>
-              
-                  {/* Loot Bags & Souvenirs */}
-                   <div className="space-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <h2 className="section-title">Loot Bags & Souvenirs</h2>
-                      </div>
+                      {/* Accept Responses */}
 
-                     <label className="flex items-center gap-3 cursor-pointer">
-                          <span className="text-sm font-medium">
-                            {showLootBags ? "On" : "Off"}
-                          </span>
+                          <div className="row-2">
 
-                          <div className="relative">
-                            <input
-                              type="checkbox"
-                              checked={showLootBags}
-                              onChange={(e) => setShowLootBags(e.target.checked)}
-                              className="sr-only peer"
-                            />
+                            <div className="form-group">
+                              <label>
+                                Accept Response Start Date <span>*</span>
+                              </label>
 
-                            <div className="w-12 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors duration-300"></div>
-
-                            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 peer-checked:translate-x-6"></div>
-                          </div>
-                        </label>
-                    </div>
-
-                    {showLootBags &&
-                      lootBagOptions.map((option, index) => (
-                        <div key={index} className="menu-card">
-                          <input
-                            value={option}
-                            onChange={(e) =>
-                              updateLootBagOption(index, e.target.value)
-                            }
-                            className="form-input !w-[250px] !h-[40px]"
-                            placeholder="Enter loot bag / souvenir item"
-                          />
-
-                          <button
-                            onClick={() => removeLootBagOption(index)}
-                            className="delete-btn !w-[80px] !h-[40px]"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-
-                          <button
-                            onClick={addLootBagOption}
-                            className="primary-btn !w-[80px] !h-[40px]"
-                          >
-                            <Plus size={19} />
-                          </button>
-                        </div>
-                      ))}
-                                              {/* Upload Banner */}
-                          <div className="space-y-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <div>
-                              <h2 className="section-title">Upload Banner</h2>
+                              <input
+                                type="datetime-local"
+                                value={registrationStart}
+                                onChange={(e) => setRegistrationStart(e.target.value)}
+                                className="form-input"
+                                required
+                              />
                             </div>
 
-                            <label className="flex items-center gap-3 cursor-pointer">
-                                  <span className="text-sm font-medium">
-                                    {showBannerUpload ? "On" : "Off"}
-                                  </span>
+                            <div className="form-group">
+                              <label>
+                                Accept Response End Date <span>*</span>
+                              </label>
 
-                                  <div className="relative">
+                              <input
+                                type="datetime-local"
+                                value={registrationEnd}
+                                onChange={(e) => setRegistrationEnd(e.target.value)}
+                                className="form-input"
+                                required
+                              />
+                            </div>
+                          </div>
+                          {/* Event Times */}
+
+                              <div className="row-2">
+
+                                <div className="form-group">
+                                  <label>
+                                    Registration Start Time
+                                  </label>
+
+                                  <input
+                                    type="time"
+                                    value={checkInTime}
+                                    onChange={(e) => setCheckInTime(e.target.value)}
+                                    className="form-input"
+                                  />
+                                </div>
+
+                                <div className="form-group">
+                                  <label>
+                                    Lunch Time
+                                  </label>
+
+                                  <input
+                                    type="time"
+                                    value={lunchTime}
+                                    onChange={(e) => setLunchTime(e.target.value)}
+                                    className="form-input"
+                                  />
+                                </div>
+
+                              </div>
+
+                    </div>
+                </div>
+              </div>  
+
+            {/* RIGHT COLUMN */}
+              <div className="right-column">
+
+                 
+                  {/* Settings Card */}
+                        {/* ================= Event Settings ================= */}
+
+                        <div className="form-card">
+
+                          <div className="card-header">
+                            <div className="card-icon orange">
+                              <Settings size={26}/>
+                            </div>
+
+                            <div>
+                              <h3>Event Settings</h3>
+                              <p>Configure event registration options.</p>
+                            </div>
+                          </div>
+                       <div className="card-body settings-body scrollable-settings">
+                          <div className="card-body settings-body">
+
+                            {/* ================= Meal Preference ================= */}
+
+                            <div className="setting-block">
+
+                              <div className="setting-item">
+
+                                <div className="setting-info">
+                                  <h4>Meal Preference</h4>
+                                  <p>Allow attendees to select their preferred meal.</p>
+                                </div>
+                               
+                                <label className="switch">
+                                  <input
+                                    type="checkbox"
+                                    checked={showMenuInForm}
+                                    onChange={(e) => setShowMenuInForm(e.target.checked)}
+                                  />
+                                  <span className="slider"></span>
+                                </label>
+
+                              </div>
+
+                              {showMenuInForm && (
+
+                                <div className="setting-content">
+
+                                  {menuOptions.map((option, index) => (
+
+                                    <div key={index} className="option-row">
+
+                                      <input
+                                        value={option}
+                                        onChange={(e) =>
+                                          updateMenuOption(index, e.target.value)
+                                        }
+                                        className="form-input"
+                                        placeholder="Meal option"
+                                      />
+
+                                      <button
+                                        type="button"
+                                        onClick={() => removeMenuOption(index)}
+                                        className="icon-btn delete"
+                                      >
+                                        <Trash2 size={17}/>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={addMenuOption}
+                                        className="icon-btn add"
+                                      >
+                                        <Plus size={17}/>
+                                      </button>
+
+                                    </div>
+
+                                  ))}
+
+                                </div>
+
+                              )}
+
+                            </div>
+
+
+                            {/* ================= Complimentaries ================= */}
+
+                            <div className="setting-block">
+
+                              <div className="setting-item">
+
+                                <div className="setting-info">
+                                  <h4>Complimentaries</h4>
+                                  <p>Choose complimentary items for attendees.</p>
+                                </div>
+
+                                <label className="switch">
+                                  <input
+                                    type="checkbox"
+                                    checked={showLootBags}
+                                    onChange={(e)=>setShowLootBags(e.target.checked)}
+                                  />
+                                  <span className="slider"></span>
+                                </label>
+
+                              </div>
+
+                              {showLootBags && (
+
+                                <div className="setting-content">
+
+                                  <div className="checkbox-group">
+
+                                    <label className="checkbox-item">
+
+                                      <input
+                                        type="checkbox"
+                                        checked={includesLootBag}
+                                        onChange={(e)=>setIncludesLootBag(e.target.checked)}
+                                      />
+
+                                      <span>Loot Bags</span>
+
+                                    </label>
+
+                                    <label className="checkbox-item">
+
+                                      <input
+                                        type="checkbox"
+                                        checked={includesSouvenir}
+                                        onChange={(e)=>setIncludesSouvenir(e.target.checked)}
+                                      />
+
+                                      <span>Souvenirs</span>
+
+                                    </label>
+
+                                  </div>
+
+                                  {(includesLootBag || includesSouvenir) &&
+
+                                    lootBagOptions.map((option,index)=>(
+
+                                      <div
+                                        key={index}
+                                        className="option-row"
+                                      >
+
+                                        <input
+                                          value={option}
+                                          onChange={(e)=>
+                                            updateLootBagOption(index,e.target.value)
+                                          }
+                                          className="form-input"
+                                          placeholder="Complimentary item"
+                                        />
+
+                                        <button
+                                          type="button"
+                                          onClick={()=>removeLootBagOption(index)}
+                                          className="icon-btn delete"
+                                        >
+                                          <Trash2 size={17}/>
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          onClick={addLootBagOption}
+                                          className="icon-btn add"
+                                        >
+                                          <Plus size={17}/>
+                                        </button>
+
+                                      </div>
+
+                                    ))
+
+                                  }
+
+                                </div>
+
+                              )}
+
+                            </div>
+
+
+                            {/* ================= Upload Banner ================= */}
+
+                            <div className="setting-block">
+
+                              <div className="setting-item">
+
+                                <div className="setting-info">
+                                  <h4>Upload Banner</h4>
+                                  <p>Display a banner on the registration page.</p>
+                                </div>
+
+                                <label className="switch">
+                                  <input
+                                    type="checkbox"
+                                    checked={showBannerUpload}
+                                    onChange={(e)=>setShowBannerUpload(e.target.checked)}
+                                  />
+                                  <span className="slider"></span>
+                                </label>
+
+                              </div>
+
+                              {showBannerUpload && (
+
+                                <div className="setting-content">
+
+                                  <div className="option-row">
+
                                     <input
-                                      type="checkbox"
-                                      checked={showBannerUpload}
-                                      onChange={(e) => setShowBannerUpload(e.target.checked)}
-                                      className="sr-only peer"
+                                      type="text"
+                                      value={bannerText}
+                                      onChange={(e)=>setBannerText(e.target.value)}
+                                      placeholder="Banner name"
+                                      className="form-input"
                                     />
 
-                                    <div className="w-12 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors duration-300"></div>
+                                    <button
+                                      type="button"
+                                      className="upload-btn"
+                                      onClick={()=>fileInputRef.current.click()}
+                                    >
+                                      Upload
+                                    </button>
 
-                                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 peer-checked:translate-x-6"></div>
+                                    <input
+                                      ref={fileInputRef}
+                                      type="file"
+                                      className="hidden"
+                                    />
+
                                   </div>
-                                </label>
+
+                                </div>
+
+                              )}
+
+                            </div>
+
                           </div>
 
-                          {showBannerUpload && (
-                            <div className="menu-card mt-3">
-                              <input
-                                type="text"
-                                value={bannerText}
-                                onChange={(e) => setBannerText(e.target.value)}
-                                placeholder="Enter banner name"
-                                className="form-input !w-[300px] !h-[40px]"
-                              />
-
-                              <button
-                                type="button"
-                                onClick={() => fileInputRef.current.click()}
-                                className="primary-btn !w-[120px] !h-[40px]"
-                              >
-                                Upload
-                              </button>
-
-                              <input
-                                type="file"
-                                ref={fileInputRef}
-                                className="hidden"
-                              />
-                            </div>
-                          )}
                         </div>
-                   </div>
-                   <div className="template-actions">
+                        </div>
+
+                  <div className="template-actions">
                     <button
                       type="button"
                       className="draft-btn"
@@ -704,16 +781,13 @@ useEffect(() => {
                        {isEdit ? "Update Event" : "Generate Form"}
                     </button>
                    </div> 
+
+
               </div>
-
-              
- 
-
-
-            </div>
           </div>
       </div>
-
+    </div>
+ 
   );
 };
 

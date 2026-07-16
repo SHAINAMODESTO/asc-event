@@ -270,7 +270,7 @@ console.log("Total Records:", response.pagination?.totalRecords);
     const response = await getAttendees({
       eventId,
       page: 1,
-      limit: 10000, // fetch all attendees
+      limit: 10, // fetch all attendees
       search: "",
       status: "",
     });
@@ -298,7 +298,21 @@ useEffect(() => {
   fetchAttendees();
   fetchDashboardStats();
 }, [eventId, page, search, status]);
+  const handleViewAttendee = async (attendeeId) => {
+  try {
+    setLoading(true);
 
+    const response = await getAttendeeById(attendeeId);
+
+    setSelectedAttendee(response.data);
+    setActiveTab("details");
+  } catch (error) {
+    console.error("Failed to fetch attendee details:", error);
+    alert("Unable to load attendee details.");
+  } finally {
+    setLoading(false);
+  }
+};
   const handleExport = () => {
     const csvRows = [
       [
@@ -686,7 +700,7 @@ return (
 
                                 <th>
                                   <div className="th-content">
-                                    Registration Status
+                                   Status
                                     <ArrowUpDown size={13} />
                                   </div>
                                 </th>
@@ -702,6 +716,12 @@ return (
                                 <th>
                                   <div className="th-content">
                                     Meal Preferred
+                                    <ArrowUpDown size={13} />
+                                  </div>
+                                </th>
+                                <th>
+                                  <div className="th-content">
+                                    Role
                                     <ArrowUpDown size={13} />
                                   </div>
                                 </th>
@@ -771,7 +791,7 @@ return (
 
                                     <th>
                                       <div className="th-content">
-                                        Registration Status
+                                        Status
                                         <ArrowUpDown size={13} />
                                       </div>
                                     </th>
@@ -788,7 +808,18 @@ return (
                                         <ArrowUpDown size={13} />
                                       </div>
                                     </th>
-                                    <th>Meal Preferred</th>
+                                    <th>
+                                      <div className="th-content">
+                                        Meal 
+                                        <ArrowUpDown size={13} />
+                                      </div>
+                                    </th>
+                                    <th>
+                                      <div className="th-content">
+                                        Role
+                                        <ArrowUpDown size={13} />
+                                      </div>
+                                    </th>
                                   </tr>
                                 </thead>
 
@@ -883,7 +914,7 @@ return (
 
                   <th>
                     <div className="th-content">
-                      Registration Status
+                      Status
                       <ArrowUpDown size={13} />
                     </div>
                   </th>
@@ -898,14 +929,22 @@ return (
                   </th>
 
                   <th>Meal Preferred</th>
+
+                  <th>
+                       <div className="th-content">
+                             Role
+                          <ArrowUpDown size={13} />
+                          </div>
+                     </th>
                 </tr>
             </thead>
         <tbody>
             {attendees.map((attendee) => (
               <tr
+               
                   key={attendee.id}
                   className="clickable-row"
-                  onClick={() => setSelectedAttendee(attendee)}
+                  onClick={() => handleViewAttendee(attendee.id)}
                 >
 
                {/* Select checkbox */}  
@@ -1089,12 +1128,12 @@ return (
               </span>
 
               <p className="attendee-id">
-                ID: {selectedAttendee.id?.slice(0,8)}
+                Code: {selectedAttendee.attendeesCode}
               </p>
 
               <div className="qr-card">
                   <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${selectedAttendee.id}`}
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${selectedAttendee.attendeesCode}`}
                         alt="QR Code"
                         className="qr-image"
                     />
@@ -1190,6 +1229,7 @@ return (
 
           </div>
         )}
+        
         {activeTab === "attendance" && (
 
 <div className="attendance-tab">
@@ -1228,9 +1268,10 @@ return (
 
             <strong>
 
-                {selectedAttendee.checkedInAt
-                    ? new Date(selectedAttendee.checkedInAt).toLocaleString()
-                    : "-"}
+                 {selectedAttendee.checkInAt
+                  ? new Date(selectedAttendee.checkInAt).toLocaleString()
+                  : "-"}
+                    
 
             </strong>
 
