@@ -928,7 +928,7 @@ return (
                     </div>
                   </th>
 
-                  <th>Meal Preferred</th>
+                  <th>Meal</th>
 
                   <th>
                        <div className="th-content">
@@ -1025,8 +1025,6 @@ return (
                   </span>
                 </td>
               
-                 
-
                 {/* Table */}
                 <td>
                   {attendee.tableNumber || "Not Assigned"}
@@ -1035,8 +1033,6 @@ return (
                 <td>
                   {attendee.mealPreference || "Not Assigned"}
                 </td>
-               
-
               </tr>
             ))}
           </tbody>

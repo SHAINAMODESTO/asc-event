@@ -322,15 +322,31 @@ const formFields = [
 
                   <div>
                     <label className="mb-2 block text-sm font-medium text-slate-700">
-                      Full Name
+                      First Name
                     </label>
 
                     <input
                       type="text"
-                      placeholder="Enter full name"
-                      value={companion.fullName}
+                      placeholder="Enter First Name"
+                      value={companion.firstName}
                       onChange={(e) =>
-                        updateCompanion(index, "fullName", e.target.value)
+                        updateCompanion(index, "firstName", e.target.value)
+                      }
+                      className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Last Name
+                    </label>
+
+                    <input
+                      type="text"
+                      placeholder="Enter Last Name"
+                      value={companion.lastName}
+                      onChange={(e) =>
+                        updateCompanion(index, "lastName", e.target.value)
                       }
                       className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
                     />
@@ -366,6 +382,10 @@ const formFields = [
                       className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
                     />
                   </div>
+                   <div>
+                   <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Meal Preference
+                    </label>
                   <select
                       value={companion.mealPreference || ""}
                       onChange={(e) =>
@@ -381,7 +401,7 @@ const formFields = [
                         </option>
                       ))}
                     </select>
-
+                  </div>
                   <div className="flex items-end">
                     <button
                       type="button"
