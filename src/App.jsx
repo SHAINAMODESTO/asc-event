@@ -58,12 +58,10 @@ function App() {
       <Route path="/create-event" element={<CreateForm />} />
       <Route path="/create-event/:id" element={<CreateForm />} />
 
-          {/* Attendees */}
-          <Route path="/attendees" element={<AttendeesList />} />
-          <Route path="/attendees/:eventId" element={<EventAttendees />} />
-
-        </Routes>
-   
+      {/* Attendees */}
+      <Route path="/attendees" element={<AttendeesList />} />
+      <Route path="/attendees/:eventId" element={<EventAttendees />} />
+    </Routes>
   );
 }
 
