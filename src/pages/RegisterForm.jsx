@@ -122,8 +122,11 @@ const RegisterForm = ({
     setCompanions([
       ...companions,
       {
-        fullName: "",
-        relationship: "",
+        firstName: "",
+        lastName: "",
+        preferredNameOnBadge: "",
+        position: "",
+        mealPreference: "",
       },
     ]);
   };
@@ -345,9 +348,9 @@ const RegisterForm = ({
                       <input
                         type="text"
                         placeholder="Relationship/Position"
-                        value={companion.relationship}
+                        value={companion.position}
                         onChange={(e) =>
-                          updateCompanion(index, "relationship", e.target.value)
+                          updateCompanion(index, "position", e.target.value)
                         }
                         className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
                       />
@@ -362,7 +365,11 @@ const RegisterForm = ({
                         placeholder="Preferred Name"
                         value={companion.preferredNameOnBadge}
                         onChange={(e) =>
-                          updateCompanion(index, "", e.target.value)
+                          updateCompanion(
+                            index,
+                            "preferredNameOnBadge",
+                            e.target.value,
+                          )
                         }
                         className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
                       />
