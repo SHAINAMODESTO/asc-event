@@ -112,3 +112,4 @@ export const getAttendees = async ({
     throw error;
   }
 };
+

@@ -132,71 +132,117 @@ TOOLBAR
     flex-shrink:0;
 }
 
-/*=====Search Box==============*/
+/* ========================================
+   TOOLBAR
+======================================== */
 
+.toolbar {
+   width: 100%;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 1px;
+    padding: 13px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 8px 20px rgba(15,23,42,.05);
+}
+
+/* LEFT SIDE */
+.toolbar-left {
+  flex:1;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    min-width:0;
+}
+
+/* RIGHT SIDE */
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+/* ========================================
+   SEARCH
+======================================== */
 
 .search-box {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  padding: 10px 14px;
-  border-radius: 12px;
-  flex-shrink: 0;
-}
-.search-box{
-    flex:1;
-    min-width:280px;
-    max-width:500px;
-}
+  flex:1 1 auto;
+  min-width:250px;
+  max-width:none;
 
-.search-box:focus-within {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+  background: #fff;
+  border: 1px solid #dbe3ef;
+  border-radius: 12px;
+  padding: 0 16px;
+  height: 46px;
 }
 
 .search-box input {
+  width: 100%;
   border: none;
   outline: none;
-  width: 100%;
   background: transparent;
   font-size: 14px;
 }
 
-/*========================*/
+.search-box:focus-within {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37,99,235,.08);
+}
+
+/* ========================================
+   DROPDOWNS
+======================================== */
 
 .toolbar select {
-  flex:1;
-  min-width:280px;
-  max-width:500px;
-  padding: 10px 14px;
+  width: 170px;
+  height: 46px;
+
+  border: 1px solid #dbe3ef;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+
   background: white;
+  padding: 0 14px;
   font-size: 14px;
+
   flex-shrink: 0;
 }
 
-/*========================*/
+/* ========================================
+   BUTTONS
+======================================== */
 
 .blue-btn,
 .white-btn {
+  height: 46px;
+  padding: 0 12px;
+
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 18px;
+
   border-radius: 12px;
-  cursor: pointer;
+  font-size: 14px;
   font-weight: 600;
+
   white-space: nowrap;
-  flex-shrink: 0;
+  cursor: pointer;
+
+  transition: .2s;
 }
 
 .blue-btn {
+  border: none;
   background: #2563eb;
   color: white;
-  border: none;
 }
 
 .blue-btn:hover {
@@ -205,11 +251,62 @@ TOOLBAR
 
 .white-btn {
   background: white;
-  border: 1px solid #dbeafe;
+  border: 1px solid #dbe3ef;
 }
 
 .white-btn:hover {
-  background: #eff6ff;
+  background: #f8fafc;
+}
+
+/* ========================================
+   TABLET
+======================================== */
+
+@media (max-width:1200px){
+
+    .toolbar{
+        flex-wrap:wrap;
+        align-items:stretch;
+    }
+
+    .toolbar-left{
+        width:100%;
+        flex-wrap:wrap;
+    }
+
+    .toolbar-right{
+        width:100%;
+        justify-content:flex-end;
+        flex-wrap:wrap;
+    }
+
+    .search-box{
+        flex:1 1 100%;
+        max-width:none;
+    }
+
+}
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width:768px){
+
+    .toolbar-left,
+    .toolbar-right{
+        width:100%;
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .toolbar select,
+    .search-box,
+    .blue-btn,
+    .white-btn{
+        width:100%;
+    }
+
 }
 /* =========================
    TABLE WRAPPER
@@ -1417,4 +1514,116 @@ background:#16a34a;
         transform:scale(1);
         opacity:1;
     }
+}
+
+/*========================
+   COMPANION TAB
+=========================*/
+.companion-tab{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+}
+
+.companion-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.companion-header h3{
+    margin:0;
+    font-size:20px;
+    font-weight:700;
+}
+
+.companion-header span{
+    color:#64748b;
+    font-size:14px;
+}
+.companion-list{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+}
+
+.companion-card{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:18px 20px;
+    border:1px solid #e2e8f0;
+    border-radius:16px;
+    background:white;
+    transition:.25s;
+}
+
+.companion-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 12px 24px rgba(15,23,42,.08);
+}
+
+.companion-avatar{
+    width:54px;
+    height:54px;
+    border-radius:50%;
+    background:#eff6ff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:24px;
+}
+
+.companion-info{
+    flex:1;
+}
+.companion-info h4{
+    margin:0;
+    font-size:17px;
+}
+.companion-info p{
+    margin-top:6px;
+    color:#64748b;
+}
+.table-chip{
+    padding:8px 14px;
+    border-radius:999px;
+    background:#eff6ff;
+    color:#2563eb;
+    font-weight:600;
+
+}  
+/*======================
+  COMPANION TAB NOTIF
+  ==================8/
+  /* Tab button */
+.tab-btn{
+    position: relative;
+}
+
+.tab-badge{
+    position: absolute;
+    top: 5px;
+    right: -16px;
+
+    min-width: 20px;
+    height: 20px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:#ef4444;
+    color:white;
+
+    border-radius:50%;
+    font-size:11px;
+    font-weight:700;
+
+    border:2px solid #fff;
+}
+.companion-label {
+  color: #ebd725;
+  font-size: 14px;
+  font-weight: 600;
 }

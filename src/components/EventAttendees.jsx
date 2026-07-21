@@ -38,6 +38,8 @@ const EventAttendees = () => {
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+//role filtering 
+  const [role, setRole] = useState("");
 
   const [eventDetails, setEventDetails] = useState(null);
   //pagination
@@ -80,7 +82,8 @@ const EventAttendees = () => {
   const [checkingIn, setCheckingIn] = useState(false);
 
   const [checkInSuccess, setCheckInSuccess] = useState(false);
-
+//for companions
+const [companions, setCompanions] = useState([]);
   //For Printing
   const handlePrint = () => {
     const printWindow = window.open("", "_blank");
@@ -242,6 +245,7 @@ const EventAttendees = () => {
         limit,
         search,
         status,
+        role,
       });
 
       console.log("API Response:", response);
@@ -270,6 +274,7 @@ const EventAttendees = () => {
         limit: 10, // fetch all attendees
         search: "",
         status: "",
+        role,
       });
 
       const allAttendees = response.data || [];
@@ -287,16 +292,28 @@ const EventAttendees = () => {
       console.error("Dashboard stats error:", err);
     }
   };
+  
   useEffect(() => {
     fetchEventDetails();
     fetchAttendees();
     fetchDashboardStats();
-  }, [eventId, page, search, status]);
+  }, [eventId, page, search, status, role]);
+
+
   const handleViewAttendee = async (attendeeId) => {
     try {
       setLoading(true);
 
       const response = await getAttendeeById(attendeeId);
+
+      console.log("FULL RESPONSE");
+    console.log(response);
+
+    console.log("ATTENDEE");
+    console.log(response.data);
+
+    console.log("COMPANIONS");
+    console.log(response.data.companions);
 
       setSelectedAttendee(response.data);
       setActiveTab("details");
@@ -307,6 +324,9 @@ const EventAttendees = () => {
       setLoading(false);
     }
   };
+
+
+
   const handleExport = () => {
     const csvRows = [
       [
@@ -451,11 +471,22 @@ const EventAttendees = () => {
         setSelectedAttendee(updatedAttendee.data);
 
         setCheckInSuccess(true);
+
+              // Success popup
+      alert("Attendee checked in successfully!");
       }
     } catch (error) {
       console.error(error);
     }
   };
+
+
+  const filteredAttendees = attendees.filter((attendee) => {
+  if (!role) return true;
+
+  // Replace "role" below with the actual property name from your API
+  return attendee.role?.toUpperCase() === role;
+});
 
   return (
     <div className="event-attendees-page">
@@ -551,20 +582,34 @@ const EventAttendees = () => {
         </div>
       </div>
       {/* Controls */}
-      <div className="toolbar">
+   <div className="toolbar">
         <div className="toolbar-left">
-          <div className="search-box">
-            <Search size={18} />
+          <div>
+           
             <input
               type="text"
-              placeholder="Search by name, email or company..."
+              placeholder=" Search by name, email or company..."
               value={search}
+              className="search-box"
               onChange={(e) => {
                 setPage(1);
                 setSearch(e.target.value);
+                
               }}
             />
-          </div>
+         </div>
+           {/* Role Filter */}
+            <select
+              value={role}
+              onChange={(e) => {
+                setRole(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">All Roles</option>
+              <option value="PRIMARY">Primary</option>
+              <option value="COMPANION">Companion</option>
+            </select>
           <select
             value={status}
             onChange={(e) => {
@@ -580,7 +625,9 @@ const EventAttendees = () => {
             <option value="DECLINED">Declined</option>
             <option value="NO_SHOW">No Show</option>
           </select>
+          
         </div>
+        
 
         <div className="toolbar-right">
           <button
@@ -697,7 +744,7 @@ const EventAttendees = () => {
                     </td>
                   </tr>
                 ) : (
-                  attendees.map((attendee) => (
+                  filteredAttendees.map((attendee) => (
                     <tr key={attendee.id}>{/* your existing row */}</tr>
                   ))
                 )}
@@ -789,7 +836,7 @@ const EventAttendees = () => {
                     </td>
                   </tr>
                 ) : (
-                  attendees.map((attendee) => (
+                  filteredAttendees.map((attendee) => (
                     <tr key={attendee.id}>{/* your existing row */}</tr>
                   ))
                 )}
@@ -886,7 +933,7 @@ const EventAttendees = () => {
                 </tr>
               </thead>
               <tbody>
-                {attendees.map((attendee) => (
+                {filteredAttendees.map((attendee) => (
                   <tr
                     key={attendee.id}
                     className="clickable-row"
@@ -1028,13 +1075,22 @@ const EventAttendees = () => {
               >
                 Attendance
               </button>
+              
+          {/* COMPANION TAB FOR PRIMARY ATTENDEE VISIBLE ONLY*/}
+              {selectedAttendee?.role === "PRIMARY" && (
+                <button
+                  className={`tab-btn ${activeTab === "companion" ? "active" : ""}`}
+                  onClick={() => setActiveTab("companion")}
+                >
+                  Companion
 
-              <button
-                className={activeTab === "companion" ? "active" : ""}
-                onClick={() => setActiveTab("companion")}
-              >
-                Companion
-              </button>
+                  {selectedAttendee?.companions?.length > 0 && (
+                    <span className="tab-badge">
+                      {selectedAttendee.companions.length}
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
 
             {/* Body */}
@@ -1049,16 +1105,13 @@ const EventAttendees = () => {
                     </div>
 
                     <h3>
-                      {selectedAttendee.firstName} {selectedAttendee.lastName}
+                        {selectedAttendee.firstName} {selectedAttendee.lastName}
+                        {selectedAttendee?.role === "COMPANION" && (
+                          <span className="companion-label"> (Companion)</span>
+                        )}
                     </h3>
 
-                    <p className="preferred-name">
-                      {selectedAttendee.preferredNameOnBadge}
-                    </p>
-
-                    <span className="status-badge confirmed">
-                      {selectedAttendee.status}
-                    </span>
+                   
 
                     <p className="attendee-id">
                       Code: {selectedAttendee.attendeesCode}
@@ -1112,15 +1165,27 @@ const EventAttendees = () => {
                           className={`status-badge ${
                             selectedAttendee.status === "CONFIRMED"
                               ? "confirmed"
-                              : selectedAttendee.status === "PENDING"
-                                ? "pending"
+                              : selectedAttendee.status === "CHECKED IN"
+                                ? "checked_in"
                                 : "cancelled"
                           }`}
                         >
+                          
                           {selectedAttendee.status}
                         </span>
                       </span>
-                      <label>Check-in Status</label>
+
+                      {selectedAttendee?.role === "COMPANION" && (
+                      <>
+                        <label>Primary Attendee</label>
+                        <span>
+                          {selectedAttendee.primaryAttendee
+                            ? `${selectedAttendee.primaryAttendee.firstName} ${selectedAttendee.primaryAttendee.lastName}`
+                            : "-"}
+                        </span>
+                      </>
+                    )}
+                    <label>Check-in Status</label>
                       <span>
                         {selectedAttendee.status === "CHECKED_IN"
                           ? "Checked In"
@@ -1191,10 +1256,65 @@ const EventAttendees = () => {
                   </div>
                 </div>
               )}
-
+         {/* Companion Tab */}
               {activeTab === "companion" && (
-                <div className="activity-tab">
-                  <h3>Attendee Companion Details</h3>
+                <div className="companion-tab">
+
+                  <div className="companion-header">
+                    <h3>Companion List</h3>
+                    <span>
+                      {selectedAttendee?.companions?.length || 0} Registered
+                    </span>
+                  </div>
+
+                  <div className="companion-list">
+
+                    {selectedAttendee?.companions?.length > 0 ? (
+
+                      selectedAttendee.companions.map((companion) => (
+
+                        <div
+                          key={companion.id}
+                          className="companion-card"
+                        >
+
+                          <div className="companion-avatar">
+                            👤
+                          </div>
+
+                          <div className="companion-info">
+                            <h4>
+                              {companion.firstName} {companion.lastName}
+                            </h4>
+
+                            <p>{companion.position || "No Position"}</p>
+                          </div>
+
+                          <div className="companion-meta">
+
+
+                            <span className="table-chip">
+                              {companion.tableNumber
+                                ? `Table ${companion.tableNumber}`
+                                : "Not Assigned"}
+                            </span>
+
+                          </div>
+
+                        </div>
+
+                      ))
+
+                    ) : (
+
+                      <div className="empty-companions">
+                        No companions registered.
+                      </div>
+
+                    )}
+
+                  </div>
+
                 </div>
               )}
               {showAssignModal && (
@@ -1243,6 +1363,7 @@ const EventAttendees = () => {
             </div>
 
             {/* Footer */}
+          {(activeTab === "details" || activeTab === "attendance") && (  
             <div className="attendee-modal-footer">
               <button
                 className="modal-cancel-btn"
@@ -1280,10 +1401,11 @@ const EventAttendees = () => {
                     : "Check In"}
               </button>
             </div>
+            )}
           </div>
         </div>
       )}
-
+     
       {/* Pagination */}
       <div className="pagination">
         <button
