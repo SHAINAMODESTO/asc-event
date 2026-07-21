@@ -47,6 +47,7 @@ function App() {
         <Route path="attendees" element={<AttendeesList />} />
         <Route path="attendees/:eventId" element={<EventAttendees />} />
         <Route path="published-events" element={<PublishedEvents />} />
+        <Route path="useradmin-table" element={<UserAdminTable />} />
       </Route>
 
       {/* Public Pages */}
@@ -58,9 +59,9 @@ function App() {
       <Route path="/create-event" element={<CreateForm />} />
       <Route path="/create-event/:id" element={<CreateForm />} />
 
-          {/* Attendees */}
-          <Route path="/attendees" element={<AttendeesList />} />
-          <Route path="/attendees/:eventId" element={<EventAttendees />} />
+      {/* Attendees */}
+      <Route path="/attendees" element={<AttendeesList />} />
+      <Route path="/attendees/:eventId" element={<EventAttendees />} />
 
         </Routes>
    
