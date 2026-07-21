@@ -62,9 +62,7 @@ function App() {
       {/* Attendees */}
       <Route path="/attendees" element={<AttendeesList />} />
       <Route path="/attendees/:eventId" element={<EventAttendees />} />
-
-        </Routes>
-   
+    </Routes>
   );
 }
 
