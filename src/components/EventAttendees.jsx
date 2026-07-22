@@ -5,7 +5,9 @@ import {
   assignTable,
   checkInAttendee,
   getAttendeeById,
+  getDashboardSummary,
 } from "../services/attendeeListService";
+
 import { getEventById } from "../services/eventService";
 import "./EventAttendees.css";
 import {
@@ -25,6 +27,7 @@ import {
   ArrowUpDown,
   Eye,
   EllipsisVertical,
+  Utensils,
 } from "lucide-react";
 
 const EventAttendees = () => {
@@ -46,25 +49,40 @@ const EventAttendees = () => {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
+
+//dashboard summary
+  const [dashboard, setDashboard] = useState({
+  attendees: {
+    total: 0,
+    registered: 0,
+  },
+  checkIn: {
+    checkedIn: 0,
+    total: 0,
+    rate: 0,
+  },
+  tableAssignment: {
+    assigned: 0,
+    notAssigned: 0,
+  },
+  confirmation: {
+    pending: 0,
+    confirmed: 0,
+  },
+});
+const fetchDashboardSummary = async () => {
+  try {
+    const response = await getDashboardSummary(eventId);
+     console.log("Dashboard API:", response);
+
+    setDashboard(response);
+  } catch (error) {
+    console.error(error);
+  }
+};
   //total attendees
   const [totalAttendees, setTotalAttendees] = useState(0);
-  const [checkedInCount, setCheckedInCount] = useState(0);
-  //const [assignedTables, setAssignedTables] = useState(0);
-  //const [pendingConfirmation, setPendingConfirmation] = useState(0);
-  //check in count
 
-  const checkedInPercentage =
-    totalAttendees > 0
-      ? ((checkedInCount / totalAttendees) * 100).toFixed(1)
-      : 0;
-
-  const assignedTables = attendees.filter((a) => a.tableNumber).length;
-
-  const unassignedTables = totalAttendees - assignedTables;
-
-  const pendingConfirmation = attendees.filter(
-    (a) => a.status === "PENDING",
-  ).length;
 
   //Selected Rows using Checkbox
   const [selectedRows, setSelectedRows] = useState([]);
@@ -73,6 +91,19 @@ const EventAttendees = () => {
   const [selectedAttendee, setSelectedAttendee] = useState(null);
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [tableNumber, setTableNumber] = useState("");
+
+  //table sorting
+  const [sortField, setSortField] = useState("");
+const [sortOrder, setSortOrder] = useState("asc");
+const handleSort = (field) => {
+  if (sortField === field) {
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  } else {
+    setSortField(field);
+    setSortOrder("asc");
+  }
+};
+
 
   const [activeTab, setActiveTab] = useState("details");
   //assign table modal
@@ -110,8 +141,7 @@ const [companions, setCompanions] = useState([]);
             <!DOCTYPE html>
             <html>
               <head>
-                <title>${eventDetails?.title || "Event"} Attendees</title>
-
+              
                 <style>
                   *{
                     box-sizing:border-box;
@@ -181,7 +211,7 @@ const [companions, setCompanions] = useState([]);
               <body>
 
               <h1>${eventDetails?.title || "Event"}</h1>
-                <h3>Attendees List</h3>
+                <h5>Attendees List</h5>
 
                 <table>
                   <thead>
@@ -194,8 +224,9 @@ const [companions, setCompanions] = useState([]);
                       <th>Company</th>
                       <th>Position</th>
                       <th>Status</th>
-                      <th>Checked In/th>
+                      <th>Checked In</th>
                       <th>Preferred Meal</th>
+                   
                     
                     </tr>
                   </thead>
@@ -266,37 +297,12 @@ const [companions, setCompanions] = useState([]);
     }
   };
 
-  const fetchDashboardStats = async () => {
-    try {
-      const response = await getAttendees({
-        eventId,
-        page: 1,
-        limit: 10, // fetch all attendees
-        search: "",
-        status: "",
-        role,
-      });
 
-      const allAttendees = response.data || [];
-
-      setCheckedInCount(
-        allAttendees.filter((a) => a.status === "CHECKED_IN").length,
-      );
-
-      setAssignedTables(allAttendees.filter((a) => a.tableNumber).length);
-
-      setPendingConfirmation(
-        allAttendees.filter((a) => a.status === "PENDING").length,
-      );
-    } catch (err) {
-      console.error("Dashboard stats error:", err);
-    }
-  };
   
   useEffect(() => {
     fetchEventDetails();
     fetchAttendees();
-    fetchDashboardStats();
+    fetchDashboardSummary();
   }, [eventId, page, search, status, role]);
 
 
@@ -341,7 +347,7 @@ const [companions, setCompanions] = useState([]);
         "Table Number",
         "Preferred Meal",
       ],
-      ...attendees.map((attendee) => [
+      ...sortedAttendees.map((attendee) => [
         attendee.firstName || "",
         attendee.lastName || "",
         attendee.preferredNameOnBadge || "",
@@ -403,90 +409,142 @@ const [companions, setCompanions] = useState([]);
     reader.readAsText(file);
   };
   // Save table assignment to the backend
-  const handleAssignTable = async () => {
-    if (!selectedAttendee) {
-      alert("Please select an attendee.");
-      return;
-    }
+ const handleAssignTable = async () => {
+  if (!selectedAttendee) {
+    alert("Please select an attendee.");
+    return;
+  }
 
-    if (!tableNumber || Number(tableNumber) <= 0) {
-      alert("Please enter a valid table number.");
-      return;
-    }
+  if (!tableNumber || Number(tableNumber) <= 0) {
+    alert("Please enter a valid table number.");
+    return;
+  }
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      console.log("Assigning Table:", {
-        attendeeId: selectedAttendee.id,
-        tableNumber: Number(tableNumber),
-      });
+    console.log("Assigning Table:", {
+      attendeeId: selectedAttendee.id,
+      tableNumber: Number(tableNumber),
+    });
 
-      const response = await assignTable(
-        selectedAttendee.id,
-        Number(tableNumber),
-      );
+    const response = await assignTable(
+      selectedAttendee.id,
+      Number(tableNumber),
+    );
 
-      console.log("Assign Table Response:", response);
+    console.log("Assign Table Response:", response);
 
-      // Refresh attendee list from backend
-      await fetchAttendees();
+    // Refresh attendees + dashboard
+    await Promise.all([
+      fetchAttendees(),
+      fetchDashboardSummary(),
+    ]);
 
-      // Update currently opened attendee details
-      setSelectedAttendee((prev) => ({
-        ...prev,
-        tableNumber: Number(tableNumber),
-      }));
+    // Update currently opened attendee details
+    setSelectedAttendee((prev) => ({
+      ...prev,
+      tableNumber: Number(tableNumber),
+    }));
 
-      // Close Assign Table modal
-      setShowAssignModal(false);
+    // Close modal
+    setShowAssignModal(false);
 
-      // Reset input
-      setTableNumber("");
+    // Reset input
+    setTableNumber("");
 
-      alert(response?.message || "Table assigned successfully.");
-    } catch (error) {
-      console.error("Assign Table Error:", error.response?.data || error);
+    alert(response?.message || "Table assigned successfully.");
+  } catch (error) {
+    console.error("Assign Table Error:", error.response?.data || error);
 
-      alert(error.response?.data?.message || "Failed to assign table.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    alert(error.response?.data?.message || "Failed to assign table.");
+  } finally {
+    setLoading(false);
+  }
+};
+
   //Checking In
 
-  const handleCheckIn = async () => {
-    try {
-      const response = await checkInAttendee(selectedAttendee.id);
+ const handleCheckIn = async () => {
+  try {
+    const response = await checkInAttendee(selectedAttendee.id);
 
-      if (response.success) {
-        // Refresh table
-        await fetchAttendees();
+    if (response.success) {
+      // Refresh dashboard + attendees at the same time
+      await Promise.all([
+        fetchAttendees(),
+        fetchDashboardSummary(),
+      ]);
 
-        // Get updated attendee
-        const updatedAttendee = await getAttendeeById(selectedAttendee.id);
+      // Refresh selected attendee details
+      const updatedAttendee = await getAttendeeById(selectedAttendee.id);
 
-        console.log("Updated Attendee:", updatedAttendee);
+      console.log("Updated Attendee:", updatedAttendee);
 
-        setSelectedAttendee(updatedAttendee.data);
+      setSelectedAttendee(updatedAttendee.data);
 
-        setCheckInSuccess(true);
+      setCheckInSuccess(true);
 
-              // Success popup
       alert("Attendee checked in successfully!");
-      }
-    } catch (error) {
-      console.error(error);
     }
-  };
+  } catch (error) {
+    console.error(error);
+  }
+};
 
+const displayedAttendees = [...attendees]
+  .filter((attendee) => {
+    // Role filter
+    if (role && attendee.role?.toUpperCase() !== role) {
+      return false;
+    }
 
-  const filteredAttendees = attendees.filter((attendee) => {
-  if (!role) return true;
+    // Search filter
+    if (search) {
+      const keyword = search.toLowerCase();
 
-  // Replace "role" below with the actual property name from your API
-  return attendee.role?.toUpperCase() === role;
-});
+      const matchesSearch =
+        attendee.firstName?.toLowerCase().includes(keyword) ||
+        attendee.lastName?.toLowerCase().includes(keyword) ||
+        attendee.emailAddress?.toLowerCase().includes(keyword) ||
+        attendee.company?.toLowerCase().includes(keyword);
+
+      if (!matchesSearch) return false;
+    }
+
+    // Status filter
+    if (status && attendee.status !== status) {
+      return false;
+    }
+
+    return true;
+  })
+  .sort((a, b) => {
+  if (!sortField) return 0;
+
+  let valueA = a[sortField];
+  let valueB = b[sortField];
+
+  // Handle null/undefined
+  valueA = valueA ?? "";
+  valueB = valueB ?? "";
+
+  // If both are numbers, compare numerically
+  if (typeof valueA === "number" && typeof valueB === "number") {
+    return sortOrder === "asc"
+      ? valueA - valueB
+      : valueB - valueA;
+  }
+
+  // Otherwise compare as strings
+  valueA = String(valueA).toLowerCase();
+  valueB = String(valueB).toLowerCase();
+
+  if (valueA < valueB) return sortOrder === "asc" ? -1 : 1;
+  if (valueA > valueB) return sortOrder === "asc" ? 1 : -1;
+
+  return 0;
+})
 
   return (
     <div className="event-attendees-page">
@@ -532,8 +590,9 @@ const [companions, setCompanions] = useState([]);
           </div>
           <div>
             <h1>Total Attendees</h1>
-            <h3>{totalAttendees}</h3>
-            <span>{totalAttendees} Registered</span>
+            <h3>{dashboard.attendees.total}</h3>
+            <span>{dashboard.attendees.total} Primary</span> <br></br>
+            <span>{dashboard.attendees.total} Companion</span>
           </div>
         </div>
         <div className="dashboard-card">
@@ -543,17 +602,17 @@ const [companions, setCompanions] = useState([]);
           <div>
             <h1>Checked In</h1>
             <h3>
-              {checkedInCount} / {totalAttendees}
+              {dashboard.checkIn.checkedIn}
             </h3>
             <div className="progress">
               <div
                 className="progress-fill"
                 style={{
-                  width: `${checkedInPercentage}%`,
+                  width: `${dashboard.checkIn.rate}%`,
                 }}
               />
             </div>
-            <span>{checkedInPercentage}% Check-in Rate</span>
+            <span>{dashboard.checkIn.rate}% Check-in Rate</span>
           </div>
         </div>
         <div className="dashboard-card">
@@ -562,22 +621,19 @@ const [companions, setCompanions] = useState([]);
           </div>
           <div>
             <h1>Table Assigned</h1>
-            <h3>{assignedTables}</h3>
-            <span>{unassignedTables} Not Assigned</span>
+            <h3>{dashboard.tableAssignment.assigned}</h3>
+            <span>{dashboard.tableAssignment.notAssigned} Not Assigned</span>
           </div>
         </div>
         <div className="dashboard-card">
           <div className="dashboard-icon purple">
-            <Hourglass size={30} />
+            <Utensils size={30} />
           </div>
           <div>
-            <h1>Pending Confirmations</h1>
-            <h3>{pendingConfirmation}</h3>
-            <span>
-              {pendingConfirmation === 0
-                ? "All Confirmed"
-                : `${pendingConfirmation} Pending`}
-            </span>
+            <h1>Meal Preference</h1>
+            <span> Meal 1: {dashboard.confirmation.confirmed}</span><br></br>
+            <span> Meal 2: {dashboard.confirmation.confirmed}</span><br></br>
+            <span> Meal 3: {dashboard.confirmation.confirmed}</span>         
           </div>
         </div>
       </div>
@@ -662,375 +718,186 @@ const [companions, setCompanions] = useState([]);
         </div>
       </div>
       {/* Table */}
-      <div className="modern-table-wrapper">
-        <div className="table-scroll" ref={printRef}>
-          {loading ? (
-            <table className="modern-table">
-              <thead>
-                <tr>
-                  <th>
-                    <div className="th-content">
-                      No.
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-                  <th>
-                    <div className="th-content">
-                      Name
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
+<div className="modern-table-wrapper">
+  <div className="table-scroll" ref={printRef}>
+    <table className="modern-table">
+      <thead>
+        <tr>
+          <th className="w-12 px-4 py-3 text-center">
+            {!loading && displayedAttendees.length > 0 && (
+              <input
+                type="checkbox"
+                checked={
+                  displayedAttendees.length > 0 &&
+                  selectedRows.length === displayedAttendees.length
+                }
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedRows(displayedAttendees.map((a) => a.id));
+                  } else {
+                    setSelectedRows([]);
+                  }
+                }}
+                className="h-4 w-4 cursor-pointer accent-red-600"
+              />
+            )}
+          </th>
 
-                  <th>
-                    <div className="th-content">
-                      Email
-                      <ArrowUpDown size={13} />
+          <th onClick={() => handleSort("firstName")}>
+            <div className="th-content">
+              Name
+              <ArrowUpDown size={13} />
+            </div>
+          </th>
+
+          <th onClick={() => handleSort("emailAddress")}>
+            <div className="th-content">
+              Email
+              <ArrowUpDown size={13} />
+            </div>
+          </th>
+
+          <th onClick={() => handleSort("company")}>
+            <div className="th-content">
+              Company
+              <ArrowUpDown size={13} />
+            </div>
+          </th>
+
+          <th onClick={() => handleSort("position")}>
+            <div className="th-content">
+              Position
+              <ArrowUpDown size={13} />
+            </div>
+          </th>
+
+          <th onClick={() => handleSort("status")}>
+            <div className="th-content">
+              Status
+              <ArrowUpDown size={13} />
+            </div>
+          </th>
+
+
+          <th onClick={() => handleSort("tableNumber")}>
+            <div className="th-content">
+              Table No.
+              <ArrowUpDown size={13} />
+            </div>
+          </th>
+
+          <th onClick={() => handleSort("mealPreference")}>
+            <div className="th-content">
+              Meal
+              <ArrowUpDown size={13} />
+            </div>
+          </th>
+
+          <th onClick={() => handleSort("role")}>
+            <div className="th-content">
+              Role
+              <ArrowUpDown size={13} />
+            </div>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {loading ? (
+          <tr>
+            <td colSpan={10} className="table-empty">
+              Loading attendees...
+            </td>
+          </tr>
+        ) : displayedAttendees.length === 0 ? (
+          <tr>
+            <td colSpan={10} className="table-empty">
+              No attendees found.
+            </td>
+          </tr>
+        ) : (
+          displayedAttendees.map((attendee) => (
+            <tr
+              key={attendee.id}
+              className="clickable-row"
+              onClick={() => handleViewAttendee(attendee.id)}
+            >
+              {/* Checkbox */}
+              <td className="text-center">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-red-600"
+                  checked={selectedRows.includes(attendee.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedRows([...selectedRows, attendee.id]);
+                    } else {
+                      setSelectedRows(
+                        selectedRows.filter((id) => id !== attendee.id)
+                      );
+                    }
+                  }}
+                />
+              </td>
+
+              {/* Name */}
+              <td>
+                <div className="attendee-info">
+                  <div>
+                    <div className="attendee-name">
+                      {attendee.firstName} {attendee.lastName}
                     </div>
-                  </th>
+                  </div>
+                </div>
+              </td>
 
-                  <th>
-                    <div className="th-content">
-                      Company
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
+              {/* Email */}
+              <td>{attendee.emailAddress || "-"}</td>
 
-                  <th>
-                    <div className="th-content">
-                      Position
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
+              {/* Company */}
+              <td>{attendee.company || "-"}</td>
 
-                  <th>
-                    <div className="th-content">
-                      Status
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
+              {/* Position */}
+              <td>{attendee.position || "-"}</td>
 
-                  <th>
-                    <div className="th-content">
-                      Table No.
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-                  <th>
-                    <div className="th-content">
-                      Meal Preferred
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-                  <th>
-                    <div className="th-content">
-                      Role
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-                </tr>
-              </thead>
+              {/* Status */}
+              <td>
+                <span
+                  className={`status-badge ${
+                    attendee.status === "CONFIRMED"
+                      ? "confirmed"
+                      : attendee.status === "CHECKED_IN"
+                      ? "checkedin"
+                      : attendee.status === "PENDING"
+                      ? "pending"
+                      : attendee.status === "DECLINED"
+                      ? "declined"
+                      : attendee.status === "NO_SHOW"
+                      ? "noshow"
+                      : "cancelled"
+                  }`}
+                >
+                  {attendee.status?.replace("_", " ")}
+                </span>
+              </td>
 
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="7" className="table-empty">
-                      Loading attendees...
-                    </td>
-                  </tr>
-                ) : attendees.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="table-empty">
-                      Loading Attendees . . .
-                    </td>
-                  </tr>
-                ) : (
-                  filteredAttendees.map((attendee) => (
-                    <tr key={attendee.id}>{/* your existing row */}</tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          ) : attendees.length === 0 ? (
-            <table className="modern-table">
-              <thead>
-                <tr>
-                  <th>
-                    <div className="th-content">
-                      No.
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-                  <th>
-                    <div className="th-content">
-                      Name
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
 
-                  <th>
-                    <div className="th-content">
-                      Email
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
+              {/* Table */}
+              <td>{attendee.tableNumber || "Not Assigned"}</td>
 
-                  <th>
-                    <div className="th-content">
-                      Company
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
+              {/* Meal */}
+              <td>{attendee.mealPreference || "Not Assigned"}</td>
 
-                  <th>
-                    <div className="th-content">
-                      Position
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-
-                  <th>
-                    <div className="th-content">
-                      Status
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-                  <th>
-                    <div className="th-content">
-                      Checkin Status
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-
-                  <th>
-                    <div className="th-content">
-                      Table No.
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-                  <th>
-                    <div className="th-content">
-                      Meal
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-                  <th>
-                    <div className="th-content">
-                      Role
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="7" className="table-empty">
-                      Loading attendees...
-                    </td>
-                  </tr>
-                ) : attendees.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="table-empty">
-                      No attendees found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredAttendees.map((attendee) => (
-                    <tr key={attendee.id}>{/* your existing row */}</tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          ) : (
-            <table className="modern-table">
-              <thead>
-                <tr>
-                  <th className="w-12 px-4 py-3 text-center">
-                    <input
-                      type="checkbox"
-                      checked={
-                        attendees.length > 0 &&
-                        selectedRows.length == attendees.length
-                      }
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedRows(attendees.map((a) => a.id));
-                        } else {
-                          setSelectedRows([]);
-                        }
-                      }}
-                      className="h-4 w-4 cursor-pointer accent-red-600"
-                    />
-                  </th>
-                  {/*<th className="w-12 px-4 py-3 text-center">
-                        <input
-                          type="checkbox"
-                          checked={
-                            attendees.length > 0 &&
-                            selectedRows.length === attendees.length
-                          }
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedRows(attendees.map(a => a.id));
-                            } else {
-                              setSelectedRows([]);
-                            }
-                          }}
-                          className="h-4 w-4 cursor-pointer accent-red-600"
-                        />
-                      </th>*/}
-                  <th>
-                    <div className="th-content">
-                      Name
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-
-                  <th>
-                    <div className="th-content">
-                      Email
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-
-                  <th>
-                    <div className="th-content">
-                      Company
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-
-                  <th>
-                    <div className="th-content">
-                      Position
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-
-                  <th>
-                    <div className="th-content">
-                      Status
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-
-                  <th>
-                    <div className="th-content">
-                      Table No.
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-
-                  <th>Meal</th>
-
-                  <th>
-                    <div className="th-content">
-                      Role
-                      <ArrowUpDown size={13} />
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAttendees.map((attendee) => (
-                  <tr
-                    key={attendee.id}
-                    className="clickable-row"
-                    onClick={() => handleViewAttendee(attendee.id)}
-                  >
-                    {/* Select checkbox */}
-                    <td className="text-center">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 accent-red-600"
-                        checked={selectedRows.includes(attendee.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedRows([...selectedRows, attendee.id]);
-                          } else {
-                            setSelectedRows(
-                              selectedRows.filter((id) => id !== attendee.id),
-                            );
-                          }
-                        }}
-                      />
-                    </td>
-                    {/*<input
-                    type="checkbox"
-                     className="h-4 w-4 accent-red-600"
-                    checked={selectedRows.includes(attendee.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedRows([...selectedRows, attendee.id]);
-                      } else {
-                        setSelectedRows(
-                          selectedRows.filter(id => id !== attendee.id)
-                        );
-                      }
-                    }}
-                  />  className="h-4 w-4 accent-red-600"*/}
-
-                    {/* Name */}
-                    <td>
-                      <div className="attendee-info">
-                        <div>
-                          <div className="attendee-name">
-                            {attendee.firstName} {attendee.lastName}
-                          </div>
-                          {/* Name 
-                      <div className="attendee-nickname">
-                        {attendee.preferredNameOnBadge || "-"}
-                      </div> */}
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Email */}
-                    <td>{attendee.emailAddress || "-"}</td>
-
-                    {/* Company */}
-                    <td>{attendee.company || "-"}</td>
-
-                    {/* Position */}
-                    <td>{attendee.position || "-"}</td>
-
-                    {/* Registration Status */}
-                    <td>
-                      <span
-                        className={`status-badge ${
-                          attendee.status === "CONFIRMED"
-                            ? "confirmed"
-                            : attendee.status === "CHECKED_IN"
-                              ? "checkedin"
-                              : attendee.status === "PENDING"
-                                ? "pending"
-                                : attendee.status === "DECLINED"
-                                  ? "declined"
-                                  : attendee.status === "NO_SHOW"
-                                    ? "noshow"
-                                    : "cancelled"
-                        }`}
-                      >
-                        {attendee.status?.replace("_", " ")}
-                      </span>
-                    </td>
-
-                    {/* Table */}
-                    <td>{attendee.tableNumber || "Not Assigned"}</td>
-                    {/* Table */}
-                    <td>{attendee.mealPreference || "Not Assigned"}</td>
-
-                    {/* Table */}
-                    <td>{attendee.role || "Not Assigned"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
+              {/* Role */}
+              <td>{attendee.role || "Not Assigned"}</td>
+            </tr>
+          ))
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
       {/* Modal */}
       {selectedAttendee && (
         <div

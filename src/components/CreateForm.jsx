@@ -170,9 +170,13 @@ const formatDateTime = (date) => {
     ? Number(maxParticipants)
     : null,
 
- checkInTime: checkInTime || null,
+ checkInTime: checkInTime
+  ? checkInTime.substring(0, 5)
+  : null,
 
-lunchTime: lunchTime || null,
+lunchTime: lunchTime
+  ? lunchTime.substring(0, 5)
+  : null,
 
   includesDoorPrize: showLootBags,
 
@@ -221,9 +225,13 @@ const handleSaveTemplate = async () => {
 
   dressCode: attire || null,
    
-  checkInTime: checkInTime || null,
+ checkInTime: checkInTime
+  ? checkInTime.substring(0, 5)
+  : null,
 
-lunchTime: lunchTime || null,
+lunchTime: lunchTime
+  ? lunchTime.substring(0, 5)
+  : null,
 
 
   maxParticipants: maxParticipants

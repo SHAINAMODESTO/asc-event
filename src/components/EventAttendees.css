@@ -335,6 +335,17 @@ TABLE
     min-width:1200px;
     border-collapse:collapse;
 }
+th {
+    cursor: pointer;
+    user-select: none;
+}
+
+.th-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
 .modern-table thead th{
     position:sticky;
     top:0;

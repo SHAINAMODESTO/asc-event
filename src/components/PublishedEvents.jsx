@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Copy } from "lucide-react";
+import { Copy, NotebookTabs } from "lucide-react";
 
 import { getEvents, deleteEvent } from "../services/eventService";
 import "./AllEventsList.css";
@@ -110,10 +110,14 @@ const copyToClipboard = async () => {
   return (
     <div className="all-events-list">
       <div className="all-events-header">
-        <div>
-          <h1 className="all-events-title">Published Events List</h1>
+        <div className="header-title">
+          <div className="stat-icon blue">
+                    <NotebookTabs size={24}/>
+          </div>
+          <div>
+            <h1 className="all-events-title"> Published Events List</h1>
+          </div>
         </div>
-
         <div className="all-events-stat">
           {events.length} published event{events.length === 1 ? "" : "s"}
         </div>

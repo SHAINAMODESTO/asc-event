@@ -190,60 +190,59 @@ export default function UserAdminTable() {
             </tr>
         </thead>
 
-        <tbody>
-
-            <tr>
+                    <tbody>
+            {users.map((user) => (
+                <tr key={user.id}>
                 <td>
                     <div className="user-cell">
+                    <div className="avatar">
+                        {user.name
+                        .split(" ")
+                        .map((word) => word[0])
+                        .join("")
+                        .substring(0, 2)}
+                    </div>
 
-                        <div className="avatar">
-                            JD
-                        </div>
-
-                        <div>
-                            <h4>Juan Dela Cruz</h4>
-                          
-                        </div>
-
+                    <div>
+                        <h4>{user.name}</h4>
+                    </div>
                     </div>
                 </td>
 
-                <td>Administrator</td>
+                <td>{user.role}</td>
 
-                <td>juan@asc.com.ph</td>
+                <td>{user.email}</td>
 
-                <td>09123456789</td>
+                <td>{user.contactNumber}</td>
 
                 <td>
-                    <span className="status active">
-                        Active
+                    <span
+                    className={`status ${
+                        user.status === "Active" ? "active" : "inactive"
+                    }`}
+                    >
+                    {user.status}
                     </span>
                 </td>
 
                 <td>
-
                     <div className="table-actions">
+                    <button className="icon-btn">
+                        <Eye size={20} strokeWidth={2} />
+                    </button>
 
-                        <button className="icon-btn">
-                            <Eye size={20} color="red" strokeWidth={2} />
-                        </button>
+                    <button className="icon-btn">
+                        <Pen size={20} strokeWidth={2} />
+                    </button>
 
-                        <button className="icon-btn">
-                            <Pen size={20} color="red" strokeWidth={2} />
-                        </button>
-
-                        <button className="icon-btn danger">
-                            <Trash size={20} color="red" strokeWidth={2} />
-                        </button>
-
+                    <button className="icon-btn danger">
+                        <Trash size={20} strokeWidth={2} />
+                    </button>
                     </div>
-
                 </td>
-
-            </tr>
-
-        </tbody>
-
+                </tr>
+            ))}
+            </tbody>
     </table>
 
     </div>

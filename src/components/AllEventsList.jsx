@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import {NotebookTabs } from "lucide-react";
 import {
   getEvents,
   publishEvent,
@@ -136,10 +136,14 @@ navigate("/published-events");
   return (
     <div className="all-events-list">
       <div className="all-events-header">
-        <div>
-          <h1 className="all-events-title">Draft Events List</h1>
+        <div className="header-title">
+          <div className="stat-icon blue">
+                    <NotebookTabs size={24}/>
+          </div>
+          <div>
+            <h1 className="all-events-title"> Drafted Events List</h1>
+          </div>
         </div>
-
         <div className="all-events-stat">
           {events.length} saved event{events.length === 1 ? "" : "s"}
         </div>

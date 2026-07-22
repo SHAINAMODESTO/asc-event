@@ -112,4 +112,21 @@ export const getAttendees = async ({
     throw error;
   }
 };
+// Dashboard Summary
+export const getDashboardSummary = async (eventId) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/attendee/summary/${eventId}`
+      // `${BASE_URL}/events/${eventId}/dashboard`
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Dashboard summary error:",
+      error.response?.data || error
+    );
+    throw error;
+  }
+};
 

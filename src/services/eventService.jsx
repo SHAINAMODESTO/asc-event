@@ -55,18 +55,20 @@ export const getEventById = async (eventId) => {
 //Edit Event
 export const updateEvent = async (eventId, eventData) => {
   try {
-    const response = await axios.patch(
-      `${BASE_URL}/event/${eventId}`,
-      eventData,
+    const response = await axios.put(
+      `${BASE_URL}/event/update/${eventId}`,
+      eventData
     );
 
     return response.data;
   } catch (error) {
-    console.error("Update Event Error:", error.response?.data || error.message);
+    console.error(
+      "Update Event Error:",
+      error.response?.data || error.message
+    );
     throw error;
   }
 };
-
 // Delete Event
 export const deleteEvent = async (eventId) => {
   try {
