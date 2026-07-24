@@ -508,9 +508,8 @@ font-size:26px;
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
-
-    padding-bottom:20px;
-    border-bottom:1px solid #ebe8e5;
+    padding-bottom:10px;
+    border-bottom:1px solid #bb1010;
 }
 
 .header-left{
@@ -519,7 +518,7 @@ font-size:26px;
     gap:16px;
 }
 .header-text{
-    margin-left:20px;
+    margin-left:7px;
 
 }
 .modal-header h2{
@@ -564,7 +563,7 @@ font-size:26px;
     gap:22px;
 }
 .form-group label{
-    margin-bottom:8px;
+    margin-bottom:0px;
     font-size:14px;
     font-weight:600;
     color:#374151;
@@ -572,7 +571,7 @@ font-size:26px;
 .form-group input,
 .form-group select{
     height:48px;
-    padding:0 16px;
+    padding:0 17px;
     border:1px solid #d1d5db;
     border-radius:12px;
     font-size:15px;
