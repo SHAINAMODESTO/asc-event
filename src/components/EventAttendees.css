@@ -1536,21 +1536,67 @@ background:#16a34a;
     gap:18px;
 }
 
+
+/* Header */
 .companion-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+  gap:16px;
+  flex-wrap:wrap;
 }
 
 .companion-header h3{
-    margin:0;
-    font-size:20px;
-    font-weight:700;
+  margin:0;
+  font-size:20px;
+  font-weight:700;
+  color:#1e293b;
 }
 
-.companion-header span{
-    color:#64748b;
-    font-size:14px;
+.companion-header-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.companion-count{
+  padding:6px 12px;
+  background:#f1f5f9;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:600;
+  color:#475569;
+}
+
+.add-companion-btn{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 16px;
+  background:#2563eb;
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+  transition:.2s;
+}
+
+.add-companion-btn:hover{
+  background:#1d4ed8;
+}
+
+@media (max-width:768px){
+  .companion-header{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .companion-header-right{
+    width:100%;
+    justify-content:space-between;
+  }
 }
 .companion-list{
     display:flex;
@@ -1558,15 +1604,90 @@ background:#16a34a;
     gap:16px;
 }
 
-.companion-card{
-    display:flex;
-    align-items:center;
-    gap:18px;
-    padding:18px 20px;
-    border:1px solid #e2e8f0;
-    border-radius:16px;
-    background:white;
-    transition:.25s;
+.companion-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  padding: 20px;
+  margin-bottom: 16px;
+
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+
+  transition: all 0.2s ease;
+}
+
+.companion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.companion-info {
+  flex: 1;
+}
+
+.companion-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;      /* prevents overlap */
+  min-width: 220px;
+}
+
+.companion-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.companion-position {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.companion-extra {
+  display: flex;
+  gap: 18px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.companion-detail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.companion-detail svg {
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+.table-chip {
+  white-space: nowrap;
+}
+
+.edit-companion-btn {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .2s;
+  white-space: nowrap;
+}
+
+.edit-companion-btn:hover {
+  background: #eff6ff;
 }
 
 .companion-card:hover{
@@ -1606,7 +1727,7 @@ background:#16a34a;
 }  
 /*======================
   COMPANION TAB NOTIF
-  ==================8/
+  ==================*/
   /* Tab button */
 .tab-btn{
     position: relative;
@@ -1637,4 +1758,400 @@ background:#16a34a;
   color: #ebd725;
   font-size: 14px;
   font-weight: 600;
+}
+/*======================
+  ADD COMPANION MODAL
+  ==================*/
+  /* ========================================
+   ADD COMPANION MODAL
+======================================== */
+
+.add-companion-modal {
+  width: 900px;
+  max-width: 95%;
+  max-height: 90vh;
+  background: #fff;
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modalFade .25s ease;
+}
+
+/* ========================================
+   HEADER
+======================================== */
+
+.add-companion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px 28px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.add-companion-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.add-companion-header p {
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: .95rem;
+}
+
+/* ========================================
+   BODY
+======================================== */
+
+.companion-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ========================================
+   EACH COMPANION CARD
+======================================== */
+
+.companion-form-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fafafa;
+  padding: 20px;
+}
+
+.companion-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 18px;
+}
+
+/* ========================================
+   FORM
+======================================== */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 8px;
+  font-size: .88rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.form-group input,
+.form-group select {
+  height: 44px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: .92rem;
+  transition: .2s;
+  background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #dc2626;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220,38,38,.15);
+}
+
+/* ========================================
+   REMOVE BUTTON
+======================================== */
+
+.remove-group {
+  justify-content: flex-end;
+}
+
+.remove-companion-btn {
+  height: 44px;
+  border: none;
+  border-radius: 10px;
+  background: #ef4444;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.remove-companion-btn:hover {
+  background: #dc2626;
+}
+
+.remove-companion-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* ========================================
+   ADD BUTTON
+======================================== */
+
+.add-companion-btn {
+  border: none;
+  border-radius: 10px;
+  background: #dc2626;
+  color: white;
+  padding: 10px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.add-companion-btn:hover {
+  background: #b91c1c;
+}
+
+/* ========================================
+   FOOTER
+======================================== */
+
+.add-companion-footer {
+  padding: 20px 28px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.companion-cancel-btn {
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #374151;
+  padding: 11px 22px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.companion-cancel-btn:hover {
+  background: #f3f4f6;
+}
+
+.companion-save-btn {
+  border: none;
+  background: #dc2626;
+  color: white;
+  padding: 11px 22px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.companion-save-btn:hover {
+  background: #b91c1c;
+}
+
+/* ========================================
+   RESPONSIVE
+======================================== */
+
+@media (max-width:768px){
+
+  .companion-form-grid{
+      grid-template-columns:1fr;
+  }
+
+  .add-companion-header{
+      flex-direction:column;
+      gap:15px;
+      align-items:flex-start;
+  }
+
+  .add-companion-btn{
+      width:100%;
+  }
+
+}
+/*==============================
+    EDIT COMPANION DETAILS
+    ========================*/
+    .edit-companion-btn{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    border:none;
+    background:#fff;
+    color:#2563eb;
+    border:1px solid #bfdbfe;
+    padding:8px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+}/* ========================================
+   EDIT COMPANION MODAL
+======================================== */
+
+.edit-companion-modal {
+  width: 720px;
+  max-width: 95%;
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
+  animation: modalFade .25s ease;
+}
+
+.edit-companion-header {
+  margin-bottom: 24px;
+}
+
+.edit-companion-header h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.edit-companion-header p {
+  color: #64748b;
+  font-size: .95rem;
+  margin: 0;
+}
+
+/* ========================================
+   FORM
+======================================== */
+
+.edit-companion-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.edit-companion-form .full-width {
+  grid-column: span 2;
+}
+
+.edit-companion-form .form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-companion-form label {
+  margin-bottom: 8px;
+  font-size: .9rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.edit-companion-form input,
+.edit-companion-form select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #dbe2ea;
+  border-radius: 12px;
+  font-size: .95rem;
+  transition: .2s;
+  background: #fff;
+}
+
+.edit-companion-form input:focus,
+.edit-companion-form select:focus {
+  border-color: #dc2626;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220,38,38,.12);
+}
+
+/* ========================================
+   FOOTER
+======================================== */
+
+.edit-companion-footer {
+  display: flex;
+  gap: 14px;
+  margin-top: 30px;
+}
+
+.edit-companion-footer button {
+  flex: 1;
+  height: 52px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+
+  cursor: pointer;
+  transition: .2s;
+
+  white-space: nowrap;
+}
+.cancel-btn {
+  border: 1px solid #dbe2ea;
+  background: #fff;
+  color: #475569;
+}
+
+.cancel-btn:hover {
+  background: #f8fafc;
+}
+
+.save-btn {
+  border: none;
+  background: #c81e1e;
+  color: #fff;
+}
+
+.save-btn:hover {
+  background: #b91c1c;
+}
+
+/* ========================================
+   RESPONSIVE
+======================================== */
+
+@media (max-width: 768px) {
+
+  .edit-companion-modal {
+    width: 95%;
+    padding: 22px;
+  }
+
+  .edit-companion-form {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-companion-form .full-width {
+    grid-column: span 1;
+  }
+
+  .edit-companion-footer {
+    flex-direction: column-reverse;
+  }
+
+  .edit-companion-footer button {
+    width: 100%;
+  }
+
+}
+
+/* ========================================
+   ANIMATION
+======================================== */
+
+@keyframes modalFade {
+  from {
+    opacity: 0;
+    transform: translateY(15px) scale(.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
