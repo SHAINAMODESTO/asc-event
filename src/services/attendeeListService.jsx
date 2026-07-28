@@ -129,4 +129,65 @@ export const getDashboardSummary = async (eventId) => {
     throw error;
   }
 };
+// Create Companion
+export const createCompanion = async (primaryId, companionData) => {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/attendee/${primaryId}/companion`,
+      companionData
+    );
 
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Create Companion Error:",
+      error.response?.data || error
+    );
+    throw error;
+  }
+};
+// Update Companion
+export const updateCompanions = async (
+  primaryId,
+  companionId,
+  companionData
+) => {
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/attendee/${primaryId}/companions/${companionId}`,
+      companionData
+    );
+
+    return response;
+
+  } catch (error) {
+    console.error("Update Companion Error:");
+    console.error(error.response);
+
+    throw error;
+  }
+};
+
+// UPDATE PRIMARY ATTENDEE
+
+
+export const updatePrimaryAttendee = async (attendeeId, attendeeData) => {
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/attendee/${attendeeId}`,
+      attendeeData
+    );
+
+    console.log("========== UPDATE ATTENDEE ==========");
+    console.log(response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Update Attendee Error:",
+      error.response?.data || error
+    );
+
+    throw error;
+  }
+};

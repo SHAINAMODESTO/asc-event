@@ -6,6 +6,9 @@ import {
   checkInAttendee,
   getAttendeeById,
   getDashboardSummary,
+  createCompanion,
+  updateCompanions,
+  updatePrimaryAttendee,
 } from "../services/attendeeListService";
 
 import { getEventById } from "../services/eventService";
@@ -96,15 +99,15 @@ const fetchDashboardSummary = async () => {
 
   //table sorting
   const [sortField, setSortField] = useState("");
-const [sortOrder, setSortOrder] = useState("asc");
-const handleSort = (field) => {
-  if (sortField === field) {
-    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-  } else {
-    setSortField(field);
-    setSortOrder("asc");
-  }
-};
+  const [sortOrder, setSortOrder] = useState("asc");
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
 
 
   const [activeTab, setActiveTab] = useState("details");
@@ -115,6 +118,73 @@ const handleSort = (field) => {
   const [checkingIn, setCheckingIn] = useState(false);
 
   const [checkInSuccess, setCheckInSuccess] = useState(false);
+// ========================================
+// EDIT ATTENDEE MODAL
+// ========================================
+
+const [showEditAttendeeModal, setShowEditAttendeeModal] = useState(false);
+
+const [editingAttendee, setEditingAttendee] = useState(null);
+
+// ========================================
+// OPEN EDIT ATTENDEE MODAL
+// ========================================
+
+const handleEditAttendee = () => {
+  setEditingAttendee({
+    ...selectedAttendee,
+  });
+
+  setShowEditAttendeeModal(true);
+};
+// ========================================
+// UPDATE PRIMARY ATTENDEE
+// ========================================
+
+const handleUpdateAttendee = async () => {
+  console.log("Updating attendee...");
+
+  console.log(editingAttendee);
+
+  try {
+    await updatePrimaryAttendee(
+      editingAttendee.id,
+      {
+        firstName: editingAttendee.firstName,
+        middleName: editingAttendee.middleName,
+        lastName: editingAttendee.lastName,
+        preferredNameOnBadge:
+          editingAttendee.preferredNameOnBadge,
+        emailAddress: editingAttendee.emailAddress,
+        contactNumber: editingAttendee.contactNumber,
+        company: editingAttendee.company,
+        position: editingAttendee.position,
+        mealPreference: editingAttendee.mealPreference,
+      }
+    );
+
+    alert("Attendee updated successfully!");
+
+    // Refresh attendee details
+    const updatedAttendee = await getAttendeeById(
+      editingAttendee.id
+    );
+
+    setSelectedAttendee(updatedAttendee.data);
+
+    setShowEditAttendeeModal(false);
+    setEditingAttendee(null);
+
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      error.response?.data?.message ||
+      "Failed to update attendee."
+    );
+  }
+};
+
 
 // ===============================
 // Add Companion Modal
@@ -184,23 +254,89 @@ const updateCompanion = (index, field, value) => {
     )
   );
 };
+// add companion under primary attendee
+const handleSaveCompanion = async () => {
+  try {
+    const primaryId = selectedAttendee.id;
 
+    const payload = companions.map((companion) => ({
+      firstName: companion.firstName,
+      lastName: companion.lastName,
+      position: companion.position,
+      preferredNameOnBadge: companion.preferredNameOnBadge,
+      mealPreference: companion.mealPreference,
+    }));
 
-const handleSaveCompanions = () => {
-  console.log(companions);
+    for (const companion of payload) {
+      await createCompanion(primaryId, companion);
+    }
 
-  /*
-  Later
+    alert("Companion(s) added successfully!");
 
-  await createCompanions(
-      selectedAttendee.id,
-      companions
-  );
-  */
+    // Refresh attendee details
+    const updatedAttendee = await getAttendeeById(primaryId);
 
-  setShowAddCompanionModal(false);
+    setSelectedAttendee(updatedAttendee.data);
+
+    setShowAddCompanionModal(false);
+
+    // Reset form
+    setCompanions([
+      {
+        firstName: "",
+        lastName: "",
+        position: "",
+        preferredNameOnBadge: "",
+        mealPreference: "",
+      },
+    ]);
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      error.response?.data?.message ||
+        "Failed to create companion."
+    );
+  }
 };
 
+// edit companion details
+
+const handleUpdateCompanion = async () => {
+  
+
+  const payload = {
+    firstName: editingCompanion.firstName,
+    lastName: editingCompanion.lastName,
+    preferredNameOnBadge: editingCompanion.preferredNameOnBadge,
+    position: editingCompanion.position,
+    mealPreference: editingCompanion.mealPreference,
+  };
+
+
+
+  try {
+    const result = await updateCompanions(
+      selectedAttendee.id,
+      editingCompanion.id,
+      payload
+    );
+
+
+    const updatedAttendee = await getAttendeeById(selectedAttendee.id);
+
+
+    setSelectedAttendee(updatedAttendee.data);
+
+     alert("Companion details updated successfully.");
+
+    setShowEditCompanionModal(false);
+    setEditingCompanion(null);
+
+  } catch (error) {
+    console.error("5. Error:", error);
+  }
+};
 // ========================================
 // EDIT COMPANION MODAL
 // ========================================
@@ -210,6 +346,19 @@ const [showEditCompanionModal, setShowEditCompanionModal] = useState(false);
 const [editingCompanion, setEditingCompanion] = useState(null);
 
 
+
+// ========================================
+// BULK CHECK IN MODAL
+// ========================================
+
+const [showBulkCheckInModal, setShowBulkCheckInModal] = useState(false);
+
+const [selectedCompanions, setSelectedCompanions] = useState([]);
+
+const handleOpenBulkCheckIn = () => {
+  setSelectedCompanions([]);
+  setShowBulkCheckInModal(true);
+};
 
   //For Printing
   const handlePrint = () => {
@@ -229,6 +378,7 @@ const [editingCompanion, setEditingCompanion] = useState(null);
               <td>${attendee.status || "-"}</td>
               <td>${attendee.checkInAt || "-"}</td>
               <td>${attendee.mealPreference || "-"}</td>
+              <td>${attendee.role || "-"}</td>
             </tr>
           `,
       )
@@ -276,7 +426,7 @@ const [editingCompanion, setEditingCompanion] = useState(null);
                   th,
                   td{
                     border:1px solid #999;
-                    padding:8px;
+                    padding:6px;
                     font-size:11px;
                     text-align:left;
                     vertical-align:top;
@@ -307,7 +457,7 @@ const [editingCompanion, setEditingCompanion] = useState(null);
               <body>
 
               <h1>${eventDetails?.title || "Event"}</h1>
-                <h5>Attendees List</h5>
+                <h3>Attendees List</h3>
 
                 <table>
                   <thead>
@@ -322,11 +472,9 @@ const [editingCompanion, setEditingCompanion] = useState(null);
                       <th>Status</th>
                       <th>Checked In</th>
                       <th>Preferred Meal</th>
-                   
-                    
+                      <th>Role</th>
                     </tr>
                   </thead>
-
                   <tbody>
                     ${tableRows}
                   </tbody>
@@ -427,9 +575,9 @@ const [editingCompanion, setEditingCompanion] = useState(null);
     }
   };
 
-
-
+ 
   const handleExport = () => {
+    
     const csvRows = [
       [
         "First Name",
@@ -443,7 +591,7 @@ const [editingCompanion, setEditingCompanion] = useState(null);
         "Table Number",
         "Preferred Meal",
       ],
-      ...sortedAttendees.map((attendee) => [
+      ...attendees.map((attendee) => [
         attendee.firstName || "",
         attendee.lastName || "",
         attendee.preferredNameOnBadge || "",
@@ -721,18 +869,8 @@ const displayedAttendees = [...attendees]
             <span>{dashboard.tableAssignment.notAssigned} Not Assigned</span>
           </div>
         </div>
-        <div className="dashboard-card">
-          <div className="dashboard-icon purple">
-            <Utensils size={30} />
-          </div>
-          <div>
-            <h1>Meal Preference</h1>
-            <span> Meal 1: {dashboard.confirmation.confirmed}</span><br></br>
-            <span> Meal 2: {dashboard.confirmation.confirmed}</span><br></br>
-            <span> Meal 3: {dashboard.confirmation.confirmed}</span>         
-          </div>
-        </div>
-      </div>
+        
+      </div> 
       {/* Controls */}
    <div className="toolbar">
         <div className="toolbar-left">
@@ -1115,6 +1253,16 @@ const displayedAttendees = [...attendees]
 
                       <label>Position</label>
                       <span>{selectedAttendee.position || "-"}</span>
+
+                       <label>Meal Preference</label>
+
+                      <span>{selectedAttendee.mealPreference || "-"}</span>  
+
+                      <div>
+                            <button className="edit-info-btn" onClick={handleEditAttendee}>
+                              Edit Info
+                            </button>  
+                      </div>
                     </div>
 
                     <hr className="section-divider" />
@@ -1166,9 +1314,7 @@ const displayedAttendees = [...attendees]
                       <label>Checked In By</label>
 
                       <span>{selectedAttendee.checkedInBy || "-"}</span>
-                      <label>Meal Preference</label>
-
-                      <span>{selectedAttendee.mealPreference || "-"}</span>  
+                     
 
                       <label>Table Number</label>
 
@@ -1328,151 +1474,334 @@ const displayedAttendees = [...attendees]
 
                 </div>
               )}
+
+              {/* ========================================
+                    EDIT ATTENDEE MODAL
+            ======================================== */}
+               {showEditAttendeeModal && editingAttendee && (
+
+                <div className="modal-overlay" onClick={() => setShowEditAttendeeModal(false)}>
+                  <div className="edit-attendee-modal" onClick={(e) => e.stopPropagation()}>
+                    {/* Header */}
+                    <div className="edit-attendee-header">
+                     
+                      <h2>Edit Attendee Information</h2>
+                      <p>
+                        Update attendee details for{" "}
+                        <strong>
+                          {selectedAttendee.firstName} {selectedAttendee.lastName}
+                        </strong>
+                      </p>
+                    </div> 
+                    {/* Body */}
+                  <div className="edit-attendee-form"> 
+                     {/*First Name */}
+                     <div className="form-group">
+                        <label>First Name:</label>
+                         <input
+                          type="text"
+                          value={editingAttendee.firstName || ""}
+                          onChange={(e) =>
+                            setEditingAttendee({
+                              ...editingAttendee,
+                              firstName: e.target.value,
+                            })
+                          }
+                        />
+                     </div>
+                     {/*Middle Name */}
+                     <div className="form-group">
+                        <label>Middle Name:</label>
+                         <input
+                          type="text"
+                          value={editingAttendee.middleName || ""}
+                          onChange={(e) =>
+                            setEditingAttendee({
+                              ...editingAttendee,
+                              middkeName: e.target.value,
+                            })
+                          }
+                        />
+                     </div>
+                    {/* Last Name */}
+                    <div className="form-group">
+                      <label>Last Name</label>
+
+                      <input
+                        type="text"
+                        value={editingAttendee.lastName || ""}
+                        onChange={(e) =>
+                          setEditingAttendee({
+                            ...editingAttendee,
+                            lastName: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    {/* Preferred Name */}
+                    <div className="form-group">
+                      <label>Preferred Name on Badge</label>
+
+                      <input
+                        type="text"
+                        value={editingAttendee.preferredNameOnBadge || ""}
+                        onChange={(e) =>
+                          setEditingAttendee({
+                            ...editingAttendee,
+                            preferredNameOnBadge: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    {/* Email Address */}
+                    <div className="form-group">
+                      <label>Email Address</label>
+                      <input
+                        type="text"
+                        value={editingAttendee.emailAddress || ""}
+                        onChange={(e) =>
+                          setEditingAttendee({
+                            ...editingAttendee,
+                            emailAddress: e.target.value,
+                          })
+                        }
+                      />
+                    </div>  
+                    {/* Contact Number*/}
+                    <div className="form-group">
+                      <label>Contact Number</label>
+                      <input
+                        type="number"
+                        value={editingAttendee.contactNumber || ""}
+                        onChange={(e) =>
+                          setEditingAttendee({
+                            ...editingAttendee,
+                            contactNumber: e.target.value,
+                          })
+                        }
+                      />
+                    </div> 
+                    {/* Company*/}
+                    <div className="form-group">
+                      <label>Company</label>
+                      <input
+                        type="text"
+                        value={editingAttendee.company || ""}
+                        onChange={(e) =>
+                          setEditingAttendee({
+                            ...editingAttendee,
+                            company: e.target.value,
+                          })
+                        }
+                      />
+                    </div> 
+                     {/* Posution */}
+                    <div className="form-group">
+                      <label>Position</label>
+                      <input
+                        type="text"
+                        value={editingAttendee.position || ""}
+                        onChange={(e) =>
+                          setEditingAttendee({
+                            ...editingAttendee,
+                            position: e.target.value,
+                          })
+                        }
+                      />
+                    </div> 
+                    {/* Meal Preference */}
+                    <div className="form-group">
+                      <label>Meal Preference</label>
+                            <select
+                              value={editingAttendee.mealPreference || ""}
+                              onChange={(e) =>
+                                setEditingAttendee({
+                                  ...editingAttendee,
+                                  mealPreference: e.target.value,
+                                })
+                              }
+                            >
+                              <option value="">Select Meal Preference</option>
+
+                            {(selectedAttendee?.event?.mealPreferences ?? []).map(
+                              (meal, index) => (
+                                <option
+                                  key={index}
+                                  value={meal}
+                                >
+                                  {meal}
+                                </option>
+                              )
+                            )}
+                          </select>
+                    </div>
+                  </div>  
+                {/* Footer */}
+                <div className="edit-attendee-footer">
+                  <button className="attendee-cancel-btn"
+                          onClick={() => {
+                            setShowEditAttendeeModal(false);
+                            setEditingAttendee(null);
+                          }}>
+                    Cancel
+                  </button>
+                   <button className="attendee-save-btn"
+                          onClick={handleUpdateAttendee}>
+                    Save Changes
+                  </button>
+
+                </div>
+            </div>
+          </div>
+        )}
+
+
+
             {/* ========================================
                 ADD COMPANION MODAL
             ======================================== */}
            {showAddCompanionModal && (
-  <div
-    className="modal-overlay"
-    onClick={() => setShowAddCompanionModal(false)}
-  >
-    <div
-      className="add-companion-modal"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="add-companion-header">
-        <div>
-          <h2>Add Companion</h2>
-
-          <p>
-            Register companion(s) for{" "}
-            <strong>
-              {selectedAttendee.firstName}{" "}
-              {selectedAttendee.lastName}
-            </strong>
-          </p>
-        </div>
-
-        <button
-          type="button"
-          className="add-companion-btn"
-          onClick={handleAddCompanionField}
-        >
-          + Add Companion
-        </button>
-      </div>
-
-      <div className="companion-modal-body">
-        {companions.map((companion, index) => (
           <div
-            key={index}
-            className="companion-form-card"
+            className="modal-overlay"
+            onClick={() => setShowAddCompanionModal(false)}
           >
-            <div className="companion-form-grid">
+            <div
+              className="add-companion-modal"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="add-companion-header">
+                <div>
+                  <h2>Add Companion</h2>
 
-              <div className="form-group">
-                <label>First Name</label>
+                  <p>
+                    Register companion(s) for{" "}
+                    <strong>
+                      {selectedAttendee.firstName}{" "}
+                      {selectedAttendee.lastName}
+                    </strong>
+                  </p>
+                </div>
 
-                <input
-                  type="text"
-                  value={companion.firstName}
-                  onChange={(e) =>
-                    updateCompanion(
-                      index,
-                      "firstName",
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Last Name</label>
-
-                <input
-                  type="text"
-                  value={companion.lastName}
-                  onChange={(e) =>
-                    updateCompanion(
-                      index,
-                      "lastName",
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Relationship / Position</label>
-
-                <input
-                  type="text"
-                  value={companion.position}
-                  onChange={(e) =>
-                    updateCompanion(
-                      index,
-                      "position",
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-
-              <div className="form-group">
-                <label>
-                  Preferred Name on Badge
-                </label>
-
-                <input
-                  type="text"
-                  value={
-                    companion.preferredNameOnBadge
-                  }
-                  onChange={(e) =>
-                    updateCompanion(
-                      index,
-                      "preferredNameOnBadge",
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Meal Preference</label>
-
-                <select
-                  value={companions[index].mealPreference}
-                  onChange={(e) =>
-                    updateCompanion(index, "mealPreference", e.target.value)
-                  }
-                >
-                  <option value="">Select Meal Preference</option>
-
-                  {(selectedAttendee?.event?.mealPreferences ?? []).map((meal, idx) => (
-                    <option key={idx} value={meal}>
-                      {meal}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group remove-group">
                 <button
                   type="button"
-                  className="remove-companion-btn"
-                  onClick={() =>
-                    handleRemoveCompanionField(index)
-                  }
-                  disabled={companions.length === 1}
+                  className="add-companion-btn"
+                  onClick={handleAddCompanionField}
                 >
-                  Remove
+                  + Add Companion
                 </button>
               </div>
 
-            </div>
-          </div>
-        ))}
+              <div className="companion-modal-body">
+                {companions.map((companion, index) => (
+                  <div
+                    key={index}
+                    className="companion-form-card"
+                  >
+                    <div className="companion-form-grid">
+
+                      <div className="form-group">
+                        <label>First Name</label>
+
+                        <input
+                          type="text"
+                          value={companion.firstName}
+                          onChange={(e) =>
+                            updateCompanion(
+                              index,
+                              "firstName",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Last Name</label>
+
+                        <input
+                          type="text"
+                          value={companion.lastName}
+                          onChange={(e) =>
+                            updateCompanion(
+                              index,
+                              "lastName",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Relationship / Position</label>
+
+                        <input
+                          type="text"
+                          value={companion.position}
+                          onChange={(e) =>
+                            updateCompanion(
+                              index,
+                              "position",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>
+                          Preferred Name on Badge
+                        </label>
+
+                        <input
+                          type="text"
+                          value={
+                            companion.preferredNameOnBadge
+                          }
+                          onChange={(e) =>
+                            updateCompanion(
+                              index,
+                              "preferredNameOnBadge",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Meal Preference</label>
+
+                        <select
+                          value={companions[index].mealPreference}
+                          onChange={(e) =>
+                            updateCompanion(index, "mealPreference", e.target.value)
+                          }
+                        >
+                          <option value="">Select Meal Preference</option>
+
+                          {(selectedAttendee?.event?.mealPreferences ?? []).map((meal, idx) => (
+                            <option key={idx} value={meal}>
+                              {meal}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-group remove-group">
+                        <button
+                          type="button"
+                          className="remove-companion-btn"
+                          onClick={() =>
+                            handleRemoveCompanionField(index)
+                          }
+                          disabled={companions.length === 1}
+                        >
+                          Remove
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+                ))}
             </div>
 
             <div className="add-companion-footer">
@@ -1488,7 +1817,7 @@ const displayedAttendees = [...attendees]
 
               <button
                 className="companion-save-btn"
-                onClick={handleSaveCompanions}
+                onClick={handleSaveCompanion}
               >
                 Save Companion(s)
               </button>
@@ -1624,6 +1953,7 @@ const displayedAttendees = [...attendees]
 
                       </div>
 
+
                       {/* Footer */}
                       <div className="edit-companion-footer">
 
@@ -1637,21 +1967,14 @@ const displayedAttendees = [...attendees]
                           Cancel
                         </button>
 
+                  
                         <button
-                          className="companion-save-btn"
-                          onClick={() => {
-                            console.log("Updated Companion:", editingCompanion);
-
-                            // TODO:
-                            // await updateCompanion(editingCompanion.id, editingCompanion);
-
-                            setShowEditCompanionModal(false);
-                            setEditingCompanion(null);
-                          }}
-                        >
-                          Save Changes
-                        </button>
-
+                            className="companion-save-btn"
+                            onClick={handleUpdateCompanion}
+                          >
+                            Save Changes
+                          </button>
+                       
                       </div>
                     </div>
                   </div>
@@ -1727,7 +2050,18 @@ const displayedAttendees = [...attendees]
                 Assign Table
               </button>
 
-              <button
+              {selectedAttendee?.role === "PRIMARY" &&
+                  selectedAttendee?.companions?.length > 0 && (
+
+                  <button
+                      className="modal-bulk-checkin-btn"
+                      onClick={handleOpenBulkCheckIn}
+                  >
+                      Bulk Check In
+                  </button>
+
+                  )}
+                <button
                 className="modal-checkin-btn"
                 disabled={
                   checkingIn || selectedAttendee?.status === "CHECKED_IN"
@@ -1745,6 +2079,214 @@ const displayedAttendees = [...attendees]
           </div>
         </div>
       )}
+
+{/* ========================================
+            BULK CHECKIN MODAL
+ ======================================== */}
+
+                   {/* ========================================
+    BULK CHECK IN MODAL
+======================================== */}
+
+{showBulkCheckInModal && (
+  <div
+    className="modal-overlay"
+    onClick={() => setShowBulkCheckInModal(false)}
+  >
+    <div
+      className="bulk-checkin-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+
+      {/* Header */}
+
+      <div className="bulk-checkin-header">
+
+        <h2>Bulk Check In Companions</h2>
+
+        <p>
+
+          Primary Attendee
+
+          <strong>
+            {selectedAttendee.firstName} {selectedAttendee.lastName}
+          </strong>
+
+        </p>
+
+      </div>
+
+      {/* Summary */}
+
+      <div className="bulk-summary">
+
+        <div className="summary-card">
+
+          <span>Total</span>
+
+          <strong>
+            {selectedAttendee.companions.length}
+          </strong>
+
+        </div>
+
+        <div className="summary-card-checkin">
+
+          <span>Checked In</span>
+
+          <strong>
+            {
+              selectedAttendee.companions.filter(
+                c => c.status === "CHECKED_IN"
+              ).length
+            }
+          </strong>
+
+        </div>
+
+        <div className="summary-card-pending">
+
+          <span>Pending</span>
+
+          <strong>
+            {
+              selectedAttendee.companions.filter(
+                c => c.status !== "CHECKED_IN"
+              ).length
+            }
+          </strong>
+
+        </div>
+
+      </div>
+
+      {/* Select All */}
+
+      <div className="bulk-select-all">
+
+        <label>
+
+          <input
+            type="checkbox"
+          />
+
+          Select All Available
+
+        </label>
+
+      </div>
+
+      {/* Companion List */}
+
+      <div className="bulk-companion-list">
+
+        {selectedAttendee.companions.map((companion) => (
+
+          <div
+            key={companion.id}
+            className={`bulk-companion-card ${
+              companion.status === "CHECKED_IN"
+                ? "checked-in"
+                : ""
+            }`}
+          >
+
+            <div className="bulk-checkbox">
+
+              <input
+                type="checkbox"
+                disabled={
+                  companion.status === "CHECKED_IN"
+                }
+              />
+
+            </div>
+
+            <div className="bulk-info">
+
+              <h4>
+
+                {companion.firstName} {companion.lastName}
+
+              </h4>
+
+              <p>
+
+                {companion.position || "No Position"}
+
+              </p>
+
+              <span>
+
+                Check In Time:
+
+                {" "}
+
+                {companion.checkInAt
+                  ? new Date(
+                      companion.checkInAt
+                    ).toLocaleString()
+                  : "-"}
+
+              </span>
+
+            </div>
+
+            <div className="bulk-status">
+
+              {companion.status === "CHECKED_IN" ? (
+
+                <span className="status-success">
+
+                  Already Checked In
+
+                </span>
+
+              ) : (
+
+                <span className="status-pending">
+
+                  ● Not Checked In
+
+                </span>
+
+              )}
+
+            </div>
+
+          </div>
+
+        ))}
+
+      </div>
+
+      {/* Footer */}
+
+      <div className="bulk-checkin-footer">
+
+        <button
+          className="bulk-cancel-btn"
+          onClick={() =>
+            setShowBulkCheckInModal(false)
+          }
+        >
+          Cancel
+        </button>
+
+        <button
+          className="bulk-save-btn"
+        >
+          Check In Selected (0)
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
+
+
      
       {/* Pagination */}
       <div className="pagination">
