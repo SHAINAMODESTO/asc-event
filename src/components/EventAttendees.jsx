@@ -9,6 +9,7 @@ import {
   createCompanion,
   updateCompanions,
   updatePrimaryAttendee,
+  bulkCheckInAttendees,
 } from "../services/attendeeListService";
 
 import { getEventById } from "../services/eventService";
@@ -359,7 +360,57 @@ const handleOpenBulkCheckIn = () => {
   setSelectedCompanions([]);
   setShowBulkCheckInModal(true);
 };
+// ========================================
+// BULK CHECK IN MAIN FUNCTION
+// ========================================
 
+const handleBulkCheckIn = async () => {
+  try {
+    if (selectedCompanions.length === 0) {
+      alert("Please select at least one companion.");
+      return;
+    }
+
+    // Include the primary attendee
+    const attendeeIds = [
+        ...(selectedAttendee.status !== "CHECKED_IN"
+          ? [selectedAttendee.id]
+          : []),
+        ...selectedCompanions,
+      ];
+
+    console.log("Attendees to Check In:");
+    console.log(attendeeIds);
+
+    const response = await bulkCheckInAttendees(attendeeIds);
+
+    console.log("Bulk Check In Response:");
+    console.log(response);
+
+    alert(response.message);
+
+    // Refresh attendee details
+    const updatedAttendee = await getAttendeeById(
+      selectedAttendee.id
+    );
+
+    setSelectedAttendee(updatedAttendee.data);
+
+    // Close modal
+    setShowBulkCheckInModal(false);
+
+    // Clear selections
+    setSelectedCompanions([]);
+
+  } catch (error) {
+    console.error("Bulk Check In Error:", error);
+
+    alert(
+      error.response?.data?.message ||
+      "Bulk check in failed."
+    );
+  }
+};
   //For Printing
   const handlePrint = () => {
     const printWindow = window.open("", "_blank");
@@ -654,6 +705,10 @@ const handleOpenBulkCheckIn = () => {
   };
   // Save table assignment to the backend
  const handleAssignTable = async () => {
+  console.log("Assign Table clicked");
+  console.log("Attendee ID:", selectedAttendee.id);
+  console.log("Table Number:", tableNumber);
+
   if (!selectedAttendee) {
     alert("Please select an attendee.");
     return;
@@ -1117,22 +1172,22 @@ const displayedAttendees = [...attendees]
               </td>
 
 
-              {/* Table */}
-              <td>{attendee.tableNumber || "Not Assigned"}</td>
+                  {/* Table */}
+                  <td>{attendee.tableNumber || "Not Assigned"}</td>
 
-              {/* Meal */}
-              <td>{attendee.mealPreference || "Not Assigned"}</td>
+                  {/* Meal */}
+                  <td>{attendee.mealPreference || "Not Assigned"}</td>
 
-              {/* Role */}
-              <td>{attendee.role || "Not Assigned"}</td>
-            </tr>
-          ))
-        )}
-      </tbody>
-    </table>
-  </div>
-</div>
-      {/* Modal */}
+                  {/* Role */}
+                  <td>{attendee.role || "Not Assigned"}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+ {/* Attendee Modal */}
       {selectedAttendee && (
         <div
           className="attendee-modal-overlay"
@@ -1177,7 +1232,8 @@ const displayedAttendees = [...attendees]
                 Attendance
               </button>
               
-          {/* COMPANION TAB FOR PRIMARY ATTENDEE VISIBLE ONLY*/}
+{/* COMPANION TAB FOR PRIMARY ATTENDEE VISIBLE ONLY*/}
+
               {selectedAttendee?.role === "PRIMARY" && (
                 <button
                   className={`tab-btn ${activeTab === "companion" ? "active" : ""}`}
@@ -1373,73 +1429,127 @@ const displayedAttendees = [...attendees]
                 </div>
               )}
          {/* Companion Tab */}
-              {activeTab === "companion" && (
-                <div className="companion-tab">
+            
+            {activeTab === "companion" && (
+              <div className="companion-tab">
 
-                  <div className="companion-header">
-                    <div className="companion-header-left">
-                      <h3>Companion List</h3>
-                    </div>
-
-                    <div className="companion-header-right">
-                      <span className="companion-count">
-                        {selectedAttendee?.companions?.length || 0} Registered
-                      </span>
-
-                      <button
-                        className="add-companion-btn"
-                         onClick={handleAddCompanion}
-                      >
-                        <Plus size={16} />
-                        Add Companion
-                      </button>
-                    </div>
+                <div className="companion-header">
+                  <div className="companion-header-left">
+                    <h3>Companion List</h3>
                   </div>
-                  <div className="companion-list">
 
-                    {selectedAttendee?.companions?.length > 0 ? (
+                  <div className="companion-header-right">
+                    <span className="companion-count">
+                      {selectedAttendee?.companions?.length || 0} Registered
+                    </span>
 
-                      selectedAttendee.companions.map((companion) => (
+                    <button
+                      className="add-companion-btn"
+                      onClick={handleAddCompanion}
+                    >
+                      <Plus size={16} />
+                      Add Companion
+                    </button>
+                  </div>
+                </div>
 
-                        <div
-                          key={companion.id}
-                          className="companion-card"
-                        >
+                <div className="companion-list">
 
-                          <div className="companion-avatar">
-                            👤
-                          </div>
+                  {selectedAttendee?.companions?.length > 0 ? (
 
-                         <div className="companion-info">
-                            <h4>
-                              {companion.firstName} {companion.lastName}
-                            </h4>
+                    selectedAttendee.companions.map((companion) => (
 
-                            <p className="companion-position">
-                              {companion.position || "No Position"}
-                            </p>
+                      <div
+                        key={companion.id}
+                        className="companion-card"
+                      >
 
-                            <div className="companion-extra">
+                        <div className="companion-avatar">
+                          👤
+                        </div>
 
-                              <div className="companion-detail">
-                                <Badge size={15} />
-                                <span>{companion.preferredNameOnBadge || "-"}</span>
-                              </div>
+                        <div className="companion-info">
 
-                              <div className="companion-detail">
-                                <UtensilsCrossed size={15} />
-                                <span>{companion.mealPreference || "Not Selected"}</span>
-                              </div>
+                          <h4>
+                            {companion.firstName} {companion.lastName}
+                          </h4>
 
+                          <p className="companion-position">
+                            {companion.position || "No Position"}
+                          </p>
+
+                       <div className="companion-extra">
+
+                            <div className="companion-detail">
+                              <Badge size={15} />
+                              <span>
+                                {companion.preferredNameOnBadge || "-"}
+                              </span>
                             </div>
-                          </div>
 
-                          <div className="companion-meta">
-                            <span className="table-chip">
-                              {companion.tableNumber
-                                ? `Table ${companion.tableNumber}`
-                                : "Not Assigned"}
+                            <div className="companion-detail">
+                              <Armchair size={15} />
+                              <span
+                                className={
+                                  companion.tableNumber
+                                    ? "table-assigned"
+                                    : "table-unassigned"
+                                }
+                              >
+                                {companion.tableNumber
+                                  ? `Table ${companion.tableNumber}`
+                                  : "Not Assigned"}
+                              </span>
+                            </div>
+
+                            <div className="companion-detail">
+                              <UtensilsCrossed size={15} />
+                              <span>
+                                {companion.mealPreference || "Not Selected"}
+                              </span>
+                            </div>
+
+                            {companion.status === "CHECKED_IN" && (
+                              <div className="companion-detail">
+                                <Clock3 size={15} />
+                                <span>
+                                  {new Date(companion.checkInAt).toLocaleString()}
+                                </span>
+                              </div>
+                            )}
+
+                                  </div>
+
+                        </div>
+
+                        <div className="companion-meta">
+
+                            <span
+                              className={
+                                companion.status === "CHECKED_IN"
+                                  ? "status-chip checked-in"
+                                  : "status-chip pending"
+                              }
+                            >
+                              {companion.status === "CHECKED_IN"
+                                ? "✓ Checked In"
+                                : "● Pending"}
                             </span>
+
+                            <button
+                              className="assign-table-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+
+                                // Keep the selected primary attendee
+                                // because the backend assigns the table to the whole group
+                                setTableNumber(companion.tableNumber || "");
+                                setShowAssignModal(true);
+                              }}
+                            >
+                              
+                              {companion.tableNumber ? "Change Table" : "Assign Table"}
+                            </button>
 
                             <button
                               type="button"
@@ -1456,28 +1566,29 @@ const displayedAttendees = [...attendees]
                             >
                               Edit
                             </button>
+
                           </div>
 
-                        </div>
-
-                      ))
-
-                    ) : (
-
-                      <div className="empty-companions">
-                        No companions registered.
                       </div>
 
-                    )}
+                    ))
 
-                  </div>
+                  ) : (
+
+                    <div className="empty-companions">
+                      No companions registered.
+                    </div>
+
+                  )}
 
                 </div>
-              )}
 
-              {/* ========================================
-                    EDIT ATTENDEE MODAL
-            ======================================== */}
+              </div>
+            )}
+
+{/* ========================================
+           EDIT ATTENDEE MODAL
+======================================== */}
                {showEditAttendeeModal && editingAttendee && (
 
                 <div className="modal-overlay" onClick={() => setShowEditAttendeeModal(false)}>
@@ -1657,9 +1768,9 @@ const displayedAttendees = [...attendees]
 
 
 
-            {/* ========================================
-                ADD COMPANION MODAL
-            ======================================== */}
+{/* ========================================
+          ADD COMPANION MODAL
+======================================== */}
            {showAddCompanionModal && (
           <div
             className="modal-overlay"
@@ -1827,9 +1938,9 @@ const displayedAttendees = [...attendees]
         </div>
       )}
 
-          {/* ========================================
-            EDIT COMPANION MODAL
-        ======================================== */}
+{/* ========================================
+     EDIT COMPANION MODAL
+======================================== */}
 
                 {showEditCompanionModal && editingCompanion && (
                   <div
@@ -2084,211 +2195,164 @@ const displayedAttendees = [...attendees]
             BULK CHECKIN MODAL
  ======================================== */}
 
-                   {/* ========================================
-    BULK CHECK IN MODAL
-======================================== */}
-
-{showBulkCheckInModal && (
-  <div
-    className="modal-overlay"
-    onClick={() => setShowBulkCheckInModal(false)}
-  >
-    <div
-      className="bulk-checkin-modal"
-      onClick={(e) => e.stopPropagation()}
-    >
-
-      {/* Header */}
-
-      <div className="bulk-checkin-header">
-
-        <h2>Bulk Check In Companions</h2>
-
-        <p>
-
-          Primary Attendee
-
-          <strong>
-            {selectedAttendee.firstName} {selectedAttendee.lastName}
-          </strong>
-
-        </p>
-
-      </div>
-
-      {/* Summary */}
-
-      <div className="bulk-summary">
-
-        <div className="summary-card">
-
-          <span>Total</span>
-
-          <strong>
-            {selectedAttendee.companions.length}
-          </strong>
-
-        </div>
-
-        <div className="summary-card-checkin">
-
-          <span>Checked In</span>
-
-          <strong>
-            {
-              selectedAttendee.companions.filter(
-                c => c.status === "CHECKED_IN"
-              ).length
-            }
-          </strong>
-
-        </div>
-
-        <div className="summary-card-pending">
-
-          <span>Pending</span>
-
-          <strong>
-            {
-              selectedAttendee.companions.filter(
-                c => c.status !== "CHECKED_IN"
-              ).length
-            }
-          </strong>
-
-        </div>
-
-      </div>
-
-      {/* Select All */}
-
-      <div className="bulk-select-all">
-
-        <label>
-
-          <input
-            type="checkbox"
-          />
-
-          Select All Available
-
-        </label>
-
-      </div>
-
-      {/* Companion List */}
-
-      <div className="bulk-companion-list">
-
-        {selectedAttendee.companions.map((companion) => (
-
-          <div
-            key={companion.id}
-            className={`bulk-companion-card ${
-              companion.status === "CHECKED_IN"
-                ? "checked-in"
-                : ""
-            }`}
-          >
-
-            <div className="bulk-checkbox">
-
-              <input
-                type="checkbox"
-                disabled={
-                  companion.status === "CHECKED_IN"
-                }
-              />
-
-            </div>
-
-            <div className="bulk-info">
-
-              <h4>
-
-                {companion.firstName} {companion.lastName}
-
-              </h4>
-
+      {showBulkCheckInModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowBulkCheckInModal(false)}>
+          <div className="bulk-checkin-modal" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="bulk-checkin-header">
+              <h2>Bulk Check In Companions</h2>
               <p>
-
-                {companion.position || "No Position"}
-
+                Primary Attendee
+                <strong>
+                  {selectedAttendee.firstName} {selectedAttendee.lastName}
+                </strong>
               </p>
-
-              <span>
-
-                Check In Time:
-
-                {" "}
-
-                {companion.checkInAt
-                  ? new Date(
-                      companion.checkInAt
-                    ).toLocaleString()
-                  : "-"}
-
-              </span>
-
             </div>
-
-            <div className="bulk-status">
-
-              {companion.status === "CHECKED_IN" ? (
-
-                <span className="status-success">
-
-                  Already Checked In
-
-                </span>
-
-              ) : (
-
-                <span className="status-pending">
-
-                  ● Not Checked In
-
-                </span>
-
-              )}
-
+            {/* Summary */}
+            <div className="bulk-summary">
+              <div className="summary-card">
+                <span>Total</span>
+                <strong>
+                  {selectedAttendee.companions.length}
+                </strong>
+              </div>
+              <div className="summary-card-checkin">
+                <span>Checked In</span>
+                <strong>
+                  {
+                    selectedAttendee.companions.filter(
+                      c => c.status === "CHECKED_IN"
+                    ).length
+                  }
+                </strong>
+              </div>
+              <div className="summary-card-pending">
+                <span>Pending</span>
+                <strong>
+                  {
+                    selectedAttendee.companions.filter(
+                      c => c.status !== "CHECKED_IN"
+                    ).length
+                  }
+                </strong>
+              </div>
             </div>
+            {/* Select All */}
+            <div className="bulk-select-all">
+              <label>
+                <input type="checkbox"
+                checked={
+                  selectedCompanions.length > 0 &&
+                  selectedCompanions.length ===
+                    selectedAttendee.companions.filter(
+                      (c) => c.status !== "CHECKEDN _IN"
+                    ).length
+                }
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    const availableCompanions =
+                      selectedAttendee.companions
+                        .filter((c) => c.status !== "CHECKED_IN")
+                        .map((c) => c.id);
+                 setSelectedCompanions(availableCompanions);
+                  }
+                 else {
+                  setSelectedCompanions([])
+                 }   
+                }}     
+                        
+                        />
+                Select All Available
+              </label>
+            </div>
+            {/* Companion List */}
+            <div className="bulk-companion-list">
+              {selectedAttendee.companions.map((companion) => (
+                <div
+                  key={companion.id}
+                  className={`bulk-companion-card ${
+                    companion.status === "CHECKED_IN"
+                      ? "checked-in"
+                      : ""
+                  }`}
+                >
+                  <div className="bulk-checkbox">
+                   <input
+                        type="checkbox"
+                        disabled={companion.status === "CHECKED_IN"}
+                        checked={selectedCompanions.includes(companion.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedCompanions((prev) => [
+                              ...prev,
+                              companion.id,
+                            ]);
+                          } else {
+                            setSelectedCompanions((prev) =>
+                              prev.filter((id) => id !== companion.id)
+                            );
+                          }
+                        }}
+                      />
+                  </div>
+                  <div className="bulk-info">
+                    <h4>
+                      {companion.firstName} {companion.lastName}
+                    </h4>
+                    <p>
+                      {companion.position || "No Position"}
+                    </p>
+                    <span>
+                      Check In Time:
+                      {" "}
+                      {companion.checkInAt
+                        ? new Date(
+                            companion.checkInAt
+                          ).toLocaleString()
+                        : "-"}
+                    </span>
+                  </div>
+                  <div className="bulk-status">
+                    {companion.status === "CHECKED_IN" ? (
+                        <span className="status-success">
+                          ✔ Already Checked In
+                        </span>
+                      ) : selectedCompanions.includes(companion.id) ? (
+                        <span className="status-selected">
+                          ✓ Selected for Check In
+                        </span>
+                      ) : (
+                        <span className="status-pending">
+                          ● Pending Check In
+                        </span>
+                      )}
+                  </div>
+                </div>
+              ))}
+            </div>
+{/* Footer */}
+          <div className="bulk-checkin-footer">
+            <button className="bulk-cancel-btn" onClick={() =>
+                setShowBulkCheckInModal(false)
+              }
+            >
+              Cancel
+            </button>
 
+            <button
+                className="bulk-save-btn"
+                onClick={handleBulkCheckIn}
+            >
+                Check In Selected ({selectedCompanions.length})
+            </button>
           </div>
-
-        ))}
-
+        </div>
       </div>
+    )}
 
-      {/* Footer */}
-
-      <div className="bulk-checkin-footer">
-
-        <button
-          className="bulk-cancel-btn"
-          onClick={() =>
-            setShowBulkCheckInModal(false)
-          }
-        >
-          Cancel
-        </button>
-
-        <button
-          className="bulk-save-btn"
-        >
-          Check In Selected (0)
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-)}
-
-
-     
-      {/* Pagination */}
+{/* Pagination */}
       <div className="pagination">
         <button
           disabled={page === 1}

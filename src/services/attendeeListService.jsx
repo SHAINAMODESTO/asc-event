@@ -191,3 +191,29 @@ export const updatePrimaryAttendee = async (attendeeId, attendeeData) => {
     throw error;
   }
 };
+// ========================================
+// BULK CHECK IN ATTENDEES
+// ========================================
+
+export const bulkCheckInAttendees = async (attendeeIds) => {
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/attendee/check-in`,
+      {
+        attendeeIds,
+      }
+    );
+
+    console.log("========== BULK CHECK IN ==========");
+    console.log(response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Bulk Check In Error:",
+      error.response?.data || error
+    );
+
+    throw error;
+  }
+};

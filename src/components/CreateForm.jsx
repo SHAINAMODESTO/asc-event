@@ -710,7 +710,7 @@ useEffect(() => {
                               <div className="setting-item">
 
                                 <div className="setting-info">
-                                  <h4>Upload Banner</h4>
+                                  <h4>Upload Registration Banner</h4>
                                   <p>Display a banner on the registration page.</p>
                                 </div>
 
@@ -761,10 +761,62 @@ useEffect(() => {
 
                             </div>
 
+                            {/* ================= Upload Attendee's Photo ================= */}
+
+                            <div className="setting-block">
+
+                              <div className="setting-item">
+
+                                <div className="setting-info">
+                                  <h4>Upload Attendee's Profile Photo</h4>
+                                  <p>Attendees are required to upload a profile picture for identification purposes</p>
+                                </div>
+
+                                <label className="switch">
+                                  <input
+                                    type="checkbox"
+                                    
+                                  />
+                                  <span className="slider"></span>
+                                </label>
+
+                              </div>
+
+                              
+
+                            </div>
+
+
+                            {/* ================= Paid Event option ================= */}
+
+                            <div className="setting-block">
+
+                              <div className="setting-item">
+
+                                <div className="setting-info">
+                                  <h4>Paid Event</h4>
+                                  <p>Turn on this option to indicate that the event requires a registration fee.</p>
+                                </div>
+
+                                <label className="switch">
+                                  <input
+                                    type="checkbox"
+                                    
+                                  />
+                                  <span className="slider"></span>
+                                </label>
+
+                              </div>
+
+                            
+                            </div>
+
                           </div>
 
                         </div>
                         </div>
+
+                        
 
                   <div className="template-actions">
                     <button
