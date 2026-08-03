@@ -34,6 +34,7 @@ import {
   Utensils,
   Badge,
   UtensilsCrossed,
+  QrCode,
 } from "lucide-react";
 
 const EventAttendees = () => {
@@ -992,18 +993,13 @@ const displayedAttendees = [...attendees]
           </button>
           <button
             className="white-btn"
-            onClick={() => fileInputRef.current.click()}
-          >
-            <Upload size={17} />
-            Bulk Upload
+            onClick={() => navigate(`/attendees/${eventId}/scanner`)}
+  >
+        
+             <QrCode size={17} />
+            QR Scanner
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            hidden
-            onChange={handleBulkUpload}
-          />
+          
         </div>
       </div>
       {/* Table */}
@@ -1552,20 +1548,15 @@ const displayedAttendees = [...attendees]
                             </button>
 
                             <button
-                              type="button"
-                              className="edit-companion-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-
-                                setEditingCompanion({
-                                  ...companion,
-                                });
-
-                                setShowEditCompanionModal(true);
-                              }}
-                            >
-                              Edit
-                            </button>
+                                type="button"
+                                className="edit-companion-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewAttendee(companion.id);
+                                }}
+                              >
+                                Edit
+                              </button>
 
                           </div>
 

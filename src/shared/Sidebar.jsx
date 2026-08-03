@@ -11,7 +11,8 @@ const sectionItems = {
     "Published Events List",
   ],
   "User Management": [
-    "Admin users"
+    "Admin users",
+    "QR Scanner"
   ],
   Settings: [
     "Profile settings",
@@ -80,7 +81,11 @@ const loadDashboard = async () => {
     } else if (path.includes("/useradmin-table")) {
       setSelectedSection("User Management");
       setActiveItem("Admin users");
-    } 
+    } else if (path.includes("/qr-scanner")) {
+      setSelectedSection("User Management");
+      setActiveItem("QR Scanner");
+    }
+    
     
   }, [location.pathname]);
 
@@ -110,6 +115,10 @@ const loadDashboard = async () => {
       case "Admin users":
         navigate("/useradmin-table");
         break;
+
+      case "QR Scanner":
+      navigate("/qr-scanner");
+      break;  
 
       default:
         break;
