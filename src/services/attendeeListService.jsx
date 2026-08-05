@@ -34,6 +34,26 @@ export const assignTable = async (attendeeId, tableNumber) => {
     throw error;
   }
 };
+//Bulk Assign Table Number for Primary Attendees with Companions
+
+export const bulkAssignTable = async (attendeeId, tableNumber) => {
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/attendee/${attendeeId}/bulk/assign-table`,
+      {
+        tableNumber,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Bulk Assign Table Error:",
+      error.response?.data || error
+    );
+    throw error;
+  }
+};
 //Check in 
 export const checkInAttendee = async (attendeeId) => {
   try {

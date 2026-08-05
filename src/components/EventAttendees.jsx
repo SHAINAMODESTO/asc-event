@@ -10,6 +10,7 @@ import {
   updateCompanions,
   updatePrimaryAttendee,
   bulkCheckInAttendees,
+  bulkAssignTable,
 } from "../services/attendeeListService";
 
 import { getEventById } from "../services/eventService";
@@ -704,10 +705,10 @@ const handleBulkCheckIn = async () => {
 
     reader.readAsText(file);
   };
-  // Save table assignment to the backend
- const handleAssignTable = async () => {
-  console.log("Assign Table clicked");
-  console.log("Attendee ID:", selectedAttendee.id);
+ // Save table assignment to the backend (Primary + Companions)
+const handleBulkAssignTable = async () => {
+  console.log("Bulk Assign Table clicked");
+  console.log("Primary Attendee ID:", selectedAttendee.id);
   console.log("Table Number:", tableNumber);
 
   if (!selectedAttendee) {
@@ -723,28 +724,33 @@ const handleBulkCheckIn = async () => {
   try {
     setLoading(true);
 
-    console.log("Assigning Table:", {
+    console.log("Bulk Assigning Table:", {
       attendeeId: selectedAttendee.id,
       tableNumber: Number(tableNumber),
     });
 
-    const response = await assignTable(
+    const response = await bulkAssignTable(
       selectedAttendee.id,
-      Number(tableNumber),
+      Number(tableNumber)
     );
 
-    console.log("Assign Table Response:", response);
+    console.log("Bulk Assign Table Response:", response);
 
-    // Refresh attendees + dashboard
+    // Refresh attendee list and dashboard
     await Promise.all([
       fetchAttendees(),
       fetchDashboardSummary(),
     ]);
 
-    // Update currently opened attendee details
+    // Update the currently opened attendee immediately
     setSelectedAttendee((prev) => ({
       ...prev,
       tableNumber: Number(tableNumber),
+      companions:
+        prev?.companions?.map((companion) => ({
+          ...companion,
+          tableNumber: Number(tableNumber),
+        })) || [],
     }));
 
     // Close modal
@@ -755,14 +761,19 @@ const handleBulkCheckIn = async () => {
 
     alert(response?.message || "Table assigned successfully.");
   } catch (error) {
-    console.error("Assign Table Error:", error.response?.data || error);
+    console.error(
+      "Bulk Assign Table Error:",
+      error.response?.data || error
+    );
 
-    alert(error.response?.data?.message || "Failed to assign table.");
+    alert(
+      error.response?.data?.message ||
+        "Failed to assign table."
+    );
   } finally {
     setLoading(false);
   }
 };
-
   //Checking In
 
  const handleCheckIn = async () => {
@@ -2117,7 +2128,7 @@ const displayedAttendees = [...attendees]
 
                       <button
                         className="save-table-btn"
-                        onClick={handleAssignTable}
+                        onClick={handleBulkAssignTable}
                       >
                         Save
                       </button>
