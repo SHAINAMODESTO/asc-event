@@ -995,6 +995,12 @@ const displayedAttendees = [...attendees]
             <Plus size={18} />
             Add Attendee
           </button>
+          <button
+            className="red-btn"
+            onClick={() => navigate(`/attendees/${eventId}/scanner`)}>
+             <QrCode size={17} />
+            QR Scanner
+          </button>
           <button className="white-btn" onClick={handlePrint}>
             <Printer size={17} />
             Print
@@ -1003,12 +1009,7 @@ const displayedAttendees = [...attendees]
             <Download size={17} />
             Export
           </button>
-          <button
-            className="white-btn"
-            onClick={() => navigate(`/attendees/${eventId}/scanner`)}>
-             <QrCode size={17} />
-            QR Scanner
-          </button>
+          
           <button
             className="white-btn"
             onClick={() => navigate(`/event-reports`)}>

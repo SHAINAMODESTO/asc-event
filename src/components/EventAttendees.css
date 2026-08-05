@@ -261,7 +261,8 @@ TOOLBAR
 ======================================== */
 
 .blue-btn,
-.white-btn {
+.white-btn,
+.red-btn{
   height: 46px;
   padding: 0 12px;
 
@@ -280,6 +281,15 @@ TOOLBAR
   transition: .2s;
 }
 
+.red-btn {
+  border: none;
+  background: #eb3c25;
+  color: white;
+}
+
+.red-btn:hover {
+  background: #e4a1a1;
+}
 .blue-btn {
   border: none;
   background: #2563eb;
