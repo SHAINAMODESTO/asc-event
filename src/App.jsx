@@ -13,6 +13,7 @@ import EventSummary from "./components/register/EventSummary";
 import Login from "./components/Login";
 import UserAdminTable from "./components/UserAdminTable";
 import QRScanner from "./qr-scanner/QRScanner";
+import EventReports from "./components/EventReports";
 
 const ProtectedRoute = ({ children }) => {
   const isLoggedIn = localStorage.getItem("isLoggedIn");
@@ -50,6 +51,7 @@ function App() {
         <Route path="published-events" element={<PublishedEvents />} />
         <Route path="useradmin-table" element={<UserAdminTable />} />
         <Route path="/attendees/:eventId/scanner" element={<QRScanner />}/>
+        <Route path="/event-reports" element={<EventReports />}/>
       </Route>
 
       {/* Public Pages */}

@@ -13,23 +13,26 @@ const RegisterV3 = () => {
   const navigate = useNavigate();
   const { eventId } = useParams();
 
+  const [searchParams] = useSearchParams();
+
+ const isAdminRegistration =
+    searchParams.get("mode") === "admin";
+
+  console.log("isAdminRegistration:", isAdminRegistration);
+
   const { event, loading, notFound } = useEvent(eventId);
 
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [privacyChecked, setPrivacyChecked] = useState(false);
 
-  const register = useRegisterForm(eventId, navigate);
-  const [searchParams] = useSearchParams();
+  const register = useRegisterForm(eventId, navigate, isAdminRegistration);
+  
 
 
   console.log("URL:", window.location.href);
   console.log("mode:", searchParams.get("mode"));
 
-  const isAdminRegistration =
-    searchParams.get("mode") === "admin";
-
-  console.log("isAdminRegistration:", isAdminRegistration);
-
+  
 
 
    

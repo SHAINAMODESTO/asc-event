@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createAttendee } from "../services/attendeeListService";
 import { validateRegistration } from "../utils/validation";
 
-export default function useRegisterForm(eventId, navigate) {
+export default function useRegisterForm(eventId, navigate, isAdmin){
   const [loading, setLoading] = useState(false);
 
   const [fieldErrors, setFieldErrors] = useState({});
@@ -75,12 +75,14 @@ export default function useRegisterForm(eventId, navigate) {
 
 await createAttendee(payload);
       navigate("/thankyou", {
-        replace: true,
-        state: {
-          eventName,
-          email: formData.email,
-        },
-      });
+      replace: true,
+      state: {
+        eventName,
+        email: formData.email,
+        eventId,
+        isAdmin,
+      },
+    });
     } catch (error) {
       const message = error.response?.data?.message;
 

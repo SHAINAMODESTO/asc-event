@@ -36,6 +36,7 @@ import {
   Badge,
   UtensilsCrossed,
   QrCode,
+  Folder,
 } from "lucide-react";
 
 const EventAttendees = () => {
@@ -862,7 +863,7 @@ const displayedAttendees = [...attendees]
       <div className="event-header">
         <button
           className="back-button"
-          onClick={() => navigate("/published-events")}
+          onClick={() => window.history.back()}
         >
           <ArrowLeft size={18} />
           Back
@@ -1004,11 +1005,15 @@ const displayedAttendees = [...attendees]
           </button>
           <button
             className="white-btn"
-            onClick={() => navigate(`/attendees/${eventId}/scanner`)}
-  >
-        
+            onClick={() => navigate(`/attendees/${eventId}/scanner`)}>
              <QrCode size={17} />
             QR Scanner
+          </button>
+          <button
+            className="white-btn"
+            onClick={() => navigate(`/event-reports`)}>
+             <Folder size={17} />
+            Reports
           </button>
           
         </div>

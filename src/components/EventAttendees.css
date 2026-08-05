@@ -217,16 +217,14 @@ TOOLBAR
   align-items: center;
   gap: 10px;
   flex:1 1 auto;
-  min-width:250px;
+  min-width:50px;
   max-width:none;
-
   background: #fff;
   border: 1px solid #dbe3ef;
   border-radius: 12px;
   padding: 0 16px;
   height: 46px;
 }
-
 .search-box input {
   width: 100%;
   border: none;

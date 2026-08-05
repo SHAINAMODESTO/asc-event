@@ -35,7 +35,12 @@ const ThankYou = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
 
-  const { eventName = "Event Registration", email = "" } = state || {};
+  const {
+  eventName = "Event Registration",
+  email = "",
+  eventId = "",
+  isAdmin = false,
+} = state || {};
 
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center px-6">
@@ -94,6 +99,31 @@ const ThankYou = () => {
             </div>
           </div>
         </div>
+        {isAdmin && (
+        <button
+          onClick={() => navigate(`/attendees/${eventId}`)}
+          className="
+            mt-6
+            flex
+            w-full
+            items-center
+            justify-center
+            gap-3
+            rounded-xl
+            border
+            border-red-600
+            py-4
+            font-semibold
+            text-red-600
+            transition
+            hover:bg-red-600
+            hover:text-white
+          "
+        >
+          <FaHome />
+          Back to Attendees
+        </button>
+      )}
 
         {/* Reminder */}
 
