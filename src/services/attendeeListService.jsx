@@ -17,6 +17,8 @@ export const createAttendee = async (attendeeData) => {
 };
 // Assign Table Number
 export const assignTable = async (attendeeId, tableNumber) => {
+   console.log("PATCH URL:");
+  console.log(`${BASE_URL}/attendee/${attendeeId}/assign-table`);
   try {
     const response = await axios.patch(
       `${BASE_URL}/attendee/${attendeeId}/assign-table`,

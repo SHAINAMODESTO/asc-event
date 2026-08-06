@@ -5,16 +5,31 @@
 }
 
 /* ================= HEADER ================= */
-.back-button {
-    margin-bottom: 20px;
-}
 .reports-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 20px;
     margin-bottom: 32px;
-    gap: 30px;
-    flex-wrap: wrap;
+}
+
+.back-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #475569;
+    font-size: 15px;
+    font-weight: 600;
+    width: 70px;
+    height: 40px;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.back-button:hover {
+    color: #f3eeef;
 }
 
 .reports-title {
@@ -42,6 +57,7 @@
 }
 
 .reports-title p {
+    margin-top: 4px;
     color: #64748b;
 }
 
@@ -75,6 +91,7 @@
 .summary-card span {
     color: #64748b;
     font-size: 14px;
+
 }
 
 .summary-card h2 {

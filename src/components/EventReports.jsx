@@ -25,31 +25,32 @@ const navigate = useNavigate();
     <div className="event-reports-page">
 
       {/* ================= HEADER ================= */}
-     
+            <div className="reports-header">
+
             <button
                 className="back-button"
-                onClick={() => navigate(-1)}>
+                onClick={() => navigate(-1)}
+            >
                 <ArrowLeft size={18} />
-                Back
+                <span>Back</span>
             </button>
-         
-      <div className="reports-header">
 
-        <div className="reports-title">
-          
-          <div className="reports-icon">
-            <FileBarChart2 size={34} />
-          </div>
+            <div className="reports-title">
 
-          <div>
-            {/*  <h2>{eventDetails?.title || "Loading Event..."}</h2> */}
-            <label>Event Reports</label>
-            <p> 
-              View attendance reports and export event data.
-            </p>
-          </div>
-        </div>
-      </div>
+                <div className="reports-icon">
+                <FileBarChart2 size={34} />
+                </div>
+
+                <div>
+                <label>Event Reports</label>
+                <p>
+                    View attendance reports and export event data.
+                </p>
+                </div>
+
+            </div>
+
+            </div>
 
       {/* ================= SUMMARY =================  */}
 

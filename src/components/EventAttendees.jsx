@@ -98,6 +98,14 @@ const fetchDashboardSummary = async () => {
 
   // Modal states
   const [selectedAttendee, setSelectedAttendee] = useState(null);
+
+//Modal for editing companion details from primary attendee modal
+ // Stores the primary attendee when opening a companion
+const [parentAttendee, setParentAttendee] = useState(null);
+
+// Determines if the current attendee modal was opened from another attendee modal
+const [openedFromPrimary, setOpenedFromPrimary] = useState(false);
+
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [tableNumber, setTableNumber] = useState("");
 
@@ -414,6 +422,77 @@ const handleBulkCheckIn = async () => {
     );
   }
 };
+
+// ========================================
+//     ASSIGN TABLE FOR COMPANION OR INDIVIDUAL ATTENDEE
+// ========================================
+
+const [showCompanionAssignModal, setShowCompanionAssignModal] = useState(false);
+
+const [selectedCompanion, setSelectedCompanion] = useState(null);
+
+const handleAssignIndividualTable = async () => {
+  if (!selectedCompanion) {
+    alert("No companion selected.");
+    return;
+  }
+
+  if (!tableNumber || Number(tableNumber) <= 0) {
+    alert("Please enter a valid table number.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const response = await assignTable(
+      selectedCompanion.id,
+      Number(tableNumber)
+    );
+
+    // Refresh the attendees list/dashboard in the background
+    await Promise.all([
+      fetchAttendees(),
+      fetchDashboardSummary(),
+    ]);
+
+    // Immediately update the primary attendee modal
+    setSelectedAttendee((prev) => ({
+      ...prev,
+      companions: prev.companions.map((companion) =>
+        companion.id === selectedCompanion.id
+          ? {
+              ...companion,
+              tableNumber: Number(tableNumber),
+            }
+          : companion
+      ),
+    }));
+
+    // Update the selected companion state as well
+    setSelectedCompanion((prev) => ({
+      ...prev,
+      tableNumber: Number(tableNumber),
+    }));
+
+    setShowCompanionAssignModal(false);
+    setSelectedCompanion(null);
+    setTableNumber("");
+
+    alert(response.message);
+
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      error.response?.data?.message ||
+      "Failed to assign table."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
   //For Printing
   const handlePrint = () => {
     const printWindow = window.open("", "_blank");
@@ -628,6 +707,47 @@ const handleBulkCheckIn = async () => {
       setLoading(false);
     }
   };
+
+//for viewing companion details from primary attendee modal
+const handleViewCompanion = async (attendeeId) => {
+  try {
+    setLoading(true);
+
+    // Save the currently opened primary attendee
+    setParentAttendee(selectedAttendee);
+
+    // Mark this as a nested modal
+    setOpenedFromPrimary(true);
+
+    const response = await getAttendeeById(attendeeId);
+
+    setSelectedAttendee(response.data);
+    setActiveTab("details");
+
+  } catch (error) {
+    console.error(error);
+    alert("Unable to load companion details.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleCloseAttendeeModal = () => {
+  setShowAssignForm(false);
+  setTableNumber("");
+  setActiveTab("details");
+
+  if (openedFromPrimary && parentAttendee) {
+    // Return to the primary attendee
+    setSelectedAttendee(parentAttendee);
+
+    setParentAttendee(null);
+    setOpenedFromPrimary(false);
+  } else {
+    // Close normally
+    setSelectedAttendee(null);
+  }
+};
 
  
   const handleExport = () => {
@@ -1204,12 +1324,7 @@ const displayedAttendees = [...attendees]
       {selectedAttendee && (
         <div
           className="attendee-modal-overlay"
-          onClick={() => {
-            setSelectedAttendee(null);
-            setShowAssignForm(false);
-            setTableNumber("");
-            setActiveTab("details");
-          }}
+          onClick={handleCloseAttendeeModal}
         >
           <div className="attendee-modal" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
@@ -1218,12 +1333,7 @@ const displayedAttendees = [...attendees]
 
               <button
                 className="close-icon"
-                onClick={() => {
-                  setSelectedAttendee(null);
-                  setShowAssignForm(false);
-                  setTableNumber("");
-                  setActiveTab("details");
-                }}
+                onClick={handleCloseAttendeeModal}
               >
                 ✕
               </button>
@@ -1552,14 +1662,17 @@ const displayedAttendees = [...attendees]
                             <button
                               className="assign-table-btn"
                               onClick={(e) => {
-                                e.stopPropagation();
+                                  e.stopPropagation();
 
-                                // Keep the selected primary attendee
-                                // because the backend assigns the table to the whole group
-                                setTableNumber(companion.tableNumber || "");
-                                setShowAssignModal(true);
+                                   console.log("Selected Companion:", companion);
+
+                                  setSelectedCompanion(companion);
+
+                                  setTableNumber(companion.tableNumber || "");
+
+                                  setShowCompanionAssignModal(true);
                               }}
-                            >
+                          >
                               
                               {companion.tableNumber ? "Change Table" : "Assign Table"}
                             </button>
@@ -1569,7 +1682,7 @@ const displayedAttendees = [...attendees]
                                 className="edit-companion-btn"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleViewAttendee(companion.id);
+                                  handleViewCompanion(companion.id);
                                 }}
                               >
                                 Edit
@@ -2144,6 +2257,60 @@ const displayedAttendees = [...attendees]
               )}
             </div>
 
+
+            {/* ========================================
+                ASSIGN TABLE MODAL FOR COMPANION
+            ======================================== */}
+
+            {showCompanionAssignModal && (
+                <div
+                  className="modal-overlay"
+                  onClick={() => setShowCompanionAssignModal(false)}
+                >
+                  <div
+                    className="assign-table-modal"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <h2>Assign Table</h2>
+
+                    <p className="assign-subtitle">
+                      {selectedCompanion?.firstName} {selectedCompanion?.lastName}
+                    </p>
+
+                    <label>Table Number</label>
+
+                    <input
+                      type="number"
+                      min="1"
+                      value={tableNumber}
+                      onChange={(e) => setTableNumber(e.target.value)}
+                      placeholder="Enter table number"
+                    />
+
+                    <div className="assign-actions">
+                      <button
+                        className="cancel-table-btn"
+                        onClick={() => {
+                            setShowCompanionAssignModal(false);
+                            setSelectedCompanion(null);
+                            setTableNumber("");
+                        }}
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        className="save-table-btn"
+                        onClick={handleAssignIndividualTable}
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            
+
             {/* Footer */}
           {(activeTab === "details" || activeTab === "attendance") && (  
             <div className="attendee-modal-footer">
@@ -2220,12 +2387,14 @@ const displayedAttendees = [...attendees]
             </div>
             {/* Summary */}
             <div className="bulk-summary">
-              <div className="summary-card">
+              
+              <div className="summary-card-total">
                 <span>Total</span>
                 <strong>
                   {selectedAttendee.companions.length}
                 </strong>
               </div>
+              
               <div className="summary-card-checkin">
                 <span>Checked In</span>
                 <strong>

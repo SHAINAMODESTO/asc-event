@@ -2448,10 +2448,10 @@ background:#16a34a;
     padding:20px 28px;
 }
 
-.summary-card{
+.summary-card-total{
     flex:1;
-    background:#ffffff;
-    border:1px solid #44474b;
+    background:#ffffff;;
+    border:1px solid #3b73c7;
     border-radius:14px;
     text-align:center;
     padding:16px;
@@ -2497,13 +2497,13 @@ background:#16a34a;
     font-size:26px;
     color:#111827;
 }
-.summary-card span{
+.summary-card-total span{
     display:block;
     color:#64748b;
     font-size:13px;
 }
 
-.summary-card strong{
+.summary-card-total strong{
     display:block;
     margin-top:6px;
     font-size:26px;
