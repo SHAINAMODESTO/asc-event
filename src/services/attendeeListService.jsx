@@ -239,3 +239,26 @@ export const bulkCheckInAttendees = async (attendeeIds) => {
     throw error;
   }
 };
+
+// ========================================
+// SCAN ATTENDEE BY QR CODE
+// ========================================
+
+export const scanAttendee = async (eventId, attendeeCode) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/attendee/event/${eventId}/scan/${encodeURIComponent(attendeeCode)}`
+    );
+
+    console.log("Scan Attendee Response:", response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Scan Attendee Error:",
+      error.response?.data || error
+    );
+
+    throw error;
+  }
+};

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Plus, Trash2, SquarePen, Users, CalendarDays, Clock, Settings} from "lucide-react";
+import { Plus, Trash2, SquarePen, Users, CalendarDays, Clock, Settings, CalendarPlus} from "lucide-react";
 import {
   createEvent,
   publishEvent,
@@ -323,11 +323,23 @@ useEffect(() => {
 
   return (
     <div className="create-event-page">
-      <div className="page-header">
-        <div>
-          <span>{isEdit ? "Edit Event Form" : "Create Event Registration Form"}</span>
-        </div>
-      </div>
+     <div className="page-header">
+  <div className="page-header-icon">
+    <CalendarPlus size={32} />
+  </div>
+
+  <div className="page-header-content">
+    <h1>
+      {isEdit ? "Edit Event" : "Create Event"}
+    </h1>
+
+    <p>
+      {isEdit
+        ? "Update your event information, registration settings, and schedule."
+        : "Configure your event details, registration form, and attendee settings."}
+    </p>
+  </div>
+</div>
 
       <div className="create-event-wrapper">
           <div className="create-form-layout">
