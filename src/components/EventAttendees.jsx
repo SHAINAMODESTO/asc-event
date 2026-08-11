@@ -983,7 +983,7 @@ const displayedAttendees = [...attendees]
       <div className="event-header">
         <button
           className="back-button"
-          onClick={() => window.history.back()}
+           onClick={() => navigate("/published-events")}
         >
           <ArrowLeft size={18} />
           Back

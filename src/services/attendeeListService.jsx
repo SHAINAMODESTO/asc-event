@@ -59,6 +59,7 @@ export const bulkAssignTable = async (attendeeId, tableNumber) => {
 //Check in 
 export const checkInAttendee = async (attendeeId) => {
   try {
+    
     const response = await axios.patch(
       `${BASE_URL}/attendee/${attendeeId}/check-in`
     );
