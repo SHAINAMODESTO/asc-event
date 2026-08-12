@@ -431,7 +431,7 @@ const processScan = async () => {
                     "Not Specified",
                 time: existingCheckInTime
             },
-            "Already Checked In"
+            "Already Registered"
         );
 
         setQrCode("");
@@ -1135,7 +1135,8 @@ const processScan = async () => {
                         <div className="checkin-error-banner">
 
                             <h3>
-                                Scan Failed : {scanResult.message} 
+                               {/* Scan Failed : {scanResult.message} */}
+                               Scan Failed : Invalid QR Code. 
                             </h3>
 
                            
@@ -1192,7 +1193,7 @@ const processScan = async () => {
                                     <div>
 
                                         <h3>
-                                            Already Checked In
+                                            Already Registered
                                         </h3>
 
                                         <p>
@@ -1211,7 +1212,7 @@ const processScan = async () => {
                                 <div className="checkin-warning-banner">
 
                                     <h3>
-                                        Already Checked In
+                                        Already Registered
                                     </h3>
 
                                     <p>
@@ -1555,7 +1556,7 @@ const processScan = async () => {
 
                                                                 <span className="status-success">
 
-                                                                    ✔ Already Checked In
+                                                                    ✔ Already Registered
 
                                                                 </span>
 

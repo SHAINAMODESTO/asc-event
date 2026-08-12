@@ -1132,7 +1132,7 @@ const displayedAttendees = [...attendees]
           
           <button
             className="white-btn"
-            onClick={() => navigate(`/event-reports`)}>
+            onClick={() => navigate(`/event-reports/${eventId}`)}>
              <Folder size={17} />
             Reports
           </button>

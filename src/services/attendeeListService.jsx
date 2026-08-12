@@ -263,3 +263,33 @@ export const scanAttendee = async (eventId, attendeeCode) => {
     throw error;
   }
 };
+// ========================================
+//  GRENERATE ATTENDEE EVENT REPORT
+// ======================================
+
+export const generateAttendeeReport = async (eventId) => {
+    try {
+        const response = await axios.get(
+            `${BASE_URL}/attendee/event/${eventId}/report`,
+            {
+                responseType: "blob",
+            }
+        );
+
+        console.log(
+            "========== GENERATE ATTENDEE REPORT =========="
+        );
+        console.log("Event ID:", eventId);
+        console.log("Report response:", response);
+
+        return response;
+
+    } catch (error) {
+        console.error(
+            "Generate Attendee Report Error:",
+            error.response?.data || error
+        );
+
+        throw error;
+    }
+};

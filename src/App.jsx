@@ -51,7 +51,8 @@ function App() {
         <Route path="published-events" element={<PublishedEvents />} />
         <Route path="useradmin-table" element={<UserAdminTable />} />
         <Route path="/attendees/:eventId/scanner" element={<QRScanner />}/>
-        <Route path="/event-reports" element={<EventReports />}/>
+        <Route path="event-reports/:eventId" element={<EventReports />}
+/>
       </Route>
 
       {/* Public Pages */}
