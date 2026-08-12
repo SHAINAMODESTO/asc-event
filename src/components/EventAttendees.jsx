@@ -493,138 +493,7 @@ const handleAssignIndividualTable = async () => {
   }
 };
 
-  //For Printing
-  const handlePrint = () => {
-    const printWindow = window.open("", "_blank");
-
-    const tableRows = attendees
-      .map(
-        (attendee, index) => `
-            <tr>
-              <td>${index + 1}</td>
-              <td>${attendee.firstName || "-"}</td>
-              <td>${attendee.lastName || "-"}</td>
-              <td>${attendee.preferredNameOnBadge || "-"}</td>
-              <td>${attendee.emailAddress || "-"}</td>
-              <td>${attendee.company || "-"}</td>
-              <td>${attendee.position || "-"}</td>
-              <td>${attendee.status || "-"}</td>
-              <td>${attendee.checkInAt || "-"}</td>
-              <td>${attendee.mealPreference || "-"}</td>
-              <td>${attendee.role || "-"}</td>
-            </tr>
-          `,
-      )
-      .join("");
-    printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-              <head>
-              
-                <style>
-                  *{
-                    box-sizing:border-box;
-                  }
-
-                  body{
-                    font-family:Arial, Helvetica, sans-serif;
-                    margin:20px;
-                    color:#222;
-                  }
-
-                  h1{
-                    text-align:center;
-                    margin-bottom:5px;
-                    font-size:24px;
-                  }
-
-                  h3{
-                    text-align:center;
-                    margin-top:0;
-                    margin-bottom:20px;
-                    color:#555;
-                    font-weight:normal;
-                  }
-
-                  table{
-                    width:100%;
-                    border-collapse:collapse;
-                    table-layout:auto;
-                  }
-
-                  thead{
-                    background:#f5f5f5;
-                  }
-
-                  th,
-                  td{
-                    border:1px solid #999;
-                    padding:6px;
-                    font-size:11px;
-                    text-align:left;
-                    vertical-align:top;
-                    word-break:break-word;
-                  }
-
-                  th{
-                    font-weight:bold;
-                  }
-
-                  td:first-child,
-                  th:first-child{
-                    width:45px;
-                    text-align:center;
-                  }
-
-                  tr{
-                    page-break-inside:avoid;
-                  }
-
-                  @page{
-                    size:landscape;
-                    margin:10mm;
-                  }
-                </style>
-              </head>
-
-              <body>
-
-              <h1>${eventDetails?.title || "Event"}</h1>
-                <h3>Attendees List</h3>
-
-                <table>
-                  <thead>
-                    <tr>
-                      <th>No.</th>
-                      <th>First Name</th>
-                      <th>Last Name</th>
-                      <th>Preferred Name</th>
-                      <th>Email</th>
-                      <th>Company</th>
-                      <th>Position</th>
-                      <th>Status</th>
-                      <th>Checked In</th>
-                      <th>Preferred Meal</th>
-                      <th>Role</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${tableRows}
-                  </tbody>
-                </table>
-
-              </body>
-            </html>
-          `);
-
-    printWindow.document.close();
-    printWindow.focus();
-
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 500);
-  };
+ 
 
   const fetchEventDetails = async () => {
     try {
@@ -1044,7 +913,7 @@ const displayedAttendees = [...attendees]
                 }}
               />
             </div>
-            <span>{dashboard.checkIn.rate}% Check-in Rate</span>
+          {/* <span>{dashboard.checkIn.rate}% Check-in Rate</span> */}
           </div>
         </div>
         <div className="dashboard-card">
@@ -1121,17 +990,10 @@ const displayedAttendees = [...attendees]
              <QrCode size={17} />
             QR Scanner
           </button>
-          <button className="white-btn" onClick={handlePrint}>
-            <Printer size={17} />
-            Print
-          </button>
-          <button className="white-btn" onClick={handleExport}>
-            <Download size={17} />
-            Export
-          </button>
+         
           
           <button
-            className="white-btn"
+            className="orange-btn"
             onClick={() => navigate(`/event-reports/${eventId}`)}>
              <Folder size={17} />
             Reports
