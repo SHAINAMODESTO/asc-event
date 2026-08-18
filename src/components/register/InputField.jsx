@@ -12,6 +12,8 @@ const InputField = ({
   error = false,
   maxLength,
   options = [],
+  uppercase = false,
+  lowercase = false,
 }) => {
   const inputClass = `
     w-full rounded-xl border py-3 transition duration-200
@@ -68,7 +70,30 @@ const InputField = ({
             onChange={onChange}
             placeholder={placeholder}
             className={inputClass}
-          />
+      
+              onChange={(e) => {
+                const newValue = uppercase
+                  ? e.target.value.toUpperCase()
+                  : lowercase
+                    ? e.target.value.toLowerCase()
+                    : e.target.value;
+
+                onChange({
+                  target: {
+                    name: e.target.name,
+                    value: newValue,
+                  },
+                });
+              }}
+             
+              style={{
+                textTransform: uppercase
+                  ? "uppercase"
+                  : lowercase
+                    ? "lowercase"
+                    : "none",
+              }}
+            />
         )}
       </div>
     </div>

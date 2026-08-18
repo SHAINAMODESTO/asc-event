@@ -27,6 +27,7 @@ const formFields = [
     placeholder: "Enter first name",
     icon: FaUser,
     required: true,
+    uppercase: true,
   },
   {
     name: "lastName",
@@ -34,6 +35,7 @@ const formFields = [
     placeholder: "Enter last name",
     icon: FaUser,
     required: true,
+    uppercase: true,
   },
   {
     name: "middleInitial",
@@ -41,12 +43,14 @@ const formFields = [
     placeholder: "M",
     icon: FaIdBadge,
     maxLength: 1,
+    uppercase: true,
   },
   {
     name: "preferredName",
     label: "Preferred Name on Badge",
     placeholder: "Preferred Name",
     required: true,
+     uppercase: true,
   },
   {
     name: "email",
@@ -55,6 +59,7 @@ const formFields = [
     type: "email",
     icon: FaEnvelope,
     required: true,
+    lowercase: true,
   },
   {
     name: "contactNumber",
@@ -68,12 +73,14 @@ const formFields = [
     placeholder: "Company Name",
     icon: FaBuilding,
     required: true,
+    uppercase: true,
   },
   {
     name: "position",
     label: "Position",
     placeholder: "Job Position",
     required: true,
+    uppercase: true,
   },
   {
     name: "mealPreference",
@@ -318,8 +325,12 @@ const RegisterForm = ({
                         placeholder="Enter First Name"
                         value={companion.firstName}
                         onChange={(e) =>
-                          updateCompanion(index, "firstName", e.target.value)
-                        }
+                            updateCompanion(
+                              index,
+                              "firstName",
+                              e.target.value.toUpperCase()
+                            )
+                          }
                         className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
                       />
                     </div>
@@ -334,7 +345,11 @@ const RegisterForm = ({
                         placeholder="Enter Last Name"
                         value={companion.lastName}
                         onChange={(e) =>
-                          updateCompanion(index, "lastName", e.target.value)
+                          updateCompanion(
+                            index,
+                            "lastName",
+                            e.target.value.toUpperCase()
+                          )
                         }
                         className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
                       />
@@ -350,7 +365,11 @@ const RegisterForm = ({
                         placeholder="Relationship/Position"
                         value={companion.position}
                         onChange={(e) =>
-                          updateCompanion(index, "position", e.target.value)
+                          updateCompanion(
+                            index,
+                            "position",
+                            e.target.value.toUpperCase()
+                          )
                         }
                         className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
                       />
@@ -365,13 +384,13 @@ const RegisterForm = ({
                         placeholder="Preferred Name"
                         value={companion.preferredNameOnBadge}
                         onChange={(e) =>
-                          updateCompanion(
-                            index,
-                            "preferredNameOnBadge",
-                            e.target.value,
-                          )
-                        }
-                        className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                              updateCompanion(
+                                index,
+                                "preferredNameOnBadge",
+                                e.target.value.toUpperCase()
+                              )
+                            }
+                            className="w-full rounded-xl border border-slate-300 px-4 py-3 transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
                       />
                     </div>
                     <div>
