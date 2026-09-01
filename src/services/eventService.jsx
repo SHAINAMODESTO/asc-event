@@ -1,11 +1,11 @@
-import axios from "axios";
+import api from "./api";
 // const BASE_URL = "https://api.asconlineportal.com/api-event";
 // const BASE_URL = "http://localhost:3021/api-event";
 const BASE_URL = import.meta.env.VITE_API_URL;
 // Create Event
 export const createEvent = async (eventData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/event/create`, eventData);
+    const response = await api.post(`${BASE_URL}/event/create`, eventData);
 
     return response.data;
   } catch (error) {
@@ -17,7 +17,7 @@ export const createEvent = async (eventData) => {
 // Publish Event
 export const publishEvent = async (eventId) => {
   try {
-    const response = await axios.patch(`${BASE_URL}/event/${eventId}/publish`);
+    const response = await api.patch(`${BASE_URL}/event/${eventId}/publish`);
 
     return response.data;
   } catch (error) {
@@ -31,7 +31,7 @@ export const publishEvent = async (eventId) => {
 // Get All Events
 export const getEvents = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/event`);
+    const response = await api.get(`${BASE_URL}/event`);
 
     return response.data.data;
   } catch (error) {
@@ -43,7 +43,7 @@ export const getEvents = async () => {
 // Get Single Event
 export const getEventById = async (eventId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/event/${eventId}`);
+    const response = await api.get(`${BASE_URL}/event/${eventId}`);
 
     console.log(response);
     return response.data;
@@ -55,7 +55,7 @@ export const getEventById = async (eventId) => {
 //Edit Event
 export const updateEvent = async (eventId, eventData) => {
   try {
-    const response = await axios.put(
+    const response = await api.put(
       `${BASE_URL}/event/update/${eventId}`,
       eventData
     );
@@ -69,14 +69,4 @@ export const updateEvent = async (eventId, eventData) => {
     throw error;
   }
 };
-// Delete Event
-export const deleteEvent = async (eventId) => {
-  try {
-    const response = await axios.delete(`${BASE_URL}/event/${eventId}`);
 
-    return response.data;
-  } catch (error) {
-    console.error("Delete Event Error:", error.response?.data || error.message);
-    throw error;
-  }
-};

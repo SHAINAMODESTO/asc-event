@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Copy, NotebookTabs } from "lucide-react";
 
-import { getEvents, deleteEvent } from "../services/eventService";
+import { getEvents} from "../services/eventService";
 import "./AllEventsList.css";
 
 const formatDateRange = (start, end) => {
@@ -70,21 +70,7 @@ const [generatedUrl, setGeneratedUrl] = useState("");
     return matchesSearch && matchesFromDate && matchesToDate;
   });
 
-  const deleteTemplate = async (id) => {
-    try {
-      const response = await deleteEvent(id);
-
-      if (response.success) {
-        fetchEvents();
-        setStatusMessage("Published event deleted successfully.");
-      }
-    } catch (error) {
-      console.error("Delete failed:", error);
-      setStatusMessage(
-        error.response?.data?.message || "Failed to delete event."
-      );
-    }
-  };
+ 
 
   const viewTemplate = (eventTemplate) => {
     navigate("/registration", { state: eventTemplate });

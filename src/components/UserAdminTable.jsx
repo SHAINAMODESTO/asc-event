@@ -7,366 +7,942 @@ import {
   Pen,
   Eye,
 } from "lucide-react";
+
 import "./UserAdminTable.css";
-import { useState } from "react";
-
-
-
-
-
-
-const users = [
-  {
-    id: 1,
-    name: "Juan Dela Cruz",
-    email: "juan@asc.com.ph",
-    contactNumber: "09123456789",
-    role: "Administrator",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Maria Santos",
-    email: "maria@asc.com.ph",
-    contactNumber: "09123456789",
-    role: "Event Coordinator",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Pedro Reyes",
-    email: "pedro@asc.com.ph",
-    contactNumber: "09123456789",
-    role: "Event Coordinator",
-    status: "Inactive",
-  },
-];
+import { useEffect, useState } from "react";
+import { createUser } from "../services/userService";
 
 export default function UserAdminTable() {
-        const [page, setPage] = useState(1);
-        const [limit] = useState(10);
-        const [totalPages, setTotalPages] = useState(1);
-        const [showAddUserModal, setShowAddUserModal] = useState(false);
+  // ========================================
+  // PAGINATION
+  // ========================================
 
-        const [newUser, setNewUser] = useState({
-        firstName: "",
-        lastName: "",
-        email: "",
-        contactNumber: "",
-        role: "Administrator",
-        status: "Active",
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+
+  // ========================================
+  // USERS
+  // ========================================
+
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // ========================================
+  // SEARCH / FILTER
+  // ========================================
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
+  // ========================================
+  // ADD USER MODAL
+  // ========================================
+
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+
+  // ========================================
+  // NEW USER FORM
+  // ========================================
+
+  const [newUser, setNewUser] = useState({
+    fullName: "",
+    email: "",
+    role: "COORDINATOR",
+    password: "",
+    confirmPassword: "",
+  });
+
+  // ========================================
+  // HANDLE INPUT CHANGE
+  // ========================================
+
+  const handleInputChange = (field, value) => {
+    setNewUser((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // ========================================
+  // CREATE USER
+  // POST /users
+  // ========================================
+
+  const handleSaveUser = async () => {
+    // ----------------------------------------
+    // Validate Full Name
+    // ----------------------------------------
+
+    if (!newUser.fullName.trim()) {
+      alert("Full name is required.");
+      return;
+    }
+
+    // ----------------------------------------
+    // Validate Email
+    // ----------------------------------------
+
+    if (!newUser.email.trim()) {
+      alert("Email address is required.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(newUser.email.trim())) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    // ----------------------------------------
+    // Validate Password
+    // ----------------------------------------
+
+    if (!newUser.password) {
+      alert("Password is required.");
+      return;
+    }
+
+    if (newUser.password.length < 8) {
+      alert("Password must be at least 8 characters.");
+      return;
+    }
+
+    // ----------------------------------------
+    // Confirm Password
+    // Frontend-only validation
+    // ----------------------------------------
+
+    if (newUser.password !== newUser.confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // ========================================
+      // IMPORTANT
+      // Only fields supported by CreateUserDto
+      // are sent to the backend.
+      // ========================================
+
+      const userData = {
+        name: newUser.fullName.trim(),
+        email: newUser.email.trim(),
+        password: newUser.password,
+        role: newUser.role || "COORDINATOR",
+      };
+
+      console.log("Creating User:");
+      console.log(userData);
+
+      const response = await createUser(userData);
+
+      console.log("Create User Response:");
+      console.log(response);
+
+      // ========================================
+      // SUCCESS
+      // ========================================
+
+      if (response.success) {
+        alert("User created successfully!");
+
+        // ----------------------------------------
+        // Add newly created user to table
+        // ----------------------------------------
+
+        if (response.data) {
+          setUsers((prev) => [
+            response.data,
+            ...prev,
+          ]);
+        }
+
+        // ----------------------------------------
+        // Close modal
+        // ----------------------------------------
+
+        setShowAddUserModal(false);
+
+        // ----------------------------------------
+        // Reset form
+        // ----------------------------------------
+
+        setNewUser({
+          fullName: "",
+          email: "",
+          role: "COORDINATOR",
+          password: "",
+          confirmPassword: "",
         });
 
- 
- 
+        // Reset pagination
+        setPage(1);
+      }
+    } catch (error) {
+      console.error(
+        "Failed to create user:",
+        error
+      );
+
+      const message =
+        error.response?.data?.message;
+
+      // Backend validation errors
+      if (Array.isArray(message)) {
+        alert(message.join("\n"));
+      } else {
+        alert(
+          message ||
+            "Failed to create user."
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ========================================
+  // USERS
+  // ========================================
+  //
+  // There is currently no confirmed GET /users
+  // endpoint in the API documentation.
+  //
+  // Therefore, users are stored in frontend
+  // state after successful creation.
+  //
+  // ========================================
+
+  useEffect(() => {
+    setUsers([]);
+  }, []);
+
+  // ========================================
+  // SEARCH + FILTER
+  // ========================================
+
+  const filteredUsers = users.filter((user) => {
+    const keyword = searchTerm.toLowerCase();
+
+    const matchesSearch =
+      user.name
+        ?.toLowerCase()
+        .includes(keyword) ||
+      user.email
+        ?.toLowerCase()
+        .includes(keyword);
+
+    const matchesRole =
+      !roleFilter ||
+      user.role?.toUpperCase() ===
+        roleFilter.toUpperCase();
+
+    // Status is currently not provided
+    // by the backend.
+    const matchesStatus =
+      !statusFilter ||
+      statusFilter === "Active";
+
+    return (
+      matchesSearch &&
+      matchesRole &&
+      matchesStatus
+    );
+  });
+
+  // ========================================
+  // STATISTICS
+  // ========================================
+
+  const totalUsers = users.length;
+
+  const administrators = users.filter(
+    (user) => user.role === "ADMIN"
+  ).length;
+
+  const coordinators = users.filter(
+    (user) => user.role === "COORDINATOR"
+  ).length;
+
+  // All newly created accounts are displayed
+  // as active in the frontend.
+  const activeUsers = users.length;
+
+  // ========================================
+  // PAGINATION
+  // ========================================
+
+  const displayedUsers =
+    filteredUsers.slice(
+      (page - 1) * limit,
+      page * limit
+    );
+
+  const calculatedTotalPages = Math.max(
+    1,
+    Math.ceil(
+      filteredUsers.length / limit
+    )
+  );
+
+  // ========================================
+  // RESET PAGE WHEN SEARCH/FILTER CHANGES
+  // ========================================
+
+  useEffect(() => {
+    setPage(1);
+  }, [
+    searchTerm,
+    roleFilter,
+    statusFilter,
+  ]);
+
   return (
     <div className="user-admin-page">
 
-            {/* Header */}
+      {/* ========================================
+          HEADER
+      ======================================== */}
 
-            <div className="user-header">
+      <div className="user-header">
 
-                <div className="header-left">
+        <div className="header-left">
 
-                  <div className="header-icon">
-                    <Users size={32} />
-                  </div>
+          <div className="header-icon">
+            <Users size={32} />
+          </div>
 
-                  <div>
-                    <h1>User Management</h1>
-                    <p>
-                      Manage administrators and event coordinators.
-                    </p>
-                  </div>
+          <div>
+            <h1>User Management</h1>
 
-                </div>
+            <p>
+              Manage administrators and event
+              coordinators.
+            </p>
+          </div>
 
-            </div>
+        </div>
 
-      {/* Statistics */}
+      </div>
 
-            <div className="stats-grid">
 
-              <div className="stat-card">
+      {/* ========================================
+          STATISTICS
+      ======================================== */}
 
-                <div className="stat-icon blue">
-                  <Users size={24} />
-                </div>
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon blue">
+            <Users size={24} />
+          </div>
+          <div className="stat-info">
+            <span>
+              Total Users
+            </span>
+            <h2>
+              {totalUsers}
+            </h2>
+          </div>
+        </div>
 
-                <div className="stat-info">
-                  <span>Total Users</span>
-                  <h2>24</h2>
-                </div>
 
-              </div>
+        <div className="stat-card">
+          <div className="stat-icon red">
+            <ShieldCheck size={24} />
+          </div>
+          <div className="stat-info">
+            <span>
+              Administrators
+            </span>
+            <h2>
+              {administrators}
+            </h2>
+          </div>
+        </div>
 
-              <div className="stat-card">
 
-                <div className="stat-icon red">
-                  <ShieldCheck size={24} />
-                </div>
+        <div className="stat-card">
+          <div className="stat-icon orange">
+            <UserCog size={24} />
+          </div>
+          <div className="stat-info">
+            <span>
+              Coordinators
+            </span>
+            <h2>
+              {coordinators}
+            </h2>
+          </div>
+        </div>
 
-                <div className="stat-info">
-                  <span>Administrators</span>
-                  <h2>5</h2>
-                </div>
 
-              </div>
+        <div className="stat-card">
+          <div className="stat-icon green">
+            <UserCheck size={24} />
+          </div>
+          <div className="stat-info">
+            <span>
+              Active Users
+            </span>
+            <h2>
+              {activeUsers}
+            </h2>
+          </div>
+        </div>
+      </div>
 
-              <div className="stat-card">
 
-                <div className="stat-icon orange">
-                  <UserCog size={24} />
-                </div>
+      {/* ========================================
+          TOOLBAR
+      ======================================== */}
 
-                <div className="stat-info">
-                  <span>Coordinators</span>
-                  <h2>19</h2>
-                </div>
+      <div className="toolbar-card">
+        <div className="toolbar-left">
+          <input
+            type="text"
+            placeholder="Search user..."
+            className="search-box"
+            value={searchTerm}
+            onChange={(e) =>
+              setSearchTerm(
+                e.target.value
+              )
+            }
+          />
 
-              </div>
+          <select
+            className="toolbar-select"
+            value={roleFilter}
+            onChange={(e) =>
+              setRoleFilter(
+                e.target.value
+              )
+            }
+          >
+            <option value="">
+              All Roles
+            </option>
+            <option value="ADMIN">
+              Administrator
+            </option>
+            <option value="COORDINATOR">
+              Coordinator
+            </option>
+          </select>
+          <select
+            className="toolbar-select"
+            value={statusFilter}
+            onChange={(e) =>
+              setStatusFilter(
+                e.target.value
+              )
+            }
+          >
+            <option value="">
+              All Status
+            </option>
+            <option value="Active">
+              Active
+            </option>
+            <option value="Inactive">
+              Inactive
+            </option>
+          </select>
+        </div>
 
-              <div className="stat-card">
 
-                <div className="stat-icon green">
-                  <UserCheck size={24} />
-                </div>
+        <button
+          className="add-user-btn"
+          onClick={() =>
+            setShowAddUserModal(true)
+          }
+        >
+          Add User
+        </button>
+      </div>
 
-                <div className="stat-info">
-                  <span>Active Users</span>
-                  <h2>21</h2>
-                </div>
 
-              </div>
+      {/* ========================================
+          TABLE
+      ======================================== */}
 
-            </div>
-
-      {/* ================= Toolbar ================= */}
-
-<div className="toolbar-card">
-
-    <div className="toolbar-left">
-
-            <input
-                type="text"
-                placeholder="Search user..."
-                className="search-box"
-            />
-
-        <select className="toolbar-select">
-            <option>All Roles</option>
-            <option>Administrator</option>
-            <option>Event Coordinator</option>
-        </select>
-
-        <select className="toolbar-select">
-            <option>All Status</option>
-            <option>Active</option>
-            <option>Inactive</option>
-        </select>
-
-    </div>
-
-    <button 
-       className="add-user-btn"
-       onClick={() => setShowAddUserModal(true)}>
-         Add User
-    </button>
-
-    </div>
-
-    <div className="table-card">
-
-    <table className="admin-table">
-
-        <thead>
+      <div className="table-card">
+        <table className="admin-table">
+          <thead>
             <tr>
-                <th>User</th>
-                <th>Role</th>
-                <th>Email</th>
-                <th>Contact</th>
-                <th>Status</th>
-                <th>Actions</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Actions</th>
             </tr>
-        </thead>
+          </thead>
 
-                    <tbody>
-            {users.map((user) => (
-                <tr key={user.id}>
-                <td>
-                    <div className="user-cell">
-                    <div className="avatar">
-                        {user.name
-                        .split(" ")
-                        .map((word) => word[0])
-                        .join("")
-                        .substring(0, 2)}
-                    </div>
 
-                    <div>
-                        <h4>{user.name}</h4>
-                    </div>
-                    </div>
+          <tbody>
+            {loading ? (
+              <tr>
+
+                <td colSpan="4">
+                  Loading...
+                </td>
+              </tr>
+
+            ) : displayedUsers.length === 0 ? (
+
+              <tr>
+
+                <td colSpan="4">
+                  No users found.
                 </td>
 
-                <td>{user.role}</td>
+              </tr>
 
-                <td>{user.email}</td>
+            ) : (
 
-                <td>{user.contactNumber}</td>
+              displayedUsers.map(
+                (user) => (
 
-                <td>
-                    <span
-                    className={`status ${
-                        user.status === "Active" ? "active" : "inactive"
-                    }`}
-                    >
-                    {user.status}
-                    </span>
-                </td>
+                  <tr key={user.id}>
 
-                <td>
-                    <div className="table-actions">
-                    <button className="icon-btn">
-                        <Eye size={20} strokeWidth={2} />
-                    </button>
+                    {/* NAME */}
 
-                    <button className="icon-btn">
-                        <Pen size={20} strokeWidth={2} />
-                    </button>
+                    <td>
 
-                    <button className="icon-btn danger">
-                        <Trash size={20} strokeWidth={2} />
-                    </button>
-                    </div>
-                </td>
-                </tr>
-            ))}
-            </tbody>
-    </table>
+                      <div className="user-cell">
 
-    </div>
-    <div className="table-footer">
+                        <div className="avatar">
+
+                          {user.name
+                            ?.split(" ")
+                            .map(
+                              (word) =>
+                                word[0]
+                            )
+                            .join("")
+                            .substring(
+                              0,
+                              2
+                            )
+                            .toUpperCase()}
+
+                        </div>
+
+                        <div>
+
+                          <h4>
+                            {user.name}
+                          </h4>
+
+                        </div>
+
+                      </div>
+
+                    </td>
+
+
+                    {/* EMAIL */}
+
+                    <td>
+                      {user.email}
+                    </td>
+
+
+                    {/* ROLE */}
+
+                    <td>
+
+                      {user.role ===
+                      "ADMIN"
+                        ? "Administrator"
+                        : "Coordinator"}
+
+                    </td>
+
+
+                    {/* ACTIONS */}
+
+                    <td>
+
+                      <div className="table-actions">
+
+                        <button
+                          className="icon-btn"
+                          type="button"
+                        >
+                          <Eye
+                            size={20}
+                            strokeWidth={2}
+                          />
+                        </button>
+
+
+                        <button
+                          className="icon-btn"
+                          type="button"
+                        >
+                          <Pen
+                            size={20}
+                            strokeWidth={2}
+                          />
+                        </button>
+
+
+                        <button
+                          className="icon-btn danger"
+                          type="button"
+                        >
+                          <Trash
+                            size={20}
+                            strokeWidth={2}
+                          />
+                        </button>
+
+                      </div>
+
+                    </td>
+
+                  </tr>
+
+                )
+              )
+
+            )}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+
+      {/* ========================================
+          TABLE FOOTER
+      ======================================== */}
+
+      <div className="table-footer">
 
         <div className="table-info">
-            Showing <strong>1–10</strong> of <strong>24</strong> users
+
+          Showing{" "}
+
+          <strong>
+
+            {displayedUsers.length > 0
+              ? `${(page - 1) * limit + 1}–${
+                  (page - 1) * limit +
+                  displayedUsers.length
+                }`
+              : "0"}
+
+          </strong>
+
+          {" "}of{" "}
+
+          <strong>
+            {filteredUsers.length}
+          </strong>
+
+          {" "}users
+
         </div>
+
+
         <div className="pagination">
-            <button className="page-btn">
-                Previous
-            </button>
-            <button className="page-number active">
-                1
-            </button>
 
-            <button className="page-btn">
-                Next
-            </button>
+          <button
+            className="page-btn"
+            disabled={page === 1}
+            onClick={() =>
+              setPage((prev) =>
+                Math.max(
+                  1,
+                  prev - 1
+                )
+              )
+            }
+          >
+            Previous
+          </button>
+
+
+          <button
+            className="page-number active"
+          >
+            {page}
+          </button>
+
+
+          <button
+            className="page-btn"
+            disabled={
+              page >=
+              calculatedTotalPages
+            }
+            onClick={() =>
+              setPage((prev) =>
+                Math.min(
+                  calculatedTotalPages,
+                  prev + 1
+                )
+              )
+            }
+          >
+            Next
+          </button>
+
         </div>
-    </div>
 
- {/* Add User Modal */}
+      </div>
+
+
+      {/* ========================================
+          ADD USER MODAL
+      ======================================== */}
+
       {showAddUserModal && (
-            <div className="modal-overlay" onClick={() => setShowAddUserModal(false)}>
-                      <div className="add-user-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className = "modal-header">
-                     
-                              <div className="header-left">
-                                  <div className="stat-icon blue">
-                                      <Users size={24}/>
-                                  </div>
-                                  <div className="header-text">
-                                      <h2>Add New User</h2>
-                                      <p>Create a New User Account.</p>
-                                  </div>
-                              </div>
-                              <button
-                                  className="close-modal-btn"
-                                  onClick={() => setShowAddUserModal(false)}
-                              >
-                                  ✕
-                              </button>
-                      
-                      </div>
-                          
-                        <div className="modal-body">
-                              <div className="user-form">
 
-                                  <div className="form-group">
-                                      <label>First Name</label>
-                                      <input
-                                          type="text"
-                                          placeholder="Enter first name"
-                                      />
-                                  </div>
-                                  <div className="form-group">
-                                      <label>Last Name</label>
-                                      <input
-                                          type="text"
-                                          placeholder="Enter last name"
-                                      />
-                                  </div>
-                                  <div className="form-group">
-                                      <label>Email Address</label>
-                                      <input
-                                          type="text"
-                                          placeholder="Enter email address"
-                                      />
-                                  </div>
-                                  <div className="form-group">
-                                      <label>Username</label>
-                                      <input
-                                          type="text"
-                                          placeholder="Enter username"
-                                      />
-                                  </div>
-                                   <div className="form-group">
-                                      <label>Role</label>
-                                      <select>
-                                          <option>Select Role</option>
-                                          <option>Administrator</option>
-                                          <option>Event Coordinator</option>
-                                      </select>
-                                  </div>
-                                  <div className="form-group">
-                                      <label>Account Status</label>
-                                      <select>
-                                          <option>Select Status</option>
-                                          <option>Active</option>
-                                          <option>Inactive</option>
-                                      </select>
-                                  </div>
-                                  <div className="form-group">
-                                      <label>Password</label>
-                                      <input
-                                          type="password"
-                                          placeholder="Enter password"
-                                      />
-                                  </div>
-                                  <div className="form-group">
-                                      <label>Confirm Password</label>
-                                      <input
-                                          type="password"
-                                          placeholder="Confirm password"
-                                      />
-                                  </div>
-                              </div>
-                           <div className="modal-footer">
-                                <button className="cancel-user-btn" onClick={() => setShowAddUserModal(false)}>
-                                        Cancel
-                                </button>
-                                <button className="save-user-btn" onClick={() => setShowAddUserModal(false)}>
-                                        Save
-                                </button>
-                          </div>   
-                        </div>
-                      </div>
+        <div
+          className="modal-overlay"
+          onClick={() =>
+            setShowAddUserModal(false)
+          }
+        >
+
+          <div
+            className="add-user-modal"
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+
+            {/* MODAL HEADER */}
+
+            <div className="modal-header">
+
+              <div className="header-left">
+
+                <div className="stat-icon blue">
+
+                  <Users size={24} />
+
+                </div>
+
+                <div className="header-text">
+
+                  <h2>
+                    Add New User
+                  </h2>
+
+                  <p>
+                    Create a New User Account.
+                  </p>
+
+                </div>
+
               </div>
 
 
-        )}
+              <button
+                className="close-modal-btn"
+                type="button"
+                onClick={() =>
+                  setShowAddUserModal(false)
+                }
+              >
+                ✕
+              </button>
+
+            </div>
 
 
+            {/* MODAL BODY */}
+
+            <div className="modal-body">
+
+              <div className="user-form">
+
+
+                {/* FULL NAME */}
+
+                <div className="form-group">
+
+                  <label>
+                    Full Name
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="Enter full name"
+                    value={
+                      newUser.fullName
+                    }
+                    onChange={(e) =>
+                      handleInputChange(
+                        "fullName",
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </div>
+
+
+                {/* EMAIL */}
+
+                <div className="form-group">
+
+                  <label>
+                    Email Address
+                  </label>
+
+                  <input
+                    type="email"
+                    placeholder="Enter email address"
+                    value={
+                      newUser.email
+                    }
+                    onChange={(e) =>
+                      handleInputChange(
+                        "email",
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </div>
+
+
+              
+
+
+                {/* PASSWORD */}
+
+                <div className="form-group">
+
+                  <label>
+                    Password
+                  </label>
+
+                  <input
+                    type="password"
+                    placeholder="Enter password"
+                    value={
+                      newUser.password
+                    }
+                    onChange={(e) =>
+                      handleInputChange(
+                        "password",
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </div>
+
+
+                {/* CONFIRM PASSWORD */}
+
+                <div className="form-group">
+
+                  <label>
+                    Confirm Password
+                  </label>
+
+                  <input
+                    type="password"
+                    placeholder="Confirm password"
+                    value={
+                      newUser.confirmPassword
+                    }
+                    onChange={(e) =>
+                      handleInputChange(
+                        "confirmPassword",
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </div>
+                  {/* ROLE */}
+
+                <div className="form-group">
+
+                  <label>
+                    Role
+                  </label>
+
+                  <select
+                    value={
+                      newUser.role
+                    }
+                    onChange={(e) =>
+                      handleInputChange(
+                        "role",
+                        e.target.value
+                      )
+                    }
+                  >
+
+                    <option value="COORDINATOR">
+                      Coordinator
+                    </option>
+
+                    <option value="ADMIN">
+                      Administrator
+                    </option>
+
+                  </select>
+
+                </div>
+
+              </div>
+
+
+              {/* MODAL FOOTER */}
+
+              <div className="modal-footer">
+
+                <button
+                  className="cancel-user-btn"
+                  type="button"
+                  onClick={() =>
+                    setShowAddUserModal(
+                      false
+                    )
+                  }
+                >
+                  Cancel
+                </button>
+
+
+                <button
+                  className="save-user-btn"
+                  type="button"
+                  onClick={
+                    handleSaveUser
+                  }
+                  disabled={loading}
+                >
+
+                  {loading
+                    ? "Saving..."
+                    : "Save"}
+
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
 
     </div>
   );

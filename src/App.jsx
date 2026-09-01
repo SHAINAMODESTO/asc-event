@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+
 import Sidebar from "./shared/Sidebar";
 import Registration from "./components/Registration";
 import RegisterV3 from "./pages/RegisterV3";
@@ -15,63 +16,152 @@ import UserAdminTable from "./components/UserAdminTable";
 import QRScanner from "./qr-scanner/QRScanner";
 import EventReports from "./components/EventReports";
 
-const ProtectedRoute = ({ children }) => {
-  const isLoggedIn = localStorage.getItem("isLoggedIn");
+// ========================================
+// PROTECTED ROUTE
+// ========================================
 
-  return isLoggedIn ? children : <Navigate to="/login" replace />;
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem("accessToken");
+
+  return token ? (
+    children
+  ) : (
+    <Navigate to="/login" replace />
+  );
 };
 
 function App() {
   return (
     <Routes>
-      {/* Public Pages */}
-      <Route path="/registration" element={<Registration />} />
-      <Route path="/registration/:eventId" element={<RegisterV3 />} />
-      <Route path="/thankyou" element={<ThankYou />} />
-      <Route path="/not-found" element={<NotFound />} />
 
-      {/* Login */}
-      <Route path="/login" element={<Login />} />
+      {/* ========================================
+          PUBLIC PAGES
+      ======================================== */}
 
-      {/* Protected Dashboard */}
       <Route
-        path="/"
+        path="/registration"
+        element={<Registration />}
+      />
+
+      <Route
+        path="/registration/:eventId"
+        element={<RegisterV3 />}
+      />
+
+      <Route
+        path="/thankyou"
+        element={<ThankYou />}
+      />
+
+      <Route
+        path="/not-found"
+        element={<NotFound />}
+      />
+
+      {/* ========================================
+          LOGIN
+      ======================================== */}
+
+      <Route
+        path="/login"
+        element={<Login />}
+      />
+
+      {/* ========================================
+          PROTECTED DASHBOARD
+      ======================================== */}
+
+      <Route
         element={
           <ProtectedRoute>
             <Sidebar />
           </ProtectedRoute>
         }
-      ></Route>
-      {/* Sidebar Layout */}
-      <Route path="/" element={<Sidebar />}>
-        <Route path="create-event" element={<CreateForm />} />
-        <Route path="draft-events" element={<AllEventsList />} />
-        <Route path="attendees" element={<AttendeesList />} />
-        <Route path="attendees/:eventId" element={<EventAttendees />} />
-        <Route path="published-events" element={<PublishedEvents />} />
-        <Route path="useradmin-table" element={<UserAdminTable />} />
-        <Route path="/attendees/:eventId/scanner" element={<QRScanner />}/>
-        <Route path="event-reports/:eventId" element={<EventReports />}
-/>
+      >
+
+        {/* Dashboard */}
+
+        <Route
+          index
+          element={<Navigate to="/published-events" replace />}
+        />
+
+        {/* Events */}
+
+        <Route
+          path="create-event"
+          element={<CreateForm />}
+        />
+
+        <Route
+          path="create-event/:id"
+          element={<CreateForm />}
+        />
+
+        <Route
+          path="draft-events"
+          element={<AllEventsList />}
+        />
+
+        <Route
+          path="published-events"
+          element={<PublishedEvents />}
+        />
+
+        {/* Attendees */}
+
+        <Route
+          path="attendees"
+          element={<AttendeesList />}
+        />
+
+        <Route
+          path="attendees/:eventId"
+          element={<EventAttendees />}
+        />
+
+        {/* QR Scanner */}
+
+        <Route
+          path="attendees/:eventId/scanner"
+          element={<QRScanner />}
+        />
+
+        {/* User Administration */}
+
+        <Route
+          path="useradmin-table"
+          element={<UserAdminTable />}
+        />
+
+        {/* Reports */}
+
+        <Route
+          path="event-reports/:eventId"
+          element={<EventReports />}
+        />
+
+        {/* Event Summary */}
+
+        <Route
+          path="event-summary"
+          element={<EventSummary />}
+        />
+
       </Route>
 
-      {/* Public Pages */}
-      <Route path="/registration" element={<Registration />} />
-      <Route path="/registration/:eventId" element={<RegisterV3 />} />
-      <Route path="/thankyou" element={<ThankYou />} />
+      {/* ========================================
+          404
+      ======================================== */}
 
-      {/* CREATE / EDIT EVENT */}
-      <Route path="/create-event" element={<CreateForm />} />
-      <Route path="/create-event/:id" element={<CreateForm />} />
-
-      {/* Attendees */}
-      <Route path="/attendees" element={<AttendeesList />} />
-      <Route path="/attendees/:eventId" element={<EventAttendees />} />
-
-      
+      <Route
+        path="*"
+        element={<NotFound />}
+      />
 
     </Routes>
   );
 }
 
 export default App;
+

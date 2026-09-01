@@ -1,10 +1,10 @@
-import axios from "axios";
+import api from "./api";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 // Create attendee
 export const createAttendee = async (attendeeData) => {
   try {
-    const response = await axios.post(
+    const response = await api.post(
       `${BASE_URL}/attendee/create`,
       attendeeData,
     );
@@ -20,7 +20,7 @@ export const assignTable = async (attendeeId, tableNumber) => {
    console.log("PATCH URL:");
   console.log(`${BASE_URL}/attendee/${attendeeId}/assign-table`);
   try {
-    const response = await axios.patch(
+    const response = await api.patch(
       `${BASE_URL}/attendee/${attendeeId}/assign-table`,
       {
         tableNumber,
@@ -40,7 +40,7 @@ export const assignTable = async (attendeeId, tableNumber) => {
 
 export const bulkAssignTable = async (attendeeId, tableNumber) => {
   try {
-    const response = await axios.patch(
+    const response = await api.patch(
       `${BASE_URL}/attendee/${attendeeId}/bulk/assign-table`,
       {
         tableNumber,
@@ -60,7 +60,7 @@ export const bulkAssignTable = async (attendeeId, tableNumber) => {
 export const checkInAttendee = async (attendeeId) => {
   try {
     
-    const response = await axios.patch(
+    const response = await api.patch(
       `${BASE_URL}/attendee/${attendeeId}/check-in`
     );
 
@@ -76,7 +76,7 @@ export const checkInAttendee = async (attendeeId) => {
 // Get attendee by ID
 export const getAttendeeById = async (attendeeId) => {
   try {
-    const response = await axios.get(
+    const response = await api.get(
       `${BASE_URL}/attendee/${attendeeId}`
     );
     console.log("Attendee API Response:", response.data);
@@ -93,7 +93,7 @@ export const getAttendeeById = async (attendeeId) => {
 // Register attendee with companions
 export const createAttendeeWithCompanions = async (data) => {
   try {
-    const response = await axios.post(
+    const response = await api.post(
       `${BASE_URL}/attendee/create`,
       data
     );
@@ -119,7 +119,7 @@ export const getAttendees = async ({
   status = "",
 }) => {
   try {
-    const response = await axios.get(`${BASE_URL}/attendee`, {
+    const response = await api.get(`${BASE_URL}/attendee`, {
       params: {
         page,
         limit,
@@ -138,7 +138,7 @@ export const getAttendees = async ({
 // Dashboard Summary
 export const getDashboardSummary = async (eventId) => {
   try {
-    const response = await axios.get(
+    const response = await api.get(
       `${BASE_URL}/attendee/summary/${eventId}`
       // `${BASE_URL}/events/${eventId}/dashboard`
     );
@@ -155,7 +155,7 @@ export const getDashboardSummary = async (eventId) => {
 // Create Companion
 export const createCompanion = async (primaryId, companionData) => {
   try {
-    const response = await axios.post(
+    const response = await api.post(
       `${BASE_URL}/attendee/${primaryId}/companion`,
       companionData
     );
@@ -176,7 +176,7 @@ export const updateCompanions = async (
   companionData
 ) => {
   try {
-    const response = await axios.patch(
+    const response = await api.patch(
       `${BASE_URL}/attendee/${primaryId}/companions/${companionId}`,
       companionData
     );
@@ -196,7 +196,7 @@ export const updateCompanions = async (
 
 export const updatePrimaryAttendee = async (attendeeId, attendeeData) => {
   try {
-    const response = await axios.patch(
+    const response = await api.patch(
       `${BASE_URL}/attendee/${attendeeId}`,
       attendeeData
     );
@@ -220,7 +220,7 @@ export const updatePrimaryAttendee = async (attendeeId, attendeeData) => {
 
 export const bulkCheckInAttendees = async (attendeeIds) => {
   try {
-    const response = await axios.patch(
+    const response = await api.patch(
       `${BASE_URL}/attendee/check-in`,
       {
         attendeeIds,
@@ -247,7 +247,7 @@ export const bulkCheckInAttendees = async (attendeeIds) => {
 
 export const scanAttendee = async (eventId, attendeeCode) => {
   try {
-    const response = await axios.get(
+    const response = await api.get(
       `${BASE_URL}/attendee/event/${eventId}/scan/${encodeURIComponent(attendeeCode)}`
     );
 
@@ -269,7 +269,7 @@ export const scanAttendee = async (eventId, attendeeCode) => {
 
 export const generateAttendeeReport = async (eventId) => {
     try {
-        const response = await axios.get(
+        const response = await api.get(
             `${BASE_URL}/attendee/event/${eventId}/report`,
             {
                 responseType: "blob",
