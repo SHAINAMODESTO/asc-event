@@ -1,4 +1,5 @@
 import api from "./api";
+import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 // Create attendee
@@ -361,6 +362,40 @@ export const bulkConfirmAttendees = async (attendeeIds) => {
       "Bulk Confirm Attendees Error:",
       error.response?.data || error.message
     );
+    throw error;
+  }
+};
+// ========================================
+// BULK CREATE ATTENDEES
+// POST /attendee/:id/bulk-create
+// Admin only
+// multipart/form-data
+// ========================================
+
+export const bulkCreateAttendees = async (eventId, file) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const token = localStorage.getItem("accessToken");
+
+    const response = await axios.post(
+      `${BASE_URL}/attendee/${eventId}/bulk-create`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Bulk Create Attendees Error:",
+      error.response?.data || error
+    );
+
     throw error;
   }
 };

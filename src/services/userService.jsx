@@ -1,9 +1,8 @@
+
 import axios from "axios";
 
-// const BASE_URL = "https://api.asconlineportal.com/api-event";
-//const BASE_URL = "http://localhost:3021/api-event";
-
 const BASE_URL = import.meta.env.VITE_API_URL;
+
 // ========================================
 // Helper: Authorization Header
 // ========================================
@@ -15,7 +14,7 @@ const getAuthHeaders = () => {
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-    },//
+    },
   };
 };
 
@@ -43,3 +42,28 @@ export const createUser = async (userData) => {
     throw error;
   }
 };
+
+// ========================================
+// GET USERS
+// GET /users
+// Admin only
+// ========================================
+
+export const getUsers = async () => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/users`,
+      getAuthHeaders()
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Get Users Error:",
+      error.response?.data || error
+    );
+
+    throw error;
+  }
+};
+

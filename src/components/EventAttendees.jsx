@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+
 import { useNavigate, useParams } from "react-router-dom";
 import {
   getAttendees,
@@ -15,6 +16,7 @@ import {
   declineAttendee,
   cancelAttendee,
   bulkConfirmAttendees,
+  bulkCreateAttendees,
 } from "../services/attendeeListService";
 
 import { getEventById } from "../services/eventService";
@@ -42,13 +44,15 @@ import {
   QrCode,
   Folder,
   UsersIcon,
+  FileUp,
 } from "lucide-react";
 
 const EventAttendees = () => {
 const navigate = useNavigate();
 const { eventId } = useParams();
 const printRef = useRef();
-const fileInputRef = useRef();
+
+
 
 // ========================================
 // ATTENDEES
@@ -1038,7 +1042,7 @@ const handleBulkConfirm = async () => {
   }
 
   const confirmed = window.confirm(
-    `Are you sure you want to confirm ${selectedRows.length} selected attendee(s)?`
+    `Are you sure you want to confirm the attendance of ${selectedRows.length} selected attendee(s)?`
   );
 
   if (!confirmed) return;
@@ -1064,57 +1068,189 @@ const handleBulkConfirm = async () => {
   }
 };
 
+const fileInputRef = useRef(null);
+
 // ========================================
-// BULK UPLOAD
+// BULK UPLOAD / IMPORT ATTENDEES
 // ========================================
 
-const handleBulkUpload = (e) => {
-  const file = e.target.files?.[0];
+const [selectedFile, setSelectedFile] = useState(null);
+const [uploading, setUploading] = useState(false);
+const [importResult, setImportResult] = useState(null);
+const [importError, setImportError] = useState("");
 
-  if (!file) return;
 
-  const reader = new FileReader();
+const handleFileChange = (event) => {
+  const file = event.target.files?.[0];
 
-  reader.onload = (event) => {
-    const text = event.target.result;
+  setImportError("");
+  setImportResult(null);
 
-    const rows = text
-      .split("\n")
-      .map((row) => row.split(","));
+  if (!file) {
+    setSelectedFile(null);
+    return;
+  }
 
-    const dataRows = rows.slice(1);
+  const isExcelFile = file.name
+    .toLowerCase()
+    .endsWith(".xlsx");
 
-    const newAttendees = dataRows
-      .filter((row) => row.length >= 6)
-      .map((row, index) => ({
-        id: `${eventId}-${Date.now()}-${index}`,
-        eventId,
-        firstName: row[0]?.trim(),
-        lastName: row[1]?.trim(),
-        preferredNameOnBadge: row[2]?.trim(),
-        emailAddress: row[3]?.trim(),
-        company: row[4]?.trim(),
-        position: row[5]?.trim(),
-        status: "PENDING",
-        mealPreference: row[6]?.trim() || "",
-      }));
+  if (!isExcelFile) {
+    setSelectedFile(null);
 
-    setAttendees((prev) => [
-      ...prev,
-      ...newAttendees,
-    ]);
-
-    alert(
-      `${newAttendees.length} attendees uploaded successfully.`
+    setImportError(
+      "Please select an Excel .xlsx file."
     );
-  };
 
-  reader.readAsText(file);
+    event.target.value = "";
+    return;
+  }
 
-  // Allow the same file to be selected again
-  e.target.value = "";
+  setSelectedFile(file);
 };
 
+
+const uploadAttendeeFile = async (file) => {
+  if (!eventId) {
+    setImportError("Event ID is required.");
+    return;
+  }
+
+  try {
+    setUploading(true);
+    setImportError("");
+    setImportResult(null);
+
+    console.log("Uploading attendee file...");
+    console.log("Event ID:", eventId);
+    console.log("File:", file.name);
+
+    const response = await bulkCreateAttendees(
+      eventId,
+      file
+    );
+
+    console.log(
+      "Bulk import response:",
+      response
+    );
+
+    setImportResult(response);
+
+    // Clear selected file after upload
+    setSelectedFile(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    // Refresh attendee list if available
+    if (typeof fetchAttendees === "function") {
+      await fetchAttendees();
+    }
+
+  } catch (error) {
+    console.error(
+      "Bulk import failed:",
+      error
+    );
+
+    const response =
+      error.response?.data;
+
+    if (Array.isArray(response?.message)) {
+      setImportError(
+        response.message.join("\n")
+      );
+    } else {
+      setImportError(
+        response?.message ||
+        "Failed to import attendees."
+      );
+    }
+
+  } finally {
+    setUploading(false);
+  }
+};
+
+const handleBulkImport = async () => {
+  if (!selectedFile) {
+    setImportError(
+      "Please select an .xlsx file first."
+    );
+    return;
+  }
+
+  if (!eventId) {
+    setImportError(
+      "Event ID is required."
+    );
+    return;
+  }
+
+  try {
+    setUploading(true);
+    setImportError("");
+    setImportResult(null);
+
+    console.log("Starting attendee import...");
+    console.log("Event ID:", eventId);
+    console.log("File:", selectedFile.name);
+
+    const response = await bulkCreateAttendees(
+      eventId,
+      selectedFile
+    );
+
+    console.log(
+      "Import result:",
+      response
+    );
+
+    setImportResult(response);
+
+    // Clear selected file
+    setSelectedFile(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+  } catch (error) {
+    console.error(
+      "Import failed:",
+      error
+    );
+
+    const response =
+      error.response?.data;
+
+    if (Array.isArray(response?.message)) {
+      setImportError(
+        response.message.join("\n")
+      );
+    } else {
+      setImportError(
+        response?.message ||
+          "Failed to import attendees."
+      );
+    }
+
+  } finally {
+    setUploading(false);
+  }
+};
+
+const handleRemoveSelectedFile = () => {
+  setSelectedFile(null);
+  setImportError("");
+  setImportResult(null);
+
+  if (fileInputRef.current) {
+    fileInputRef.current.value = "";
+  }
+};
 // ========================================
 // BULK ASSIGN TABLE
 // PRIMARY + COMPANIONS
@@ -1493,6 +1629,271 @@ const displayedAttendees = [...attendees]
              <Folder size={17} />
             Reports
           </button>
+        
+{/* ========================================
+    IMPORT ATTENDEES BUTTON
+======================================== */}
+
+<button
+  type="button"
+  className="blue-btn"
+  onClick={() => fileInputRef.current?.click()}
+  disabled={uploading}
+>
+  <FileUp size={17} />
+  {uploading ? "Importing..." : "Import Attendees"}
+</button>
+
+<input
+  ref={fileInputRef}
+  type="file"
+  accept=".xlsx"
+  onChange={handleFileChange}
+  style={{ display: "none" }}
+/>
+
+
+{/* ========================================
+    IMPORT MODAL
+======================================== */}
+
+{(selectedFile || uploading || importResult || importError) && (
+  <div className="import-modal-overlay">
+
+    <div className="import-modal">
+
+      {/* HEADER */}
+      <div className="import-modal-header">
+        <div>
+          <h2>Import Attendees</h2>
+          <p>
+            Upload an Excel spreadsheet to add attendees
+            to this event.
+          </p>
+        </div>
+
+        {!uploading && (
+          <button
+            type="button"
+            className="import-modal-close"
+            onClick={handleRemoveSelectedFile}
+          >
+            ×
+          </button>
+        )}
+      </div>
+
+
+      {/* BODY */}
+      <div className="import-modal-body">
+
+        {/* SELECTED FILE */}
+        {selectedFile && !importResult && (
+          <div className="import-file-card">
+
+            <div className="import-file-icon">
+              <FileUp size={24} />
+            </div>
+
+            <div className="import-file-details">
+              <strong>
+                {selectedFile.name}
+              </strong>
+
+              <span>
+                {(selectedFile.size / 1024).toFixed(1)} KB
+              </span>
+            </div>
+
+          </div>
+        )}
+
+
+        {/* UPLOADING */}
+        {uploading && (
+          <div className="import-progress-container">
+
+            <div className="import-progress-header">
+              <span>
+                Importing attendees...
+              </span>
+
+              <span>
+                Please wait
+              </span>
+            </div>
+
+            <div className="import-progress-bar">
+              <div className="import-progress-fill"></div>
+            </div>
+
+            <p>
+              The system is processing your Excel
+              spreadsheet. Please do not close this window.
+            </p>
+
+          </div>
+        )}
+
+
+        {/* ERROR */}
+        {importError && !uploading && (
+          <div className="import-error-box">
+
+            <div className="import-error-title">
+              Import Failed
+            </div>
+
+            <div className="import-error-message">
+              {importError}
+            </div>
+
+          </div>
+        )}
+
+
+        {/* RESULT */}
+        {importResult && !uploading && (
+          <div className="import-result-container">
+
+            <div className="import-success-icon">
+              ✓
+            </div>
+
+            <h3>
+              Import Completed
+            </h3>
+
+            <p className="import-result-message">
+              {importResult.message}
+            </p>
+
+
+            {/* SUMMARY */}
+            <div className="import-summary">
+
+              <div className="import-summary-card">
+                <strong>
+                  {importResult.inserted ?? 0}
+                </strong>
+
+                <span>
+                  Imported
+                </span>
+              </div>
+
+              <div className="import-summary-card">
+                <strong>
+                  {importResult.queued ?? 0}
+                </strong>
+
+                <span>
+                  Queued
+                </span>
+              </div>
+
+              <div className="import-summary-card">
+                <strong>
+                  {importResult.skipped ?? 0}
+                </strong>
+
+                <span>
+                  Skipped
+                </span>
+              </div>
+
+            </div>
+
+
+            {/* ROW ERRORS */}
+            {importResult.errors?.length > 0 && (
+              <div className="import-errors-list">
+
+                <h4>
+                  Rows that need correction
+                </h4>
+
+                <div className="import-errors-scroll">
+
+                  {importResult.errors.map(
+                    (item, index) => (
+                      <div
+                        key={`${item.row}-${index}`}
+                        className="import-row-error"
+                      >
+
+                        <span className="import-row-number">
+                          Row {item.row}
+                        </span>
+
+                        <span className="import-row-reason">
+                          {item.reason}
+                        </span>
+
+                      </div>
+                    )
+                  )}
+
+                </div>
+
+              </div>
+            )}
+
+          </div>
+        )}
+
+      </div>
+
+
+      {/* FOOTER */}
+      {!uploading && (
+        <div className="import-modal-footer">
+
+          {!importResult && selectedFile && (
+            <>
+              <button
+                type="button"
+                className="import-cancel-btn"
+                onClick={handleRemoveSelectedFile}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="blue-btn"
+                onClick={() =>
+                  uploadAttendeeFile(selectedFile)
+                }
+              >
+                <FileUp size={17} />
+                Start Import
+              </button>
+            </>
+          )}
+
+          {(importResult || importError) && (
+            <button
+              type="button"
+              className="blue-btn"
+              onClick={handleRemoveSelectedFile}
+            >
+              Done
+            </button>
+          )}
+
+        </div>
+      )}
+
+    </div>
+  </div>
+)}
+
+
+          
+              
+                
+                
 
           <div
               title={
@@ -1514,6 +1915,8 @@ const displayedAttendees = [...attendees]
                 <UsersIcon size={17} />
                 Bulk Confirm ({selectedRows.length})
               </button>
+
+              
           </div>
         </div>
       </div>
@@ -1740,6 +2143,64 @@ const displayedAttendees = [...attendees]
 </table>
       </div>
     </div>
+ {/* Import Attendee Results Modal */}
+    {importResult && (
+  <div className="import-result">
+    <h3>Import Results</h3>
+
+    <p>
+      {importResult.message}
+    </p>
+
+    <div className="import-summary">
+      <div>
+        <strong>
+          {importResult.inserted}
+        </strong>
+        <span>Imported</span>
+      </div>
+
+      <div>
+        <strong>
+          {importResult.queued}
+        </strong>
+        <span>Queued</span>
+      </div>
+
+      <div>
+        <strong>
+          {importResult.skipped}
+        </strong>
+        <span>Skipped</span>
+      </div>
+    </div>
+
+    {importResult.errors?.length > 0 && (
+      <div className="import-errors">
+        <h4>
+          Rows that need correction
+        </h4>
+
+        {importResult.errors.map(
+          (error, index) => (
+            <div
+              key={`${error.row}-${index}`}
+              className="import-error-row"
+            >
+              <strong>
+                Row {error.row}
+              </strong>
+
+              <span>
+                {error.reason}
+              </span>
+            </div>
+          )
+        )}
+      </div>
+    )}
+  </div>
+)}
  {/* Attendee Modal */}
       {selectedAttendee && (
         <div

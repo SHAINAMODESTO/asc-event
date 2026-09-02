@@ -10,40 +10,23 @@ import {
 
 import "./UserAdminTable.css";
 import { useEffect, useState } from "react";
-import { createUser } from "../services/userService";
+import { createUser, getUsers } from "../services/userService";
 
 export default function UserAdminTable() {
-  // ========================================
-  // PAGINATION
-  // ========================================
-
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
 
-  // ========================================
-  // USERS
-  // ========================================
-
+  // REAL USERS FROM DATABASE
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
 
-  // ========================================
-  // SEARCH / FILTER
-  // ========================================
+  const [loading, setLoading] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
-  // ========================================
-  // ADD USER MODAL
-  // ========================================
-
   const [showAddUserModal, setShowAddUserModal] = useState(false);
-
-  // ========================================
-  // NEW USER FORM
-  // ========================================
 
   const [newUser, setNewUser] = useState({
     fullName: "",
@@ -53,10 +36,63 @@ export default function UserAdminTable() {
     confirmPassword: "",
   });
 
-  // ========================================
-  // HANDLE INPUT CHANGE
-  // ========================================
+  // =========================================================
+  // FETCH USERS
+  // =========================================================
+  const fetchUsers = async () => {
+    try {
+      setLoadingUsers(true);
 
+      const response = await getUsers();
+
+      console.log("Users Response:", response);
+
+      /*
+       * Supports either:
+       *
+       * {
+       *   data: [...]
+       * }
+       *
+       * OR
+       *
+       * [...]
+       */
+
+      const usersData = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+        ? response.data
+        : [];
+
+      setUsers(usersData);
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+
+      const message = error.response?.data?.message;
+
+      if (Array.isArray(message)) {
+        alert(message.join("\n"));
+      } else {
+        alert(message || "Failed to load users.");
+      }
+
+      setUsers([]);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  // =========================================================
+  // LOAD USERS WHEN PAGE OPENS
+  // =========================================================
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // =========================================================
+  // INPUT CHANGE
+  // =========================================================
   const handleInputChange = (field, value) => {
     setNewUser((prev) => ({
       ...prev,
@@ -64,30 +100,23 @@ export default function UserAdminTable() {
     }));
   };
 
-  // ========================================
+  // =========================================================
   // CREATE USER
-  // POST /users
-  // ========================================
-
+  // =========================================================
   const handleSaveUser = async () => {
-    // ----------------------------------------
-    // Validate Full Name
-    // ----------------------------------------
-
+    // FULL NAME
     if (!newUser.fullName.trim()) {
       alert("Full name is required.");
       return;
     }
 
-    // ----------------------------------------
-    // Validate Email
-    // ----------------------------------------
-
+    // EMAIL
     if (!newUser.email.trim()) {
       alert("Email address is required.");
       return;
     }
 
+    // FIXED EMAIL REGEX
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(newUser.email.trim())) {
@@ -95,25 +124,19 @@ export default function UserAdminTable() {
       return;
     }
 
-    // ----------------------------------------
-    // Validate Password
-    // ----------------------------------------
-
+    // PASSWORD
     if (!newUser.password) {
       alert("Password is required.");
       return;
     }
 
+    // PASSWORD LENGTH
     if (newUser.password.length < 8) {
       alert("Password must be at least 8 characters.");
       return;
     }
 
-    // ----------------------------------------
-    // Confirm Password
-    // Frontend-only validation
-    // ----------------------------------------
-
+    // CONFIRM PASSWORD
     if (newUser.password !== newUser.confirmPassword) {
       alert("Passwords do not match.");
       return;
@@ -122,12 +145,6 @@ export default function UserAdminTable() {
     try {
       setLoading(true);
 
-      // ========================================
-      // IMPORTANT
-      // Only fields supported by CreateUserDto
-      // are sent to the backend.
-      // ========================================
-
       const userData = {
         name: newUser.fullName.trim(),
         email: newUser.email.trim(),
@@ -135,42 +152,33 @@ export default function UserAdminTable() {
         role: newUser.role || "COORDINATOR",
       };
 
-      console.log("Creating User:");
-      console.log(userData);
+      console.log("Creating User:", userData);
 
       const response = await createUser(userData);
 
-      console.log("Create User Response:");
-      console.log(response);
+      console.log("Create User Response:", response);
 
-      // ========================================
-      // SUCCESS
-      // ========================================
+      /*
+       * Backend currently returns:
+       *
+       * {
+       *   message: "User created successfully.",
+       *   data: {
+       *      id,
+       *      name,
+       *      email,
+       *      role
+       *   }
+       * }
+       */
 
-      if (response.success) {
+      if (response?.data) {
         alert("User created successfully!");
 
-        // ----------------------------------------
-        // Add newly created user to table
-        // ----------------------------------------
-
-        if (response.data) {
-          setUsers((prev) => [
-            response.data,
-            ...prev,
-          ]);
-        }
-
-        // ----------------------------------------
         // Close modal
-        // ----------------------------------------
-
         setShowAddUserModal(false);
 
-        // ----------------------------------------
         // Reset form
-        // ----------------------------------------
-
         setNewUser({
           fullName: "",
           email: "",
@@ -179,25 +187,27 @@ export default function UserAdminTable() {
           confirmPassword: "",
         });
 
-        // Reset pagination
+        // Go back to first page
         setPage(1);
+
+        // IMPORTANT:
+        // Reload users from the actual database
+        await fetchUsers();
+      } else {
+        alert(
+          response?.message || "User creation failed."
+        );
       }
     } catch (error) {
-      console.error(
-        "Failed to create user:",
-        error
-      );
+      console.error("Failed to create user:", error);
 
-      const message =
-        error.response?.data?.message;
+      const message = error.response?.data?.message;
 
-      // Backend validation errors
       if (Array.isArray(message)) {
         alert(message.join("\n"));
       } else {
         alert(
-          message ||
-            "Failed to create user."
+          message || "Failed to create user."
         );
       }
     } finally {
@@ -205,44 +215,28 @@ export default function UserAdminTable() {
     }
   };
 
-  // ========================================
-  // USERS
-  // ========================================
-  //
-  // There is currently no confirmed GET /users
-  // endpoint in the API documentation.
-  //
-  // Therefore, users are stored in frontend
-  // state after successful creation.
-  //
-  // ========================================
-
-  useEffect(() => {
-    setUsers([]);
-  }, []);
-
-  // ========================================
-  // SEARCH + FILTER
-  // ========================================
-
+  // =========================================================
+  // FILTER USERS
+  // =========================================================
   const filteredUsers = users.filter((user) => {
     const keyword = searchTerm.toLowerCase();
 
     const matchesSearch =
-      user.name
-        ?.toLowerCase()
-        .includes(keyword) ||
-      user.email
-        ?.toLowerCase()
-        .includes(keyword);
+      user.name?.toLowerCase().includes(keyword) ||
+      user.email?.toLowerCase().includes(keyword);
 
     const matchesRole =
       !roleFilter ||
       user.role?.toUpperCase() ===
         roleFilter.toUpperCase();
 
-    // Status is currently not provided
-    // by the backend.
+    /*
+     * Your backend User entity currently does not have
+     * a status field.
+     *
+     * Keep the existing behavior so the design does not
+     * change.
+     */
     const matchesStatus =
       !statusFilter ||
       statusFilter === "Active";
@@ -254,28 +248,32 @@ export default function UserAdminTable() {
     );
   });
 
-  // ========================================
-  // STATISTICS
-  // ========================================
-
+  // =========================================================
+  // USER STATISTICS
+  // =========================================================
   const totalUsers = users.length;
 
   const administrators = users.filter(
-    (user) => user.role === "ADMIN"
+    (user) =>
+      user.role?.toUpperCase() === "ADMIN"
   ).length;
 
   const coordinators = users.filter(
-    (user) => user.role === "COORDINATOR"
+    (user) =>
+      user.role?.toUpperCase() ===
+      "COORDINATOR"
   ).length;
 
-  // All newly created accounts are displayed
-  // as active in the frontend.
+  /*
+   * There is currently no status column in the
+   * backend User entity, so all loaded users are
+   * treated as active for the existing UI.
+   */
   const activeUsers = users.length;
 
-  // ========================================
+  // =========================================================
   // PAGINATION
-  // ========================================
-
+  // =========================================================
   const displayedUsers =
     filteredUsers.slice(
       (page - 1) * limit,
@@ -289,10 +287,9 @@ export default function UserAdminTable() {
     )
   );
 
-  // ========================================
-  // RESET PAGE WHEN SEARCH/FILTER CHANGES
-  // ========================================
-
+  // =========================================================
+  // RESET PAGE WHEN FILTER CHANGES
+  // =========================================================
   useEffect(() => {
     setPage(1);
   }, [
@@ -301,7 +298,12 @@ export default function UserAdminTable() {
     statusFilter,
   ]);
 
+  // =========================================================
+  // RETURN
+  // =========================================================
+
   return (
+    
     <div className="user-admin-page">
 
       {/* ========================================
