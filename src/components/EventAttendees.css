@@ -263,6 +263,7 @@ TOOLBAR
 .blue-btn,
 .white-btn,
 .orange-btn,
+.green-btn,
 .red-btn{
   height: 46px;
   padding: 0 12px;
@@ -290,6 +291,26 @@ TOOLBAR
 
 .red-btn:hover {
   background: #e4a1a1;
+}
+
+.orange-btn {
+  border: none;
+  background: #f07109;
+  color: white;
+}
+
+.orange-btn:hover {
+  background: #e4a1a1;
+}
+
+.green-btn {
+  border: none;
+  background: #16a34a;
+  color: white;
+}
+
+.green-btn:hover {
+  background: #15803d;
 }
 
 .orange-btn {
@@ -2708,4 +2729,80 @@ background:#16a34a;
         flex-direction:column;
     }
 
+}
+/* ========================================
+   ATTENDEE ACTIONS BASED ON STATUS
+   ======================================== */
+
+.attendee-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* Base button style */
+.attendee-actions button {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 90px;
+}
+
+/* Confirm */
+.confirm-attendee-btn {
+  background-color: #198754;
+  color: white;
+}
+
+.confirm-attendee-btn:hover {
+  background-color: #157347;
+  transform: translateY(-1px);
+}
+
+/* Decline */
+.decline-attendee-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.decline-attendee-btn:hover {
+  background-color: #bb2d3b;
+  transform: translateY(-1px);
+}
+
+/* Cancel */
+.cancel-attendee-btn {
+  background-color: #6c757d;
+  color: white;
+}
+
+.cancel-attendee-btn:hover {
+  background-color: #5c636a;
+  transform: translateY(-1px);
+}
+
+/* Disabled state */
+.attendee-actions button:disabled {
+  background-color: #d1d5db;
+  color: #6b7280;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .attendee-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .attendee-actions button {
+    width: 100%;
+  }
 }

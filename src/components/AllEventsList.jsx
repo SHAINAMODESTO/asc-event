@@ -4,6 +4,7 @@ import {NotebookTabs } from "lucide-react";
 import {
   getEvents,
   publishEvent,
+  deleteEvent,
 } from "../services/eventService";
 import "./AllEventsList.css";
 
@@ -98,7 +99,21 @@ navigate("/published-events");
     return matchesSearch && matchesFromDate && matchesToDate;
   });
 
-  
+    const deleteTemplate = async (id) => {
+  try {
+    const response = await deleteEvent(id);
+
+    if (response.success) {
+      fetchEvents();
+      setStatusMessage("Event deleted successfully.");
+    }
+  } catch (error) {
+    console.error("Delete failed:", error);
+    setStatusMessage(
+      error.response?.data?.message || "Failed to delete event."
+    );
+  }
+};
 
   const viewTemplate = (eventTemplate) => {
     navigate("/registration", { state: eventTemplate });
@@ -218,7 +233,7 @@ navigate("/published-events");
                   className="event-button event-button-delete"
                   onClick={() => deleteTemplate(event.id)}
                 >
-                  Delete
+                  Archive
                 </button>
               </div>
 

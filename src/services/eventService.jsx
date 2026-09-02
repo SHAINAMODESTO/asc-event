@@ -69,4 +69,14 @@ export const updateEvent = async (eventId, eventData) => {
     throw error;
   }
 };
+// Delete Event
+export const deleteEvent = async (eventId) => {
+  try {
+    const response = await api.delete(`${BASE_URL}/event/${eventId}`);
 
+    return response.data;
+  } catch (error) {
+    console.error("Delete Event Error:", error.response?.data || error.message);
+    throw error;
+  }
+};

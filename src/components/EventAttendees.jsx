@@ -11,6 +11,10 @@ import {
   updatePrimaryAttendee,
   bulkCheckInAttendees,
   bulkAssignTable,
+  confirmAttendee,
+  declineAttendee,
+  cancelAttendee,
+  bulkConfirmAttendees,
 } from "../services/attendeeListService";
 
 import { getEventById } from "../services/eventService";
@@ -37,30 +41,50 @@ import {
   UtensilsCrossed,
   QrCode,
   Folder,
+  UsersIcon,
 } from "lucide-react";
 
 const EventAttendees = () => {
-  const navigate = useNavigate();
-  const { eventId } = useParams();
-  const printRef = useRef();
-  const fileInputRef = useRef();
+const navigate = useNavigate();
+const { eventId } = useParams();
+const printRef = useRef();
+const fileInputRef = useRef();
 
-  const [attendees, setAttendees] = useState([]);
-  const [loading, setLoading] = useState(false);
+// ========================================
+// ATTENDEES
+// ========================================
 
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-//role filtering 
-  const [role, setRole] = useState("");
+const [attendees, setAttendees] = useState([]);
+const [loading, setLoading] = useState(false);
 
-  const [eventDetails, setEventDetails] = useState(null);
-  //pagination
-  const [page, setPage] = useState(1);
-  const [limit] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
+// ========================================
+// FILTERS
+// ========================================
 
-//dashboard summary
-  const [dashboard, setDashboard] = useState({
+const [search, setSearch] = useState("");
+const [status, setStatus] = useState("");
+const [role, setRole] = useState("");
+
+// ========================================
+// EVENT DETAILS
+// ========================================
+
+const [eventDetails, setEventDetails] = useState(null);
+
+// ========================================
+// PAGINATION
+// ========================================
+
+const [page, setPage] = useState(1);
+const [limit] = useState(10);
+const [totalPages, setTotalPages] = useState(1);
+const [totalAttendees, setTotalAttendees] = useState(0);
+
+// ========================================
+// DASHBOARD SUMMARY
+// ========================================
+
+const [dashboard, setDashboard] = useState({
   attendees: {
     total: 0,
     registered: 0,
@@ -79,63 +103,108 @@ const EventAttendees = () => {
     confirmed: 0,
   },
 });
+
 const fetchDashboardSummary = async () => {
+  if (!eventId) return;
+
   try {
     const response = await getDashboardSummary(eventId);
-     console.log("Dashboard API:", response);
 
-    setDashboard(response);
+    console.log("Dashboard API:", response);
+
+    setDashboard(
+      response || {
+        attendees: {
+          total: 0,
+          registered: 0,
+        },
+        checkIn: {
+          checkedIn: 0,
+          total: 0,
+          rate: 0,
+        },
+        tableAssignment: {
+          assigned: 0,
+          notAssigned: 0,
+        },
+        confirmation: {
+          pending: 0,
+          confirmed: 0,
+        },
+      }
+    );
   } catch (error) {
-    console.error(error);
+    console.error("Dashboard summary error:", error);
   }
 };
-  //total attendees
-  const [totalAttendees, setTotalAttendees] = useState(0);
 
+// ========================================
+// SELECTED ROWS
+// ========================================
 
-  //Selected Rows using Checkbox
-  const [selectedRows, setSelectedRows] = useState([]);
+const [selectedRows, setSelectedRows] = useState([]);
 
-  // Modal states
-  const [selectedAttendee, setSelectedAttendee] = useState(null);
+// ========================================
+// ATTENDEE DETAIL MODAL
+// ========================================
 
-//Modal for editing companion details from primary attendee modal
- // Stores the primary attendee when opening a companion
+const [selectedAttendee, setSelectedAttendee] = useState(null);
+
+// ========================================
+// PRIMARY / COMPANION MODAL
+// ========================================
+
 const [parentAttendee, setParentAttendee] = useState(null);
-
-// Determines if the current attendee modal was opened from another attendee modal
 const [openedFromPrimary, setOpenedFromPrimary] = useState(false);
 
-  const [showAssignForm, setShowAssignForm] = useState(false);
-  const [tableNumber, setTableNumber] = useState("");
+// ========================================
+// TABLE ASSIGNMENT
+// ========================================
 
-  //table sorting
-  const [sortField, setSortField] = useState("");
-  const [sortOrder, setSortOrder] = useState("asc");
-  const handleSort = (field) => {
-    if (sortField === field) {
-      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortField(field);
-      setSortOrder("asc");
-    }
-  };
+const [showAssignForm, setShowAssignForm] = useState(false);
+const [tableNumber, setTableNumber] = useState("");
 
+const [showAssignModal, setShowAssignModal] = useState(false);
 
-  const [activeTab, setActiveTab] = useState("details");
-  //assign table modal
-  const [showAssignModal, setShowAssignModal] = useState(false);
+const [showCompanionAssignModal, setShowCompanionAssignModal] =
+  useState(false);
 
-  //check in
-  const [checkingIn, setCheckingIn] = useState(false);
+const [selectedCompanion, setSelectedCompanion] = useState(null);
 
-  const [checkInSuccess, setCheckInSuccess] = useState(false);
+// ========================================
+// SORTING
+// ========================================
+
+const [sortField, setSortField] = useState("");
+const [sortOrder, setSortOrder] = useState("asc");
+
+const handleSort = (field) => {
+  if (sortField === field) {
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  } else {
+    setSortField(field);
+    setSortOrder("asc");
+  }
+};
+
+// ========================================
+// TABS
+// ========================================
+
+const [activeTab, setActiveTab] = useState("details");
+
+// ========================================
+// CHECK IN
+// ========================================
+
+const [checkingIn, setCheckingIn] = useState(false);
+const [checkInSuccess, setCheckInSuccess] = useState(false);
+
 // ========================================
 // EDIT ATTENDEE MODAL
 // ========================================
 
 const [showEditAttendeeModal, setShowEditAttendeeModal] = useState(false);
-
 const [editingAttendee, setEditingAttendee] = useState(null);
 
 // ========================================
@@ -143,39 +212,40 @@ const [editingAttendee, setEditingAttendee] = useState(null);
 // ========================================
 
 const handleEditAttendee = () => {
+  if (!selectedAttendee) return;
+
   setEditingAttendee({
     ...selectedAttendee,
   });
 
   setShowEditAttendeeModal(true);
 };
+
 // ========================================
 // UPDATE PRIMARY ATTENDEE
 // ========================================
 
 const handleUpdateAttendee = async () => {
-  console.log("Updating attendee...");
-
-  console.log(editingAttendee);
+  if (!editingAttendee?.id) {
+    alert("No attendee selected.");
+    return;
+  }
 
   try {
-    await updatePrimaryAttendee(
-      editingAttendee.id,
-      {
-        firstName: editingAttendee.firstName,
-        middleName: editingAttendee.middleName,
-        lastName: editingAttendee.lastName,
-        preferredNameOnBadge:
-          editingAttendee.preferredNameOnBadge,
-        emailAddress: editingAttendee.emailAddress,
-        contactNumber: editingAttendee.contactNumber,
-        company: editingAttendee.company,
-        position: editingAttendee.position,
-        mealPreference: editingAttendee.mealPreference,
-      }
-    );
+    await updatePrimaryAttendee(editingAttendee.id, {
+      firstName: editingAttendee.firstName,
+      middleName: editingAttendee.middleName,
+      lastName: editingAttendee.lastName,
+      preferredNameOnBadge: editingAttendee.preferredNameOnBadge,
+      emailAddress: editingAttendee.emailAddress,
+      contactNumber: editingAttendee.contactNumber,
+      company: editingAttendee.company,
+      position: editingAttendee.position,
+      mealPreference: editingAttendee.mealPreference,
+    });
 
-    alert("Attendee updated successfully!");
+    // Refresh attendee list
+    await fetchAttendees();
 
     // Refresh attendee details
     const updatedAttendee = await getAttendeeById(
@@ -187,22 +257,23 @@ const handleUpdateAttendee = async () => {
     setShowEditAttendeeModal(false);
     setEditingAttendee(null);
 
+    alert("Attendee updated successfully!");
   } catch (error) {
-    console.error(error);
+    console.error("Update attendee error:", error);
 
     alert(
       error.response?.data?.message ||
-      "Failed to update attendee."
+        "Failed to update attendee."
     );
   }
 };
 
+// ========================================
+// ADD COMPANION MODAL
+// ========================================
 
-// ===============================
-// Add Companion Modal
-// ===============================
-
-const [showAddCompanionModal, setShowAddCompanionModal] = useState(false);
+const [showAddCompanionModal, setShowAddCompanionModal] =
+  useState(false);
 
 const emptyCompanion = {
   firstName: "",
@@ -215,24 +286,39 @@ const emptyCompanion = {
 const [companions, setCompanions] = useState([
   { ...emptyCompanion },
 ]);
-const handleAddCompanion = () => {
-  const existingCompanions = selectedAttendee?.companions?.length || 0;
 
-  if (existingCompanions >= 5) {
-    alert("Maximum of 5 companions is allowed per primary attendee.");
+// ========================================
+// OPEN ADD COMPANION MODAL
+// ========================================
+
+const handleAddCompanion = () => {
+  if (!selectedAttendee) {
+    alert("Please select an attendee first.");
     return;
   }
 
-  // Always reset form
+  const existingCompanions =
+    selectedAttendee?.companions?.length || 0;
+
+  if (existingCompanions >= 5) {
+    alert(
+      "Maximum of 5 companions is allowed per primary attendee."
+    );
+    return;
+  }
+
   setCompanions([{ ...emptyCompanion }]);
- 
 
   console.log("EVENT OBJECT");
   console.log(selectedAttendee.event);
 
-
   setShowAddCompanionModal(true);
 };
+
+// ========================================
+// ADD COMPANION FIELD
+// ========================================
+
 const handleAddCompanionField = () => {
   const existingCompanions =
     selectedAttendee?.companions?.length || 0;
@@ -247,13 +333,25 @@ const handleAddCompanionField = () => {
     { ...emptyCompanion },
   ]);
 };
+
+// ========================================
+// REMOVE COMPANION FIELD
+// ========================================
+
 const handleRemoveCompanionField = (index) => {
   setCompanions((prev) => {
-    if (prev.length === 1) return prev;
+    if (prev.length === 1) {
+      return prev;
+    }
 
     return prev.filter((_, i) => i !== index);
   });
 };
+
+// ========================================
+// UPDATE COMPANION FIELD
+// ========================================
+
 const updateCompanion = (index, field, value) => {
   setCompanions((prev) =>
     prev.map((companion, i) =>
@@ -266,8 +364,17 @@ const updateCompanion = (index, field, value) => {
     )
   );
 };
-// add companion under primary attendee
+
+// ========================================
+// SAVE COMPANION
+// ========================================
+
 const handleSaveCompanion = async () => {
+  if (!selectedAttendee?.id) {
+    alert("No primary attendee selected.");
+    return;
+  }
+
   try {
     const primaryId = selectedAttendee.id;
 
@@ -275,7 +382,8 @@ const handleSaveCompanion = async () => {
       firstName: companion.firstName,
       lastName: companion.lastName,
       position: companion.position,
-      preferredNameOnBadge: companion.preferredNameOnBadge,
+      preferredNameOnBadge:
+        companion.preferredNameOnBadge,
       mealPreference: companion.mealPreference,
     }));
 
@@ -283,7 +391,8 @@ const handleSaveCompanion = async () => {
       await createCompanion(primaryId, companion);
     }
 
-    alert("Companion(s) added successfully!");
+    // Refresh attendee list
+    await fetchAttendees();
 
     // Refresh attendee details
     const updatedAttendee = await getAttendeeById(primaryId);
@@ -292,18 +401,15 @@ const handleSaveCompanion = async () => {
 
     setShowAddCompanionModal(false);
 
-    // Reset form
     setCompanions([
       {
-        firstName: "",
-        lastName: "",
-        position: "",
-        preferredNameOnBadge: "",
-        mealPreference: "",
+        ...emptyCompanion,
       },
     ]);
+
+    alert("Companion(s) added successfully!");
   } catch (error) {
-    console.error(error);
+    console.error("Create companion error:", error);
 
     alert(
       error.response?.data?.message ||
@@ -312,83 +418,110 @@ const handleSaveCompanion = async () => {
   }
 };
 
-// edit companion details
+// ========================================
+// EDIT COMPANION MODAL
+// ========================================
+
+const [showEditCompanionModal, setShowEditCompanionModal] =
+  useState(false);
+
+const [editingCompanion, setEditingCompanion] = useState(null);
+
+// ========================================
+// UPDATE COMPANION
+// ========================================
 
 const handleUpdateCompanion = async () => {
-  
+  if (!selectedAttendee?.id || !editingCompanion?.id) {
+    alert("No companion selected.");
+    return;
+  }
 
   const payload = {
     firstName: editingCompanion.firstName,
     lastName: editingCompanion.lastName,
-    preferredNameOnBadge: editingCompanion.preferredNameOnBadge,
+    preferredNameOnBadge:
+      editingCompanion.preferredNameOnBadge,
     position: editingCompanion.position,
     mealPreference: editingCompanion.mealPreference,
   };
 
-
-
   try {
-    const result = await updateCompanions(
+    await updateCompanions(
       selectedAttendee.id,
       editingCompanion.id,
       payload
     );
 
+    // Refresh attendee list
+    await fetchAttendees();
 
-    const updatedAttendee = await getAttendeeById(selectedAttendee.id);
-
+    // Refresh attendee details
+    const updatedAttendee = await getAttendeeById(
+      selectedAttendee.id
+    );
 
     setSelectedAttendee(updatedAttendee.data);
 
-     alert("Companion details updated successfully.");
+    alert("Companion details updated successfully.");
 
     setShowEditCompanionModal(false);
     setEditingCompanion(null);
-
   } catch (error) {
-    console.error("5. Error:", error);
+    console.error("Update companion error:", error);
+
+    alert(
+      error.response?.data?.message ||
+        "Failed to update companion."
+    );
   }
 };
-// ========================================
-// EDIT COMPANION MODAL
-// ========================================
-
-const [showEditCompanionModal, setShowEditCompanionModal] = useState(false);
-
-const [editingCompanion, setEditingCompanion] = useState(null);
-
-
 
 // ========================================
-// BULK CHECK IN MODAL
+// BULK CHECK-IN MODAL
 // ========================================
 
-const [showBulkCheckInModal, setShowBulkCheckInModal] = useState(false);
+const [showBulkCheckInModal, setShowBulkCheckInModal] =
+  useState(false);
 
 const [selectedCompanions, setSelectedCompanions] = useState([]);
 
+// ========================================
+// OPEN BULK CHECK-IN
+// ========================================
+
 const handleOpenBulkCheckIn = () => {
+  if (!selectedAttendee) {
+    alert("Please select an attendee first.");
+    return;
+  }
+
   setSelectedCompanions([]);
   setShowBulkCheckInModal(true);
 };
+
 // ========================================
-// BULK CHECK IN MAIN FUNCTION
+// BULK CHECK-IN
 // ========================================
 
 const handleBulkCheckIn = async () => {
-  try {
-    if (selectedCompanions.length === 0) {
-      alert("Please select at least one companion.");
-      return;
-    }
+  if (!selectedAttendee?.id) {
+    alert("No attendee selected.");
+    return;
+  }
 
-    // Include the primary attendee
+  if (selectedCompanions.length === 0) {
+    alert("Please select at least one companion.");
+    return;
+  }
+
+  try {
     const attendeeIds = [
-        ...(selectedAttendee.status !== "CHECKED_IN"
-          ? [selectedAttendee.id]
-          : []),
-        ...selectedCompanions,
-      ];
+      ...(selectedAttendee.status !== "CHECKED_IN"
+        ? [selectedAttendee.id]
+        : []),
+      ...selectedCompanions,
+    ];
 
     console.log("Attendees to Check In:");
     console.log(attendeeIds);
@@ -398,38 +531,39 @@ const handleBulkCheckIn = async () => {
     console.log("Bulk Check In Response:");
     console.log(response);
 
-    alert(response.message);
+    // Refresh list + dashboard
+    await Promise.all([
+      fetchAttendees(),
+      fetchDashboardSummary(),
+    ]);
 
-    // Refresh attendee details
+    // Refresh selected attendee
     const updatedAttendee = await getAttendeeById(
       selectedAttendee.id
     );
 
     setSelectedAttendee(updatedAttendee.data);
 
-    // Close modal
     setShowBulkCheckInModal(false);
-
-    // Clear selections
     setSelectedCompanions([]);
 
+    alert(
+      response?.message ||
+        "Attendees checked in successfully."
+    );
   } catch (error) {
     console.error("Bulk Check In Error:", error);
 
     alert(
       error.response?.data?.message ||
-      "Bulk check in failed."
+        "Bulk check in failed."
     );
   }
 };
 
 // ========================================
-//     ASSIGN TABLE FOR COMPANION OR INDIVIDUAL ATTENDEE
+// ASSIGN TABLE TO COMPANION
 // ========================================
-
-const [showCompanionAssignModal, setShowCompanionAssignModal] = useState(false);
-
-const [selectedCompanion, setSelectedCompanion] = useState(null);
 
 const handleAssignIndividualTable = async () => {
   if (!selectedCompanion) {
@@ -450,156 +584,211 @@ const handleAssignIndividualTable = async () => {
       Number(tableNumber)
     );
 
-    // Refresh the attendees list/dashboard in the background
+    // Refresh attendees + dashboard
     await Promise.all([
       fetchAttendees(),
       fetchDashboardSummary(),
     ]);
 
-    // Immediately update the primary attendee modal
-    setSelectedAttendee((prev) => ({
-      ...prev,
-      companions: prev.companions.map((companion) =>
-        companion.id === selectedCompanion.id
-          ? {
-              ...companion,
-              tableNumber: Number(tableNumber),
-            }
-          : companion
-      ),
-    }));
+    // Update selected attendee modal
+    setSelectedAttendee((prev) => {
+      if (!prev) return prev;
 
-    // Update the selected companion state as well
-    setSelectedCompanion((prev) => ({
-      ...prev,
-      tableNumber: Number(tableNumber),
-    }));
+      return {
+        ...prev,
+        companions:
+          prev.companions?.map((companion) =>
+            companion.id === selectedCompanion.id
+              ? {
+                  ...companion,
+                  tableNumber: Number(tableNumber),
+                }
+              : companion
+          ) || [],
+      };
+    });
+
+    // Update selected companion
+    setSelectedCompanion((prev) => {
+      if (!prev) return prev;
+
+      return {
+        ...prev,
+        tableNumber: Number(tableNumber),
+      };
+    });
 
     setShowCompanionAssignModal(false);
     setSelectedCompanion(null);
     setTableNumber("");
 
-    alert(response.message);
-
+    alert(
+      response?.message ||
+        "Table assigned successfully."
+    );
   } catch (error) {
-    console.error(error);
+    console.error("Assign table error:", error);
 
     alert(
       error.response?.data?.message ||
-      "Failed to assign table."
+        "Failed to assign table."
     );
   } finally {
     setLoading(false);
   }
 };
 
- 
+// ========================================
+// FETCH EVENT DETAILS
+// ========================================
 
-  const fetchEventDetails = async () => {
-    try {
-      const response = await getEventById(eventId);
+const fetchEventDetails = async () => {
+  if (!eventId) return;
 
-      const event = response.data;
+  try {
+    const response = await getEventById(eventId);
 
-      setEventDetails(event);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    const event = response?.data;
 
-  const fetchAttendees = async () => {
-    if (!eventId) {
-      console.log("No eventId found");
-      return;
-    }
+    setEventDetails(event || null);
+  } catch (error) {
+    console.error("Fetch event details error:", error);
+  }
+};
 
-    try {
-      setLoading(true);
+// ========================================
+// FETCH ATTENDEES
+// ========================================
 
-      const response = await getAttendees({
-        eventId,
-        page,
-        limit,
-        search,
-        status,
-        role,
-      });
+const fetchAttendees = async () => {
+  if (!eventId) {
+    console.log("No eventId found");
+    return;
+  }
 
-      console.log("API Response:", response);
-      console.log(response.data[0]);
-      console.log("checkInAt:", response.data[0]?.checkInAt);
-      console.log(response.data[0]);
-
-      console.log("Pagination:", response.pagination);
-      console.log("Total Records:", response.pagination?.totalRecords);
-      setAttendees(response.data || []);
-      setTotalPages(response.pagination?.totalPages || 1);
-      setTotalAttendees(response.pagination?.totalRecords || 0);
-    } catch (error) {
-      console.error("Fetch attendees error:", error);
-      alert("Failed to load attendees");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  
-  useEffect(() => {
-    fetchEventDetails();
-    fetchAttendees();
-    fetchDashboardSummary();
-  }, [eventId, page, search, status, role]);
-
-
-  const handleViewAttendee = async (attendeeId) => {
-    try {
-      setLoading(true);
-
-      const response = await getAttendeeById(attendeeId);
-
-      console.log("FULL RESPONSE");
-    console.log(response);
-
-    console.log("ATTENDEE");
-    console.log(response.data);
-
-    console.log("COMPANIONS");
-    console.log(response.data.companions);
-
-      setSelectedAttendee(response.data);
-      setActiveTab("details");
-    } catch (error) {
-      console.error("Failed to fetch attendee details:", error);
-      alert("Unable to load attendee details.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-//for viewing companion details from primary attendee modal
-const handleViewCompanion = async (attendeeId) => {
   try {
     setLoading(true);
 
-    // Save the currently opened primary attendee
-    setParentAttendee(selectedAttendee);
+    const response = await getAttendees({
+      eventId,
+      page,
+      limit,
+      search,
+      status,
+      role,
+    });
 
-    // Mark this as a nested modal
-    setOpenedFromPrimary(true);
+    console.log("API Response:", response);
+    console.log("Attendees:", response?.data);
+    console.log("Pagination:", response?.pagination);
 
-    const response = await getAttendeeById(attendeeId);
+    setAttendees(response?.data || []);
 
-    setSelectedAttendee(response.data);
-    setActiveTab("details");
+    setTotalPages(
+      response?.pagination?.totalPages || 1
+    );
 
+    setTotalAttendees(
+      response?.pagination?.totalRecords || 0
+    );
   } catch (error) {
-    console.error(error);
-    alert("Unable to load companion details.");
+    console.error("Fetch attendees error:", error);
+
+    alert(
+      error.response?.data?.message ||
+        "Failed to load attendees."
+    );
   } finally {
     setLoading(false);
   }
 };
+
+// ========================================
+// INITIAL / FILTER DATA FETCH
+// ========================================
+
+useEffect(() => {
+  fetchEventDetails();
+  fetchAttendees();
+  fetchDashboardSummary();
+}, [eventId, page, search, status, role]);
+
+// ========================================
+// VIEW ATTENDEE
+// ========================================
+
+const handleViewAttendee = async (attendeeId) => {
+  if (!attendeeId) return;
+
+  try {
+    setLoading(true);
+
+    const response = await getAttendeeById(attendeeId);
+
+    console.log("FULL RESPONSE");
+    console.log(response);
+
+    console.log("ATTENDEE");
+    console.log(response?.data);
+
+    console.log("COMPANIONS");
+    console.log(response?.data?.companions);
+
+    setSelectedAttendee(response?.data || null);
+    setActiveTab("details");
+  } catch (error) {
+    console.error(
+      "Failed to fetch attendee details:",
+      error
+    );
+
+    alert(
+      error.response?.data?.message ||
+        "Unable to load attendee details."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+// ========================================
+// VIEW COMPANION
+// ========================================
+
+const handleViewCompanion = async (attendeeId) => {
+  if (!attendeeId) return;
+
+  try {
+    setLoading(true);
+
+    // Save primary attendee
+    setParentAttendee(selectedAttendee);
+
+    // Mark nested modal
+    setOpenedFromPrimary(true);
+
+    const response = await getAttendeeById(attendeeId);
+
+    setSelectedAttendee(response?.data || null);
+    setActiveTab("details");
+  } catch (error) {
+    console.error(
+      "Failed to fetch companion details:",
+      error
+    );
+
+    alert(
+      error.response?.data?.message ||
+        "Unable to load companion details."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+// ========================================
+// CLOSE ATTENDEE MODAL
+// ========================================
 
 const handleCloseAttendeeModal = () => {
   setShowAssignForm(false);
@@ -607,101 +796,332 @@ const handleCloseAttendeeModal = () => {
   setActiveTab("details");
 
   if (openedFromPrimary && parentAttendee) {
-    // Return to the primary attendee
+    // Return to primary attendee
     setSelectedAttendee(parentAttendee);
 
     setParentAttendee(null);
     setOpenedFromPrimary(false);
   } else {
-    // Close normally
+    // Close modal
     setSelectedAttendee(null);
   }
 };
 
- 
-  const handleExport = () => {
-    
-    const csvRows = [
-      [
-        "First Name",
-        "Last Name",
-        "Preferred Name",
-        "Email",
-        "Company",
-        "Position",
-        "Status",
-        "Checked In",
-        "Table Number",
-        "Preferred Meal",
-      ],
-      ...attendees.map((attendee) => [
-        attendee.firstName || "",
-        attendee.lastName || "",
-        attendee.preferredNameOnBadge || "",
-        attendee.emailAddress || "",
-        attendee.company || "",
-        attendee.position || "",
-        attendee.status || "",
-        attendee.checkInAt || "",
-        attendee.tableNumber || "",
-        attendee.mealPreference || "",
-      ]),
-    ];
+// ========================================
+// ATTENDEE STATUS ACTIONS
+// ========================================
 
-    const csvContent = csvRows.map((row) => row.join(",")).join("\n");
+const [statusMessage, setStatusMessage] = useState("");
+const [confirmAction, setConfirmAction] = useState(null);
 
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
+// ========================================
+// CONFIRM ATTENDEE
+// ========================================
 
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `attendees-${eventId}.csv`;
-    link.click();
+const handleConfirmAttendee = async (id) => {
+  if (!id) {
+    alert("Invalid attendee.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Are you sure you want to confirm the attendance of this attendee?"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    // Update backend
+    await confirmAttendee(id);
+
+    // Refresh attendee list
+    await fetchAttendees();
+
+    // Refresh dashboard
+    await fetchDashboardSummary();
+
+    // Refresh currently opened attendee
+    const updatedAttendee = await getAttendeeById(id);
+
+    if (updatedAttendee?.data) {
+      setSelectedAttendee(updatedAttendee.data);
+    }
+
+    alert("Attendee confirmed successfully.");
+  } catch (error) {
+    console.error("Confirm failed:", error);
+
+    alert(
+      error.response?.data?.message ||
+        "Failed to confirm attendee."
+    );
+  }
+};
+
+// ========================================
+// DECLINE ATTENDEE
+// ========================================
+
+const handleDeclineAttendee = async (id) => {
+  if (!id) {
+    alert("Invalid attendee.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Are you sure you want to decline the registration of this attendee?"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    // Update backend
+    await declineAttendee(id);
+
+    // Refresh attendee list
+    await fetchAttendees();
+
+    // Refresh dashboard
+    await fetchDashboardSummary();
+
+    /*
+     * Declined attendees may be soft-deleted by the backend.
+     * Close the modal instead of trying to load the attendee again.
+     */
+    setSelectedAttendee(null);
+
+    alert("Attendee declined successfully.");
+  } catch (error) {
+    console.error("Decline failed:", error);
+
+    alert(
+      error.response?.data?.message ||
+        "Failed to decline attendee."
+    );
+  }
+};
+
+// ========================================
+// CANCEL ATTENDEE
+// ========================================
+
+const handleCancelAttendee = async (id) => {
+  if (!id) {
+    alert("Invalid attendee.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Are you sure you want to cancel the attendance of this attendee?"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    // Update backend
+    await cancelAttendee(id);
+
+    // Refresh attendee list
+    await fetchAttendees();
+
+    // Refresh dashboard
+    await fetchDashboardSummary();
+
+    // Refresh currently opened attendee
+    const updatedAttendee = await getAttendeeById(id);
+
+    if (updatedAttendee?.data) {
+      setSelectedAttendee(updatedAttendee.data);
+    }
+
+    alert("Attendee cancelled successfully.");
+  } catch (error) {
+    console.error("Cancel failed:", error);
+
+    alert(
+      error.response?.data?.message ||
+        "Failed to cancel attendee."
+    );
+  }
+};
+
+// ========================================
+// EXPORT ATTENDEES
+// ========================================
+
+const handleExport = () => {
+  const csvRows = [
+    [
+      "First Name",
+      "Last Name",
+      "Preferred Name",
+      "Email",
+      "Company",
+      "Position",
+      "Status",
+      "Checked In",
+      "Table Number",
+      "Preferred Meal",
+    ],
+    ...attendees.map((attendee) => [
+      attendee.firstName || "",
+      attendee.lastName || "",
+      attendee.preferredNameOnBadge || "",
+      attendee.emailAddress || "",
+      attendee.company || "",
+      attendee.position || "",
+      attendee.status || "",
+      attendee.checkInAt || "",
+      attendee.tableNumber || "",
+      attendee.mealPreference || "",
+    ]),
+  ];
+
+  const csvContent = csvRows
+    .map((row) =>
+      row
+        .map((value) =>
+          `"${String(value).replace(/"/g, '""')}"`
+        )
+        .join(",")
+    )
+    .join("\n");
+
+  const blob = new Blob([csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `attendees-${eventId}.csv`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+};
+
+// ========================================
+// BULK CONFIRM ATTENDEES
+// ========================================
+
+const [selectedAttendees, setSelectedAttendees] = useState([]);
+
+const handleBulkConfirm = async () => {
+  if (selectedRows.length === 0) {
+    alert("Please select at least one attendee.");
+    return;
+  }
+
+  const selectedAttendees = displayedAttendees.filter((attendee) =>
+    selectedRows.includes(attendee.id)
+  );
+
+  const invalidAttendee = selectedAttendees.find(
+    (attendee) => attendee.status !== "PENDING"
+  );
+
+  if (invalidAttendee) {
+    const attendeeName = `${invalidAttendee.firstName} ${invalidAttendee.lastName}`;
+
+    alert(
+      `${attendeeName} is already ${invalidAttendee.status
+        ?.replace("_", " ")
+        .toLowerCase()}.`
+    );
+
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Are you sure you want to confirm ${selectedRows.length} selected attendee(s)?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await bulkConfirmAttendees(selectedRows);
+
+    await Promise.all([
+      fetchAttendees(),
+      fetchDashboardSummary(),
+    ]);
+
+    setSelectedRows([]);
+
+    alert("Selected attendees confirmed successfully.");
+  } catch (error) {
+    console.error("Bulk confirm failed:", error);
+
+    alert(
+      error.response?.data?.message ||
+        "Failed to confirm selected attendees."
+    );
+  }
+};
+
+// ========================================
+// BULK UPLOAD
+// ========================================
+
+const handleBulkUpload = (e) => {
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = (event) => {
+    const text = event.target.result;
+
+    const rows = text
+      .split("\n")
+      .map((row) => row.split(","));
+
+    const dataRows = rows.slice(1);
+
+    const newAttendees = dataRows
+      .filter((row) => row.length >= 6)
+      .map((row, index) => ({
+        id: `${eventId}-${Date.now()}-${index}`,
+        eventId,
+        firstName: row[0]?.trim(),
+        lastName: row[1]?.trim(),
+        preferredNameOnBadge: row[2]?.trim(),
+        emailAddress: row[3]?.trim(),
+        company: row[4]?.trim(),
+        position: row[5]?.trim(),
+        status: "PENDING",
+        mealPreference: row[6]?.trim() || "",
+      }));
+
+    setAttendees((prev) => [
+      ...prev,
+      ...newAttendees,
+    ]);
+
+    alert(
+      `${newAttendees.length} attendees uploaded successfully.`
+    );
   };
 
-  const handleBulkUpload = (e) => {
-    const file = e.target.files[0];
+  reader.readAsText(file);
 
-    if (!file) return;
+  // Allow the same file to be selected again
+  e.target.value = "";
+};
 
-    const reader = new FileReader();
+// ========================================
+// BULK ASSIGN TABLE
+// PRIMARY + COMPANIONS
+// ========================================
 
-    reader.onload = (event) => {
-      const text = event.target.result;
-      const rows = text.split("\n").map((row) => row.split(","));
-
-      const dataRows = rows.slice(1);
-
-      const newAttendees = dataRows
-        .filter((row) => row.length >= 6)
-        .map((row, index) => ({
-          id: `${eventId}-${Date.now()}-${index}`,
-          eventId,
-          firstName: row[0]?.trim(),
-          lastName: row[1]?.trim(),
-          preferredNameOnBadge: row[2]?.trim(),
-          emailAddress: row[3]?.trim(),
-          company: row[4]?.trim(),
-          position: row[5]?.trim(),
-          status: "PENDING",
-          mealPreference: row[6]?.trim() || "",
-        }));
-
-      setAttendees((prev) => [...prev, ...newAttendees]);
-
-      alert(`${newAttendees.length} attendees uploaded successfully.`);
-    };
-
-    reader.readAsText(file);
-  };
- // Save table assignment to the backend (Primary + Companions)
 const handleBulkAssignTable = async () => {
-  console.log("Bulk Assign Table clicked");
-  console.log("Primary Attendee ID:", selectedAttendee.id);
-  console.log("Table Number:", tableNumber);
-
-  if (!selectedAttendee) {
+  if (!selectedAttendee?.id) {
     alert("Please select an attendee.");
     return;
   }
@@ -724,24 +1144,23 @@ const handleBulkAssignTable = async () => {
       Number(tableNumber)
     );
 
-    console.log("Bulk Assign Table Response:", response);
+    console.log(
+      "Bulk Assign Table Response:",
+      response
+    );
 
-    // Refresh attendee list and dashboard
+    // Refresh attendee list + dashboard
     await Promise.all([
       fetchAttendees(),
       fetchDashboardSummary(),
     ]);
 
-    // Update the currently opened attendee immediately
-    setSelectedAttendee((prev) => ({
-      ...prev,
-      tableNumber: Number(tableNumber),
-      companions:
-        prev?.companions?.map((companion) => ({
-          ...companion,
-          tableNumber: Number(tableNumber),
-        })) || [],
-    }));
+    // Refresh selected attendee from backend
+    const updatedAttendee = await getAttendeeById(
+      selectedAttendee.id
+    );
+
+    setSelectedAttendee(updatedAttendee.data);
 
     // Close modal
     setShowAssignModal(false);
@@ -749,7 +1168,10 @@ const handleBulkAssignTable = async () => {
     // Reset input
     setTableNumber("");
 
-    alert(response?.message || "Table assigned successfully.");
+    alert(
+      response?.message ||
+        "Table assigned successfully."
+    );
   } catch (error) {
     console.error(
       "Bulk Assign Table Error:",
@@ -764,89 +1186,162 @@ const handleBulkAssignTable = async () => {
     setLoading(false);
   }
 };
-  //Checking In
 
- const handleCheckIn = async () => {
+// ========================================
+// CHECK IN
+// ========================================
+
+const handleCheckIn = async () => {
+  if (!selectedAttendee?.id) {
+    alert("Please select an attendee.");
+    return;
+  }
+
   try {
-    const response = await checkInAttendee(selectedAttendee.id);
+    setCheckingIn(true);
 
-    if (response.success) {
-      // Refresh dashboard + attendees at the same time
+    const response = await checkInAttendee(
+      selectedAttendee.id
+    );
+
+    if (response?.success) {
+      // Refresh attendees + dashboard
       await Promise.all([
         fetchAttendees(),
         fetchDashboardSummary(),
       ]);
 
-      // Refresh selected attendee details
-      const updatedAttendee = await getAttendeeById(selectedAttendee.id);
+      // Refresh selected attendee
+      const updatedAttendee = await getAttendeeById(
+        selectedAttendee.id
+      );
 
-      console.log("Updated Attendee:", updatedAttendee);
+      console.log(
+        "Updated Attendee:",
+        updatedAttendee
+      );
 
       setSelectedAttendee(updatedAttendee.data);
 
       setCheckInSuccess(true);
 
-      alert("Attendee checked in successfully!");
+      alert(
+        "Attendee checked in successfully!"
+      );
+    } else {
+      alert(
+        response?.message ||
+          "Failed to check in attendee."
+      );
     }
   } catch (error) {
-    console.error(error);
+    console.error("Check-in error:", error);
+
+    alert(
+      error.response?.data?.message ||
+        "Failed to check in attendee."
+    );
+  } finally {
+    setCheckingIn(false);
   }
 };
 
+// ========================================
+// DISPLAYED ATTENDEES
+// ========================================
+
 const displayedAttendees = [...attendees]
   .filter((attendee) => {
-    // Role filter
-    if (role && attendee.role?.toUpperCase() !== role) {
+    // -----------------------------
+    // ROLE FILTER
+    // -----------------------------
+
+    if (
+      role &&
+      attendee.role?.toUpperCase() !==
+        role.toUpperCase()
+    ) {
       return false;
     }
 
-    // Search filter
+    // -----------------------------
+    // SEARCH FILTER
+    // -----------------------------
+
     if (search) {
-      const keyword = search.toLowerCase();
+      const keyword = search
+        .toLowerCase()
+        .trim();
 
       const matchesSearch =
-        attendee.firstName?.toLowerCase().includes(keyword) ||
-        attendee.lastName?.toLowerCase().includes(keyword) ||
-        attendee.emailAddress?.toLowerCase().includes(keyword) ||
-        attendee.company?.toLowerCase().includes(keyword);
+        attendee.firstName
+          ?.toLowerCase()
+          .includes(keyword) ||
+        attendee.lastName
+          ?.toLowerCase()
+          .includes(keyword) ||
+        attendee.emailAddress
+          ?.toLowerCase()
+          .includes(keyword) ||
+        attendee.company
+          ?.toLowerCase()
+          .includes(keyword);
 
-      if (!matchesSearch) return false;
+      if (!matchesSearch) {
+        return false;
+      }
     }
 
-    // Status filter
-    if (status && attendee.status !== status) {
+    // -----------------------------
+    // STATUS FILTER
+    // -----------------------------
+
+    if (
+      status &&
+      attendee.status?.toUpperCase() !==
+        status.toUpperCase()
+    ) {
       return false;
     }
 
     return true;
   })
   .sort((a, b) => {
-  if (!sortField) return 0;
+    if (!sortField) {
+      return 0;
+    }
 
-  let valueA = a[sortField];
-  let valueB = b[sortField];
+    let valueA = a[sortField];
+    let valueB = b[sortField];
 
-  // Handle null/undefined
-  valueA = valueA ?? "";
-  valueB = valueB ?? "";
+    // Handle null / undefined
+    valueA = valueA ?? "";
+    valueB = valueB ?? "";
 
-  // If both are numbers, compare numerically
-  if (typeof valueA === "number" && typeof valueB === "number") {
-    return sortOrder === "asc"
-      ? valueA - valueB
-      : valueB - valueA;
-  }
+    // Numeric sorting
+    if (
+      typeof valueA === "number" &&
+      typeof valueB === "number"
+    ) {
+      return sortOrder === "asc"
+        ? valueA - valueB
+        : valueB - valueA;
+    }
 
-  // Otherwise compare as strings
-  valueA = String(valueA).toLowerCase();
-  valueB = String(valueB).toLowerCase();
+    // String sorting
+    valueA = String(valueA).toLowerCase();
+    valueB = String(valueB).toLowerCase();
 
-  if (valueA < valueB) return sortOrder === "asc" ? -1 : 1;
-  if (valueA > valueB) return sortOrder === "asc" ? 1 : -1;
+    if (valueA < valueB) {
+      return sortOrder === "asc" ? -1 : 1;
+    }
 
-  return 0;
-})
+    if (valueA > valueB) {
+      return sortOrder === "asc" ? 1 : -1;
+    }
 
+    return 0;
+  });
   return (
     <div className="event-attendees-page">
       <div className="event-header">
@@ -965,12 +1460,12 @@ const displayedAttendees = [...attendees]
             }}
           >
             <option value="">All Status</option>
-            <option value="CONFIRMED">Confirmed</option>
             <option value="PENDING">Pending</option>
+            <option value="CONFIRMED">Confirmed</option>
             <option value="CHECKED_IN">Checked In</option>
-            <option value="CANCELLED">Cancelled</option>
             <option value="DECLINED">Declined</option>
-            <option value="NO_SHOW">No Show</option>
+            <option value="CANCELLED">Cancelled</option>
+          
           </select>
           
         </div>
@@ -998,188 +1493,251 @@ const displayedAttendees = [...attendees]
              <Folder size={17} />
             Reports
           </button>
-          
+
+          <div
+              title={
+                selectedRows.length === 0
+                  ? "Please select attendee first"
+                  : ""
+              }
+            >
+              <button
+                type="button"
+                onClick={handleBulkConfirm}
+                disabled={selectedRows.length === 0}
+                className={`green-btn ${
+                  selectedRows.length === 0
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+              >
+                <UsersIcon size={17} />
+                Bulk Confirm ({selectedRows.length})
+              </button>
+          </div>
         </div>
       </div>
       {/* Table */}
 <div className="modern-table-wrapper">
   <div className="table-scroll" ref={printRef}>
     <table className="modern-table">
-      <thead>
-        <tr>
-          <th className="w-12 px-4 py-3 text-center">
-            {!loading && displayedAttendees.length > 0 && (
-              <input
-                type="checkbox"
-                checked={
-                  displayedAttendees.length > 0 &&
-                  selectedRows.length === displayedAttendees.length
+  <thead>
+    <tr>
+      {/* Select All Checkbox */}
+      <th className="w-12 px-4 py-3 text-center">
+        {!loading &&
+          displayedAttendees.filter(
+            (attendee) => attendee.status === "PENDING"
+          ).length > 0 && (
+            <input
+              type="checkbox"
+              checked={
+                displayedAttendees.filter(
+                  (attendee) => attendee.status === "PENDING"
+                ).length > 0 &&
+                displayedAttendees
+                  .filter(
+                    (attendee) => attendee.status === "PENDING"
+                  )
+                  .every((attendee) =>
+                    selectedRows.includes(attendee.id)
+                  )
+              }
+              onChange={(e) => {
+                const pendingAttendees = displayedAttendees.filter(
+                  (attendee) => attendee.status === "PENDING"
+                );
+
+                if (e.target.checked) {
+                  setSelectedRows(
+                    pendingAttendees.map(
+                      (attendee) => attendee.id
+                    )
+                  );
+                } else {
+                  setSelectedRows([]);
                 }
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setSelectedRows(displayedAttendees.map((a) => a.id));
-                  } else {
-                    setSelectedRows([]);
-                  }
-                }}
-                className="h-4 w-4 cursor-pointer accent-red-600"
-              />
-            )}
-          </th>
+              }}
+              className="h-4 w-4 cursor-pointer accent-red-600"
+            />
+          )}
+      </th>
 
-          <th onClick={() => handleSort("firstName")}>
-            <div className="th-content">
-              Name
-              <ArrowUpDown size={13} />
-            </div>
-          </th>
+      {/* Name */}
+      <th onClick={() => handleSort("firstName")}>
+        <div className="th-content">
+          Name
+          <ArrowUpDown size={13} />
+        </div>
+      </th>
 
-          <th onClick={() => handleSort("emailAddress")}>
-            <div className="th-content">
-              Email
-              <ArrowUpDown size={13} />
-            </div>
-          </th>
+      {/* Email */}
+      <th onClick={() => handleSort("emailAddress")}>
+        <div className="th-content">
+          Email
+          <ArrowUpDown size={13} />
+        </div>
+      </th>
 
-          <th onClick={() => handleSort("company")}>
-            <div className="th-content">
-              Company
-              <ArrowUpDown size={13} />
-            </div>
-          </th>
+      {/* Company */}
+      <th onClick={() => handleSort("company")}>
+        <div className="th-content">
+          Company
+          <ArrowUpDown size={13} />
+        </div>
+      </th>
 
-          <th onClick={() => handleSort("position")}>
-            <div className="th-content">
-              Position
-              <ArrowUpDown size={13} />
-            </div>
-          </th>
+      {/* Position */}
+      <th onClick={() => handleSort("position")}>
+        <div className="th-content">
+          Position
+          <ArrowUpDown size={13} />
+        </div>
+      </th>
 
-          <th onClick={() => handleSort("status")}>
-            <div className="th-content">
-              Status
-              <ArrowUpDown size={13} />
-            </div>
-          </th>
+      {/* Status */}
+      <th onClick={() => handleSort("status")}>
+        <div className="th-content">
+          Status
+          <ArrowUpDown size={13} />
+        </div>
+      </th>
 
+      {/* Table Number */}
+      <th onClick={() => handleSort("tableNumber")}>
+        <div className="th-content">
+          Table No.
+          <ArrowUpDown size={13} />
+        </div>
+      </th>
 
-          <th onClick={() => handleSort("tableNumber")}>
-            <div className="th-content">
-              Table No.
-              <ArrowUpDown size={13} />
-            </div>
-          </th>
+      {/* Meal */}
+      <th onClick={() => handleSort("mealPreference")}>
+        <div className="th-content">
+          Meal
+          <ArrowUpDown size={13} />
+        </div>
+      </th>
 
-          <th onClick={() => handleSort("mealPreference")}>
-            <div className="th-content">
-              Meal
-              <ArrowUpDown size={13} />
-            </div>
-          </th>
+      {/* Role */}
+      <th onClick={() => handleSort("role")}>
+        <div className="th-content">
+          Role
+          <ArrowUpDown size={13} />
+        </div>
+      </th>
+    </tr>
+  </thead>
 
-          <th onClick={() => handleSort("role")}>
-            <div className="th-content">
-              Role
-              <ArrowUpDown size={13} />
-            </div>
-          </th>
-        </tr>
-      </thead>
+  <tbody>
+    {loading ? (
+      <tr>
+        <td colSpan={10} className="table-empty">
+          Loading attendees...
+        </td>
+      </tr>
+    ) : displayedAttendees.length === 0 ? (
+      <tr>
+        <td colSpan={10} className="table-empty">
+          No attendees found.
+        </td>
+      </tr>
+    ) : (
+      displayedAttendees.map((attendee) => (
+        <tr
+          key={attendee.id}
+          className="clickable-row"
+          onClick={() => handleViewAttendee(attendee.id)}
+        >
+          {/* Checkbox */}
+          <td className="text-center">
+            <input
+              type="checkbox"
+              className="h-4 w-4 cursor-pointer accent-red-600"
+              checked={selectedRows.includes(attendee.id)}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setSelectedRows((prev) => [
+                    ...prev,
+                    attendee.id,
+                  ]);
+                } else {
+                  setSelectedRows((prev) =>
+                    prev.filter((id) => id !== attendee.id)
+                  );
+                }
+              }}
+            />
+          </td>
 
-      <tbody>
-        {loading ? (
-          <tr>
-            <td colSpan={10} className="table-empty">
-              Loading attendees...
-            </td>
-          </tr>
-        ) : displayedAttendees.length === 0 ? (
-          <tr>
-            <td colSpan={10} className="table-empty">
-              No attendees found.
-            </td>
-          </tr>
-        ) : (
-          displayedAttendees.map((attendee) => (
-            <tr
-              key={attendee.id}
-              className="clickable-row"
-              onClick={() => handleViewAttendee(attendee.id)}
-            >
-              {/* Checkbox */}
-              <td className="text-center">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 accent-red-600"
-                  checked={selectedRows.includes(attendee.id)}
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedRows([...selectedRows, attendee.id]);
-                    } else {
-                      setSelectedRows(
-                        selectedRows.filter((id) => id !== attendee.id)
-                      );
-                    }
-                  }}
-                />
-              </td>
-
-              {/* Name */}
-              <td>
-                <div className="attendee-info">
-                  <div>
-                    <div className="attendee-name">
-                      {attendee.firstName} {attendee.lastName}
-                    </div>
-                  </div>
+          {/* Name */}
+          <td>
+            <div className="attendee-info">
+              <div>
+                <div className="attendee-name">
+                  {attendee.firstName}{" "}
+                  {attendee.lastName}
                 </div>
-              </td>
+              </div>
+            </div>
+          </td>
 
-              {/* Email */}
-              <td>{attendee.emailAddress || "-"}</td>
+          {/* Email */}
+          <td>
+            {attendee.emailAddress || "-"}
+          </td>
 
-              {/* Company */}
-              <td>{attendee.company || "-"}</td>
+          {/* Company */}
+          <td>
+            {attendee.company || "-"}
+          </td>
 
-              {/* Position */}
-              <td>{attendee.position || "-"}</td>
+          {/* Position */}
+          <td>
+            {attendee.position || "-"}
+          </td>
 
-              {/* Status */}
-              <td>
-                <span
-                  className={`status-badge ${
-                    attendee.status === "CONFIRMED"
-                      ? "confirmed"
-                      : attendee.status === "CHECKED_IN"
-                      ? "checkedin"
-                      : attendee.status === "PENDING"
-                      ? "pending"
-                      : attendee.status === "DECLINED"
-                      ? "declined"
-                      : attendee.status === "NO_SHOW"
-                      ? "noshow"
-                      : "cancelled"
-                  }`}
-                >
-                  {attendee.status?.replace("_", " ")}
-                </span>
-              </td>
+          {/* Status */}
+          <td>
+            <span
+              className={`status-badge ${
+                attendee.status === "CONFIRMED"
+                  ? "confirmed"
+                  : attendee.status === "CHECKED_IN"
+                  ? "checkedin"
+                  : attendee.status === "PENDING"
+                  ? "pending"
+                  : attendee.status === "DECLINED"
+                  ? "declined"
+                  : attendee.status === "NO_SHOW"
+                  ? "noshow"
+                  : "cancelled"
+              }`}
+            >
+              {attendee.status?.replace("_", " ")}
+            </span>
+          </td>
 
+          {/* Table */}
+          <td>
+            {attendee.tableNumber || "Not Assigned"}
+          </td>
 
-                  {/* Table */}
-                  <td>{attendee.tableNumber || "Not Assigned"}</td>
+          {/* Meal */}
+          <td>
+            {attendee.mealPreference || "Not Assigned"}
+          </td>
 
-                  {/* Meal */}
-                  <td>{attendee.mealPreference || "Not Assigned"}</td>
-
-                  {/* Role */}
-                  <td>{attendee.role || "Not Assigned"}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+          {/* Role */}
+          <td>
+            {attendee.role || "Not Assigned"}
+          </td>
+        </tr>
+      ))
+    )}
+  </tbody>
+</table>
       </div>
     </div>
  {/* Attendee Modal */}
@@ -1366,11 +1924,44 @@ const displayedAttendees = [...attendees]
 
                        
 
+
                         <button
                           className="edit-table-btn"
                           onClick={() => setShowAssignForm(true)}
                         ></button>
                       </span>
+
+                      {/* ATTENDEE ACTION BUTTONS BASED ON THE CURRENT STATUS */}
+                        {selectedAttendee.status === "PENDING" && (
+                          <>
+                            <label>Actions</label>
+
+                            <div className="attendee-actions">
+                              <button
+                                className="confirm-attendee-btn"
+                                onClick={() => handleConfirmAttendee(selectedAttendee.id)}
+                              >
+                                Confirm
+                              </button>
+
+                              <button
+                                className="decline-attendee-btn"
+                                onClick={() => handleDeclineAttendee(selectedAttendee.id)}
+                              >
+                                Decline
+                              </button>
+
+                              <button
+                                className="cancel-attendee-btn"
+                                onClick={() => handleCancelAttendee(selectedAttendee.id)}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </>
+                        )}
+
+
                     </div>
                   </div>
                 </div>

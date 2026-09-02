@@ -293,3 +293,74 @@ export const generateAttendeeReport = async (eventId) => {
         throw error;
     }
 };
+
+
+// Confirm attendee
+export const confirmAttendee = async (attendeeId) => {
+  try {
+    const response = await api.patch(
+      `/attendee/${attendeeId}/confirm`
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Confirm Attendee Error:",
+      error.response?.data || error.message
+    );
+
+    throw error;
+  }
+};
+
+// Decline attendee
+export const declineAttendee = async (attendeeId) => {
+  try {
+    const response = await api.patch(
+      `/attendee/${attendeeId}/decline`
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Decline Attendee Error:",
+      error.response?.data || error.message
+    );
+
+    throw error;
+  }
+};
+
+// Cancel attendee
+export const cancelAttendee = async (attendeeId) => {
+  try {
+    const response = await api.patch(
+      `/attendee/${attendeeId}/cancel`
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Cancel Attendee Error:",
+      error.response?.data || error.message
+    );
+
+    throw error;
+  }
+};
+//Bulk Confirm Attendees
+export const bulkConfirmAttendees = async (attendeeIds) => {
+  try {
+    const response = await api.patch("/attendee/bulk-confirm", {
+      attendeeIds,
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Bulk Confirm Attendees Error:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
