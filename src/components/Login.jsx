@@ -1,8 +1,7 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, CalendarDays } from "lucide-react";
-import { loginUser } from "../services/authService";
+import { loginUser, getCurrentUser } from "../services/authService";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -44,12 +43,9 @@ const Login = () => {
         password
       );
 
-      console.log("Login Response:", response);
-      console.log(
-        "Login Response JSON:",
-        JSON.stringify(response, null, 2)
-      );
-
+      // Commented out — this prints the full login response (id,
+      // email, name, and the access token itself) to the console on
+      // every login. 
       // ========================================
       // BACKEND RESPONSE
       //
@@ -65,6 +61,8 @@ const Login = () => {
       //     }
       //   }
       // }
+      //
+      
       // ========================================
 
       if (!response || !response.data) {
@@ -107,6 +105,35 @@ const Login = () => {
         localStorage.setItem(
           "name",
           user.name || ""
+        );
+      }
+
+      // ========================================
+      // FETCH + SAVE CURRENT USER'S ROLE
+      // ========================================
+     
+      try {
+        const meResponse = await getCurrentUser();
+
+        // Commented out — same reason as the login response logs
+        // ========================================
+        // console.log("Current User (/auth/me) Response:", meResponse);
+        // { id, email, role } response, or one wrapped in
+        // { data: { id, email, role } } like the login response above.
+        const me =
+          meResponse?.role
+            ? meResponse
+            : meResponse?.data?.role
+              ? meResponse.data
+              : meResponse?.data || meResponse;
+
+        if (me?.role) {
+          localStorage.setItem("role", me.role);
+        }
+      } catch (meError) {
+        console.error(
+          "Failed to fetch current user role:",
+          meError.response?.data || meError
         );
       }
 

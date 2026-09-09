@@ -48,7 +48,7 @@
   cursor: pointer;
   font-weight: 600;
   transition: 0.2s ease;
-  
+
 }
 
 .table-actions{
@@ -91,7 +91,7 @@
   align-items: center;
   gap: 18px;
  margin-bottom:18px;
-    
+
   background: #fff;
   border-radius: 14px;
   padding: 20px;
@@ -187,7 +187,9 @@ TOOLBAR
     padding: 13px 24px;
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 20px;
+    row-gap: 14px;
     box-shadow: 0 8px 20px rgba(15,23,42,.05);
 }
 
@@ -196,16 +198,26 @@ TOOLBAR
   flex:1;
     display:flex;
     align-items:center;
+    flex-wrap: wrap;
     gap:14px;
-    min-width:0;
+    row-gap: 10px;
+    min-width:220px;
 }
 
 /* RIGHT SIDE */
+/* Wraps onto its own line(s) instead of overflowing the toolbar when
+   the button group (QR Scanner, Reports, Import Attendees, Blocked
+   Emails, Bulk Confirm, ...) no longer fits beside the search/filters
+   on one row. This isn't gated behind a media query on purpose — the
+   number of buttons here can grow, so the layout needs to respond to
+   available width, not just a couple of fixed breakpoints. */
 .toolbar-right {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: nowrap;
+  row-gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 /* ========================================
@@ -226,7 +238,7 @@ TOOLBAR
   height: 46px;
 }
 .search-box input {
-  width: 100%;
+  width: 90%;
   border: none;
   outline: none;
   background: transparent;
@@ -243,17 +255,15 @@ TOOLBAR
 ======================================== */
 
 .toolbar select {
-  width: 170px;
+  width: 150px;
   height: 46px;
-
   border: 1px solid #dbe3ef;
   border-radius: 12px;
-
   background: white;
   padding: 0 14px;
   font-size: 14px;
-
   flex-shrink: 0;
+ 
 }
 
 /* ========================================
@@ -386,7 +396,10 @@ TOOLBAR
     .toolbar select,
     .search-box,
     .blue-btn,
-    .white-btn{
+    .white-btn,
+    .orange-btn,
+    .red-btn,
+    .green-btn{
         width:100%;
     }
 
@@ -624,7 +637,7 @@ th {
   .pagination {
     justify-content: center;
   }
-  
+
 }
 /* ===========================================
    EVENT HEADER
@@ -1824,7 +1837,7 @@ background:#16a34a;
     color:#2563eb;
     font-weight:600;
 
-}  
+}
 /*======================
   COMPANION TAB NOTIF
   ==================*/
@@ -3381,3 +3394,216 @@ background:#16a34a;
   }
 }
 
+/* ========================================
+   GIVEAWAY DISTRIBUTION (loot bag / souvenir / door prize)
+   Attendance tab of the attendee modal
+======================================== */
+
+.giveaway-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.giveaway-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: .2s;
+}
+
+.giveaway-card.distributed {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.giveaway-card-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.giveaway-card-info svg {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.giveaway-card.distributed .giveaway-card-info svg {
+  color: #16a34a;
+}
+
+.giveaway-card-info strong {
+  display: block;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.giveaway-card-info span {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.giveaway-distribute-btn {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #2563eb;
+  color: #fff;
+  transition: .2s;
+  white-space: nowrap;
+}
+
+.giveaway-distribute-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.giveaway-distribute-btn:disabled {
+  cursor: not-allowed;
+}
+
+.giveaway-card.distributed .giveaway-distribute-btn {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+@media (max-width: 600px) {
+  .giveaway-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .giveaway-distribute-btn {
+    width: 100%;
+  }
+}
+
+
+/* ========================================
+   BLOCKED EMAILS MODAL
+======================================== */
+
+.blocked-emails-modal {
+  max-width: 480px;
+}
+
+.blocked-email-form {
+  display: flex;
+  gap: 10px;
+
+  margin-bottom: 18px;
+}
+
+.blocked-email-form input {
+  flex: 1;
+
+  height: 44px;
+  padding: 0 14px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+
+  font-size: 14px;
+
+  transition: 0.2s;
+}
+
+.blocked-email-form input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.blocked-email-form input:disabled {
+  background: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.blocked-email-form button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  white-space: nowrap;
+}
+
+.blocked-email-form button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.blocked-email-status {
+  color: #6b7280;
+  font-size: 14px;
+
+  text-align: center;
+
+  padding: 20px 0;
+}
+
+.blocked-email-list-wrapper {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.blocked-email-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.blocked-email-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 10px 14px;
+
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 10px;
+}
+
+.blocked-email-item span {
+  font-size: 14px;
+  color: #374151;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icon-btn.danger {
+  color: #dc2626;
+}
+
+.icon-btn.danger:hover {
+  background: #fee2e2;
+}
+
+.icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .blocked-email-form {
+    flex-direction: column;
+  }
+}

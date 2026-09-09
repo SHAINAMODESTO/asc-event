@@ -399,3 +399,73 @@ export const bulkCreateAttendees = async (eventId, file) => {
     throw error;
   }
 };
+
+// ========================================
+// GIVEAWAY DISTRIBUTION
+// ========================================
+
+// Mark loot bag as distributed
+export const distributeLootBag = async (attendeeId) => {
+  try {
+    const response = await api.patch(
+      `${BASE_URL}/attendee/${attendeeId}/loot-bag`
+    );
+
+    console.log("========== LOOT BAG DISTRIBUTED ==========");
+    console.log("Attendee ID:", attendeeId);
+    console.log(response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Distribute Loot Bag Error:",
+      error.response?.data || error
+    );
+
+    throw error;
+  }
+};
+
+// Mark souvenir as distributed
+export const distributeSouvenir = async (attendeeId) => {
+  try {
+    const response = await api.patch(
+      `${BASE_URL}/attendee/${attendeeId}/souvenir`
+    );
+
+    console.log("========== SOUVENIR DISTRIBUTED ==========");
+    console.log("Attendee ID:", attendeeId);
+    console.log(response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Distribute Souvenir Error:",
+      error.response?.data || error
+    );
+
+    throw error;
+  }
+};
+
+// Mark door prize as distributed
+export const distributeDoorPrize = async (attendeeId) => {
+  try {
+    const response = await api.patch(
+      `${BASE_URL}/attendee/${attendeeId}/door-prize`
+    );
+
+    console.log("========== DOOR PRIZE DISTRIBUTED ==========");
+    console.log("Attendee ID:", attendeeId);
+    console.log(response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Distribute Door Prize Error:",
+      error.response?.data || error
+    );
+
+    throw error;
+  }
+};

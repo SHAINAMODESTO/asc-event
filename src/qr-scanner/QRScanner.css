@@ -118,7 +118,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-   
+
 }
 
 .event-details svg {
@@ -605,7 +605,7 @@
     align-items: center;
     gap: 15px;
     margin-bottom: 15px;
-  
+
 }
 
 .companion-section-header h1 {
@@ -1155,5 +1155,85 @@
 
     .bulk-info h4 {
         font-size: 14px;
+    }
+}
+
+/* =========================================================
+   GIVEAWAY DISTRIBUTION (loot bag / souvenir / door prize)
+   Mirrors the giveaway styling used in EventAttendees.css so
+   the scan flow and the attendee list look consistent.
+   ========================================================= */
+
+.giveaway-section {
+    margin-top: 25px;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 20px;
+}
+
+.giveaway-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.giveaway-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    transition: .2s;
+}
+
+.giveaway-card.distributed {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.giveaway-card-info span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.giveaway-distribute-btn {
+    flex-shrink: 0;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #2563eb;
+    color: #fff;
+    transition: .2s;
+    white-space: nowrap;
+}
+
+.giveaway-distribute-btn:hover:not(:disabled) {
+    background: #1d4ed8;
+}
+
+.giveaway-distribute-btn:disabled {
+    cursor: not-allowed;
+}
+
+.giveaway-card.distributed .giveaway-distribute-btn {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+@media (max-width: 480px) {
+
+    .giveaway-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .giveaway-distribute-btn {
+        width: 100%;
     }
 }

@@ -17,9 +17,17 @@ import {
   cancelAttendee,
   bulkConfirmAttendees,
   bulkCreateAttendees,
+  distributeLootBag,
+  distributeSouvenir,
+  distributeDoorPrize,
 } from "../services/attendeeListService";
 
-import { getEventById } from "../services/eventService";
+import {
+  getEventById,
+  getBlockedEmails,
+  addBlockedEmail,
+  removeBlockedEmail,
+} from "../services/eventService";
 import "./EventAttendees.css";
 import {
   Users,
@@ -45,7 +53,101 @@ import {
   Folder,
   UsersIcon,
   FileUp,
+  Gift,
+  Ban,
+  Trash2,
 } from "lucide-react";
+
+// ========================================
+// GIVEAWAY CONFIGURATION
+// ========================================
+// Maps each giveaway type to:
+// - the event flag that turns it on for this event (from CreateForm.jsx)
+// - the attendee field that tells us it's already been distributed
+// - the service call that marks it distributed
+//
+// Confirmed against the database schema (receivedLootBagAt /
+// receivedSouvenirAt / receivedDoorPrizeAt — a nullable timestamp,
+// set once the item is handed out).
+
+const GIVEAWAY_TYPES = [
+  {
+    key: "lootBag",
+    label: "Loot Bag",
+    eventFlag: "includesLootBag",
+    distributedFields: ["receivedLootBagAt"],
+    action: distributeLootBag,
+  },
+  {
+    key: "souvenir",
+    label: "Souvenir",
+    eventFlag: "includesSouvenir",
+    distributedFields: ["receivedSouvenirAt"],
+    action: distributeSouvenir,
+  },
+  {
+    key: "doorPrize",
+    label: "Door Prize",
+    eventFlag: "includesDoorPrize",
+    distributedFields: ["receivedDoorPrizeAt"],
+    action: distributeDoorPrize,
+  },
+];
+
+// Returns the distribution timestamp for this giveaway on the
+// attendee record, or undefined if it hasn't been distributed yet.
+
+const getGiveawayValue = (attendee, giveaway) => {
+  if (!attendee) return undefined;
+
+  for (const field of giveaway.distributedFields) {
+    if (attendee[field]) {
+      return attendee[field];
+    }
+  }
+
+  return undefined;
+};
+
+// ========================================
+// GIVEAWAY "DISTRIBUTED" CACHE (localStorage)
+// ========================================
+// Now that `receivedLootBagAt` / `receivedSouvenirAt` /
+// `receivedDoorPrizeAt` are confirmed real fields, the API response
+// is the source of truth and this cache is just a same-device,
+// instant-UI bonus on top of it: it lets a card show "Distributed"
+// the moment you click, and lets the QR Scanner page (a separate
+// route/component) reflect a giveaway marked here without waiting on
+// its own network round trip. Persisted per event so it survives
+// navigating between this page and the scanner.
+//
+// Caveat: this is per-browser, not per-account, so it won't sync
+// across two different devices/coordinators — only the real API
+// response does that.
+
+const giveawayCacheKey = (eventId) => `asc-giveaway-distributed:${eventId}`;
+
+const loadGiveawayCache = (eventId) => {
+  if (!eventId) return {};
+
+  try {
+    const raw = localStorage.getItem(giveawayCacheKey(eventId));
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+};
+
+const saveGiveawayCache = (eventId, cache) => {
+  if (!eventId) return;
+
+  try {
+    localStorage.setItem(giveawayCacheKey(eventId), JSON.stringify(cache));
+  } catch {
+    // Ignore storage errors (private browsing, quota, etc.) — worst
+    // case this just falls back to the in-memory state for this visit.
+  }
+};
 
 const EventAttendees = () => {
 const navigate = useNavigate();
@@ -1383,6 +1485,250 @@ const handleCheckIn = async () => {
 };
 
 // ========================================
+// GIVEAWAY DISTRIBUTION
+// ========================================
+// Marks a single giveaway (loot bag / souvenir / door prize) as
+// distributed for the currently selected attendee. Mirrors the
+// check-in flow above: call the PATCH endpoint, then refresh the
+// list, dashboard, and the open attendee modal.
+
+const [distributingGiveaway, setDistributingGiveaway] = useState(null);
+
+// Instant-UI cache: remembers a giveaway as distributed the moment
+// the PATCH succeeds (or the backend says it already happened), so
+// the card updates immediately without waiting on the next fetch.
+// Keyed as "<attendeeId>:<giveawayKey>". Seeded from localStorage (see
+// loadGiveawayCache above) so a giveaway marked from the QR Scanner
+// page shows as already distributed here too, without needing a page
+// refresh.
+const [locallyDistributed, setLocallyDistributed] = useState(() =>
+  loadGiveawayCache(eventId)
+);
+
+// Marks a giveaway as distributed in both this component's state and
+// the shared localStorage cache, so the QR Scanner page (and this
+// page, next time it loads) immediately sees it as done too.
+const markGiveawayDistributedLocally = (localKey) => {
+  setLocallyDistributed((prev) => {
+    const next = { ...prev, [localKey]: true };
+    saveGiveawayCache(eventId, next);
+    return next;
+  });
+};
+
+const handleDistributeGiveaway = async (giveaway) => {
+  if (!selectedAttendee?.id) {
+    alert("Please select an attendee.");
+    return;
+  }
+
+  const localKey = `${selectedAttendee.id}:${giveaway.key}`;
+
+  try {
+    setDistributingGiveaway(giveaway.key);
+
+    await giveaway.action(selectedAttendee.id);
+
+    markGiveawayDistributedLocally(localKey);
+
+    // Refresh attendees + dashboard so the list/table and stats update
+    // immediately — no page refresh needed.
+    await Promise.all([
+      fetchAttendees(),
+      fetchDashboardSummary(),
+    ]);
+
+    // Refresh selected attendee so the modal reflects the update
+    const updatedAttendee = await getAttendeeById(
+      selectedAttendee.id
+    );
+
+    setSelectedAttendee(updatedAttendee.data);
+
+    alert(`${giveaway.label} received successfully!`);
+  } catch (error) {
+    console.error(
+      `Distribute ${giveaway.label} error:`,
+      error
+    );
+
+    const serverMessage = error.response?.data?.message;
+
+    // The backend rejected our PATCH because it was already marked
+    // (e.g. a double-click, or the attendee was marked from another
+    // screen a moment ago). Treat that as "already distributed"
+    // rather than a hard failure, and refresh so the modal catches up
+    // to the real state instead of staying stale until the next
+    // manual reload.
+    if (
+      error.response?.status === 400 &&
+      typeof serverMessage === "string" &&
+      serverMessage.toLowerCase().includes("already")
+    ) {
+      markGiveawayDistributedLocally(localKey);
+
+      try {
+        const refreshedAttendee = await getAttendeeById(
+          selectedAttendee.id
+        );
+
+        setSelectedAttendee(refreshedAttendee.data);
+      } catch (refreshError) {
+        console.warn(
+          "Unable to refresh attendee after 'already distributed' response.",
+          refreshError
+        );
+      }
+
+      alert(serverMessage);
+    } else {
+      alert(
+        serverMessage ||
+          `Failed to mark ${giveaway.label} as distributed.`
+      );
+    }
+  } finally {
+    setDistributingGiveaway(null);
+  }
+};
+
+// ========================================
+// BLOCKED EMAILS (per event)
+// ========================================
+// Lets an admin block a specific email address from registering for
+// this event, and view/remove entries in the current block list —
+// all without leaving this dashboard (opened as a modal, same pattern
+// as the Import Attendees modal above).
+
+const [showBlockedEmailsModal, setShowBlockedEmailsModal] = useState(false);
+const [blockedEmails, setBlockedEmails] = useState([]);
+const [blockedEmailsLoading, setBlockedEmailsLoading] = useState(false);
+const [blockedEmailsError, setBlockedEmailsError] = useState("");
+const [newBlockedEmail, setNewBlockedEmail] = useState("");
+const [addingBlockedEmail, setAddingBlockedEmail] = useState(false);
+const [addBlockedEmailError, setAddBlockedEmailError] = useState("");
+const [removingBlockedEmailId, setRemovingBlockedEmailId] = useState(null);
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// The shape of each entry in the GET response isn't confirmed yet — it
+// may be a plain string (just the email) or an object with an id. This
+// normalizes either shape so the rest of the UI has a consistent
+// { id, email } to work with. If the backend returns objects, `id`
+// falls back to the email itself when no separate identifier is present.
+const normalizeBlockedEmail = (entry) => {
+  if (typeof entry === "string") {
+    return { id: entry, email: entry };
+  }
+
+  const email =
+    entry?.email || entry?.emailAddress || entry?.address || "";
+
+  return {
+    id: entry?.id || entry?._id || email,
+    email,
+  };
+};
+
+const fetchBlockedEmails = async () => {
+  try {
+    setBlockedEmailsLoading(true);
+    setBlockedEmailsError("");
+
+    const response = await getBlockedEmails(eventId);
+
+    // Defensive: accept an array directly, or an array nested under a
+    // common wrapper key, depending on what the backend actually sends.
+    const list = Array.isArray(response)
+      ? response
+      : response?.data || response?.blockedEmails || response?.emails || [];
+
+    setBlockedEmails(list.map(normalizeBlockedEmail));
+  } catch (error) {
+    console.error("Fetch Blocked Emails Error:", error);
+    setBlockedEmailsError(
+      error.response?.data?.message ||
+        "Failed to load blocked emails for this event."
+    );
+  } finally {
+    setBlockedEmailsLoading(false);
+  }
+};
+
+const handleOpenBlockedEmailsModal = () => {
+  setShowBlockedEmailsModal(true);
+  setNewBlockedEmail("");
+  setAddBlockedEmailError("");
+  fetchBlockedEmails();
+};
+
+const handleCloseBlockedEmailsModal = () => {
+  setShowBlockedEmailsModal(false);
+};
+
+const handleAddBlockedEmail = async (e) => {
+  e.preventDefault();
+
+  const email = newBlockedEmail.trim().toLowerCase();
+
+  if (!email) {
+    setAddBlockedEmailError("Please enter an email address.");
+    return;
+  }
+
+  if (!emailRegex.test(email)) {
+    setAddBlockedEmailError("Please enter a valid email address.");
+    return;
+  }
+
+  if (
+    blockedEmails.some(
+      (entry) => entry.email.toLowerCase() === email
+    )
+  ) {
+    setAddBlockedEmailError("This email is already blocked for this event.");
+    return;
+  }
+
+  try {
+    setAddingBlockedEmail(true);
+    setAddBlockedEmailError("");
+
+    await addBlockedEmail(eventId, email);
+
+    setNewBlockedEmail("");
+    await fetchBlockedEmails();
+  } catch (error) {
+    console.error("Add Blocked Email Error:", error);
+    setAddBlockedEmailError(
+      error.response?.data?.message || "Failed to block this email."
+    );
+  } finally {
+    setAddingBlockedEmail(false);
+  }
+};
+
+const handleRemoveBlockedEmail = async (entry) => {
+  try {
+    setRemovingBlockedEmailId(entry.id);
+
+    await removeBlockedEmail(eventId, entry.id);
+
+    setBlockedEmails((prev) =>
+      prev.filter((item) => item.id !== entry.id)
+    );
+  } catch (error) {
+    console.error("Remove Blocked Email Error:", error);
+    alert(
+      error.response?.data?.message ||
+        `Failed to unblock ${entry.email}.`
+    );
+  } finally {
+    setRemovingBlockedEmailId(null);
+  }
+};
+
+// ========================================
 // DISPLAYED ATTENDEES
 // ========================================
 
@@ -1557,13 +1903,13 @@ const displayedAttendees = [...attendees]
             <span>{dashboard.tableAssignment.notAssigned} Not Assigned</span>
           </div>
         </div>
-        
-      </div> 
+
+      </div>
       {/* Controls */}
    <div className="toolbar">
         <div className="toolbar-left">
           <div>
-           
+
             <input
               type="text"
               placeholder=" Search by name, email or company..."
@@ -1572,7 +1918,7 @@ const displayedAttendees = [...attendees]
               onChange={(e) => {
                 setPage(1);
                 setSearch(e.target.value);
-                
+
               }}
             />
          </div>
@@ -1601,11 +1947,11 @@ const displayedAttendees = [...attendees]
             <option value="CHECKED_IN">Checked In</option>
             <option value="DECLINED">Declined</option>
             <option value="CANCELLED">Cancelled</option>
-          
+
           </select>
-          
+
         </div>
-        
+
 
         <div className="toolbar-right">
           <button
@@ -1621,15 +1967,15 @@ const displayedAttendees = [...attendees]
              <QrCode size={17} />
             QR Scanner
           </button>
-         
-          
+
+
           <button
             className="orange-btn"
             onClick={() => navigate(`/event-reports/${eventId}`)}>
              <Folder size={17} />
             Reports
           </button>
-        
+
 {/* ========================================
     IMPORT ATTENDEES BUTTON
 ======================================== */}
@@ -1651,6 +1997,19 @@ const displayedAttendees = [...attendees]
   onChange={handleFileChange}
   style={{ display: "none" }}
 />
+
+{/* ========================================
+    BLOCKED EMAILS BUTTON
+======================================== */}
+
+<button
+  type="button"
+  className="red-btn"
+  onClick={handleOpenBlockedEmailsModal}
+>
+  <Ban size={17} />
+  Blocked Emails
+</button>
 
 
 {/* ========================================
@@ -1889,11 +2248,139 @@ const displayedAttendees = [...attendees]
   </div>
 )}
 
+{/* ========================================
+    BLOCKED EMAILS MODAL
+======================================== */}
 
-          
-              
-                
-                
+{showBlockedEmailsModal && (
+  <div className="import-modal-overlay">
+    <div className="import-modal blocked-emails-modal">
+
+      {/* HEADER */}
+      <div className="import-modal-header">
+        <div>
+          <h2>Blocked Emails</h2>
+          <p>
+            Block an email address from registering for this event,
+            or remove one from the block list.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="import-modal-close"
+          onClick={handleCloseBlockedEmailsModal}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* BODY */}
+      <div className="import-modal-body">
+
+        {/* ADD FORM */}
+        <form
+          className="blocked-email-form"
+          onSubmit={handleAddBlockedEmail}
+        >
+          <input
+            type="email"
+            placeholder="name@example.com"
+            value={newBlockedEmail}
+            onChange={(e) => {
+              setNewBlockedEmail(e.target.value);
+              if (addBlockedEmailError) setAddBlockedEmailError("");
+            }}
+            disabled={addingBlockedEmail}
+          />
+
+          <button
+            type="submit"
+            className="red-btn"
+            disabled={addingBlockedEmail}
+          >
+            <Ban size={16} />
+            {addingBlockedEmail ? "Blocking..." : "Block Email"}
+          </button>
+        </form>
+
+        {addBlockedEmailError && (
+          <div className="import-error-box">
+            <div className="import-error-message">
+              {addBlockedEmailError}
+            </div>
+          </div>
+        )}
+
+        {/* LIST */}
+        <div className="blocked-email-list-wrapper">
+          {blockedEmailsLoading && (
+            <p className="blocked-email-status">
+              Loading blocked emails...
+            </p>
+          )}
+
+          {!blockedEmailsLoading && blockedEmailsError && (
+            <div className="import-error-box">
+              <div className="import-error-message">
+                {blockedEmailsError}
+              </div>
+            </div>
+          )}
+
+          {!blockedEmailsLoading &&
+            !blockedEmailsError &&
+            blockedEmails.length === 0 && (
+              <p className="blocked-email-status">
+                No emails are blocked for this event yet.
+              </p>
+            )}
+
+          {!blockedEmailsLoading &&
+            !blockedEmailsError &&
+            blockedEmails.length > 0 && (
+              <ul className="blocked-email-list">
+                {blockedEmails.map((entry) => (
+                  <li key={entry.id} className="blocked-email-item">
+                    <span>{entry.email}</span>
+
+                    <button
+                      type="button"
+                      className="icon-btn danger"
+                      title={`Unblock ${entry.email}`}
+                      onClick={() => handleRemoveBlockedEmail(entry)}
+                      disabled={removingBlockedEmailId === entry.id}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+        </div>
+
+      </div>
+
+      {/* FOOTER */}
+      <div className="import-modal-footer">
+        <button
+          type="button"
+          className="import-cancel-btn"
+          onClick={handleCloseBlockedEmailsModal}
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+
+
+
+
+
+
 
           <div
               title={
@@ -1916,7 +2403,7 @@ const displayedAttendees = [...attendees]
                 Bulk Confirm ({selectedRows.length})
               </button>
 
-              
+
           </div>
         </div>
       </div>
@@ -2235,7 +2722,7 @@ const displayedAttendees = [...attendees]
               >
                 Attendance
               </button>
-              
+
 {/* COMPANION TAB FOR PRIMARY ATTENDEE VISIBLE ONLY*/}
 
               {selectedAttendee?.role === "PRIMARY" && (
@@ -2272,7 +2759,7 @@ const displayedAttendees = [...attendees]
                         )}
                     </h3>
 
-                   
+
 
                     <p className="attendee-id">
                       Code: {selectedAttendee.attendeesCode}
@@ -2316,12 +2803,12 @@ const displayedAttendees = [...attendees]
 
                        <label>Meal Preference</label>
 
-                      <span>{selectedAttendee.mealPreference || "-"}</span>  
+                      <span>{selectedAttendee.mealPreference || "-"}</span>
 
                       <div>
                             <button className="edit-info-btn" onClick={handleEditAttendee}>
                               Edit Info
-                            </button>  
+                            </button>
                       </div>
                     </div>
 
@@ -2341,7 +2828,7 @@ const displayedAttendees = [...attendees]
                                 : "cancelled"
                           }`}
                         >
-                          
+
                           {selectedAttendee.status}
                         </span>
                       </span>
@@ -2374,16 +2861,16 @@ const displayedAttendees = [...attendees]
                       <label>Checked In By</label>
 
                       <span>{selectedAttendee.checkedInBy || "-"}</span>
-                     
+
 
                       <label>Table Number</label>
 
-                      
+
 
                       <span className="table-row">
                         {selectedAttendee.tableNumber || "-"}
 
-                       
+
 
 
                         <button
@@ -2463,10 +2950,91 @@ const displayedAttendees = [...attendees]
                       </strong>
                     </div>
                   </div>
+
+                  {/* ========================================
+                      GIVEAWAY DISTRIBUTION
+                      Only shown for giveaway types this event
+                      was configured with in CreateForm.jsx
+                  ======================================== */}
+
+                  {GIVEAWAY_TYPES.some(
+                    (giveaway) => eventDetails?.[giveaway.eventFlag]
+                  ) && (
+                    <>
+                      <hr className="section-divider" />
+                      <h3>Giveaways</h3>
+
+                      <div className="giveaway-grid">
+                        {GIVEAWAY_TYPES.filter(
+                          (giveaway) => eventDetails?.[giveaway.eventFlag]
+                        ).map((giveaway) => {
+                          const giveawayValue = getGiveawayValue(
+                            selectedAttendee,
+                            giveaway
+                          );
+
+                          const distributed =
+                            Boolean(giveawayValue) ||
+                            Boolean(
+                              locallyDistributed[
+                                `${selectedAttendee?.id}:${giveaway.key}`
+                              ]
+                            );
+
+                          const isSaving =
+                            distributingGiveaway === giveaway.key;
+
+                          return (
+                            <div
+                              key={giveaway.key}
+                              className={`giveaway-card ${
+                                distributed ? "distributed" : ""
+                              }`}
+                            >
+                              <div className="giveaway-card-info">
+                                <Gift size={20} />
+
+                                <div>
+                                  <strong>{giveaway.label}</strong>
+
+                                  <span>
+                                    {distributed
+                                      ? `Distributed${
+                                          typeof giveawayValue === "string"
+                                            ? ` on ${new Date(
+                                                giveawayValue
+                                              ).toLocaleString()}`
+                                            : ""
+                                        }`
+                                      : "Not yet distributed"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                className="giveaway-distribute-btn"
+                                disabled={distributed || isSaving}
+                                onClick={() =>
+                                  handleDistributeGiveaway(giveaway)
+                                }
+                              >
+                                {distributed
+                                  ? "Distributed"
+                                  : isSaving
+                                    ? "Marking..."
+                                    : "Mark Distributed"}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
          {/* Companion Tab */}
-            
+
             {activeTab === "companion" && (
               <div className="companion-tab">
 
@@ -2587,7 +3155,7 @@ const displayedAttendees = [...attendees]
                                   setShowCompanionAssignModal(true);
                               }}
                           >
-                              
+
                               {companion.tableNumber ? "Change Table" : "Assign Table"}
                             </button>
 
@@ -2630,7 +3198,7 @@ const displayedAttendees = [...attendees]
                   <div className="edit-attendee-modal" onClick={(e) => e.stopPropagation()}>
                     {/* Header */}
                     <div className="edit-attendee-header">
-                     
+
                       <h2>Edit Attendee Information</h2>
                       <p>
                         Update attendee details for{" "}
@@ -2638,9 +3206,9 @@ const displayedAttendees = [...attendees]
                           {selectedAttendee.firstName} {selectedAttendee.lastName}
                         </strong>
                       </p>
-                    </div> 
+                    </div>
                     {/* Body */}
-                  <div className="edit-attendee-form"> 
+                  <div className="edit-attendee-form">
                      {/*First Name */}
                      <div className="form-group">
                         <label>First Name:</label>
@@ -2712,7 +3280,7 @@ const displayedAttendees = [...attendees]
                           })
                         }
                       />
-                    </div>  
+                    </div>
                     {/* Contact Number*/}
                     <div className="form-group">
                       <label>Contact Number</label>
@@ -2726,7 +3294,7 @@ const displayedAttendees = [...attendees]
                           })
                         }
                       />
-                    </div> 
+                    </div>
                     {/* Company*/}
                     <div className="form-group">
                       <label>Company</label>
@@ -2740,7 +3308,7 @@ const displayedAttendees = [...attendees]
                           })
                         }
                       />
-                    </div> 
+                    </div>
                      {/* Posution */}
                     <div className="form-group">
                       <label>Position</label>
@@ -2754,7 +3322,7 @@ const displayedAttendees = [...attendees]
                           })
                         }
                       />
-                    </div> 
+                    </div>
                     {/* Meal Preference */}
                     <div className="form-group">
                       <label>Meal Preference</label>
@@ -2781,7 +3349,7 @@ const displayedAttendees = [...attendees]
                             )}
                           </select>
                     </div>
-                  </div>  
+                  </div>
                 {/* Footer */}
                 <div className="edit-attendee-footer">
                   <button className="attendee-cancel-btn"
@@ -3113,14 +3681,14 @@ const displayedAttendees = [...attendees]
                           Cancel
                         </button>
 
-                  
+
                         <button
                             className="companion-save-btn"
                             onClick={handleUpdateCompanion}
                           >
                             Save Changes
                           </button>
-                       
+
                       </div>
                     </div>
                   </div>
@@ -3223,10 +3791,10 @@ const displayedAttendees = [...attendees]
                   </div>
                 </div>
               )}
-            
+
 
             {/* Footer */}
-          {(activeTab === "details" || activeTab === "attendance") && (  
+          {(activeTab === "details" || activeTab === "attendance") && (
             <div className="attendee-modal-footer">
               <button
                 className="modal-cancel-btn"
@@ -3301,14 +3869,14 @@ const displayedAttendees = [...attendees]
             </div>
             {/* Summary */}
             <div className="bulk-summary">
-              
+
               <div className="summary-card-total">
                 <span>Total</span>
                 <strong>
                   {selectedAttendee.companions.length}
                 </strong>
               </div>
-              
+
               <div className="summary-card-checkin">
                 <span>Checked In</span>
                 <strong>
@@ -3351,9 +3919,9 @@ const displayedAttendees = [...attendees]
                   }
                  else {
                   setSelectedCompanions([])
-                 }   
-                }}     
-                        
+                 }
+                }}
+
                         />
                 Select All Available
               </label>

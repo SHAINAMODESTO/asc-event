@@ -11,15 +11,122 @@ import {
     HiCheckCircle,
     HiClock,
     HiArrowLeft,
-    HiUserGroup
+    HiUserGroup,
+    HiGift
 } from "react-icons/hi2";
 
 import {
     scanAttendee,
     checkInAttendee,
     bulkCheckInAttendees,
-    getAttendeeById
+    getAttendeeById,
+    distributeLootBag,
+    distributeSouvenir,
+    distributeDoorPrize
 } from "../services/attendeeListService";
+
+// ========================================
+// GIVEAWAY CONFIGURATION
+// ========================================
+// Mirrors the config used in EventAttendees.jsx so the scan flow
+// and the attendee list mark giveaways the same way.
+//
+// Confirmed against the database schema (receivedLootBagAt /
+// receivedSouvenirAt / receivedDoorPrizeAt — a nullable timestamp,
+// set once the item is handed out).
+
+const GIVEAWAY_TYPES = [
+    {
+        key: "lootBag",
+        label: "Loot Bag",
+        eventFlag: "includesLootBag",
+        fields: ["receivedLootBagAt"],
+        action: distributeLootBag
+    },
+    {
+        key: "souvenir",
+        label: "Souvenir",
+        eventFlag: "includesSouvenir",
+        fields: ["receivedSouvenirAt"],
+        action: distributeSouvenir
+    },
+    {
+        key: "doorPrize",
+        label: "Door Prize",
+        eventFlag: "includesDoorPrize",
+        fields: ["receivedDoorPrizeAt"],
+        action: distributeDoorPrize
+    }
+];
+
+// Pulls the giveaway distribution fields off an attendee record so
+// they can be merged into the flattened `scanResult` object below.
+
+const getGiveawayFields = (attendee) => {
+    const fields = {};
+
+    GIVEAWAY_TYPES.forEach((giveaway) => {
+        giveaway.fields.forEach((fieldName) => {
+            fields[fieldName] = attendee?.[fieldName] || null;
+        });
+    });
+
+    return fields;
+};
+
+// Returns the distribution timestamp (on the flattened scanResult)
+// for this giveaway, or undefined if it hasn't been distributed yet.
+
+const getGiveawayValue = (resultLike, giveaway) => {
+    if (!resultLike) return undefined;
+
+    for (const fieldName of giveaway.fields) {
+        if (resultLike[fieldName]) {
+            return resultLike[fieldName];
+        }
+    }
+
+    return undefined;
+};
+
+// ========================================
+// GIVEAWAY "DISTRIBUTED" CACHE (localStorage)
+// ========================================
+// Now that `receivedLootBagAt` / `receivedSouvenirAt` /
+// `receivedDoorPrizeAt` are confirmed real fields, the API response
+// is the source of truth and this cache is just a same-device,
+// instant-UI bonus on top of it: it lets a card show "Distributed"
+// the moment you click, and lets the attendee list page (a separate
+// route/component) reflect a giveaway marked here without waiting on
+// its own network round trip. Persisted per event so it survives
+// navigating between this page and the attendee list.
+//
+// Caveat: this is per-browser, not per-account, so it won't sync
+// across two different devices/coordinators — only the real API
+// response does that.
+
+const giveawayCacheKey = (eventId) => `asc-giveaway-distributed:${eventId}`;
+
+const loadGiveawayCache = (eventId) => {
+    if (!eventId) return {};
+
+    try {
+        const raw = localStorage.getItem(giveawayCacheKey(eventId));
+        return raw ? JSON.parse(raw) : {};
+    } catch {
+        return {};
+    }
+};
+
+const saveGiveawayCache = (eventId, cache) => {
+    if (!eventId) return;
+
+    try {
+        localStorage.setItem(giveawayCacheKey(eventId), JSON.stringify(cache));
+    } catch {
+        // Ignore storage errors (private browsing, quota, etc.).
+    }
+};
 
 const EventQRScanner = () => {
 
@@ -65,6 +172,34 @@ const EventQRScanner = () => {
     // ========================================
 
     const [checkingIn, setCheckingIn] = useState(false);
+
+    // ========================================
+    // GIVEAWAY DISTRIBUTION LOADING
+    // ========================================
+
+    const [distributingGiveaway, setDistributingGiveaway] = useState(null);
+
+    // Instant-UI cache: remembers a giveaway as distributed the
+    // moment the PATCH succeeds (or the backend says it already
+    // happened), so the card updates immediately without waiting on
+    // the next fetch. Keyed as "<attendeeId>:<giveawayKey>". Seeded
+    // from localStorage (see loadGiveawayCache above) so a giveaway
+    // marked from the attendee list shows as already distributed
+    // here too, without needing a refresh.
+    const [locallyDistributed, setLocallyDistributed] = useState(() =>
+        loadGiveawayCache(eventId)
+    );
+
+    // Marks a giveaway as distributed in both this component's state
+    // and the shared localStorage cache, so the attendee list page
+    // (and this page, next time it loads) immediately sees it as done.
+    const markGiveawayDistributedLocally = (localKey) => {
+        setLocallyDistributed((prev) => {
+            const next = { ...prev, [localKey]: true };
+            saveGiveawayCache(eventId, next);
+            return next;
+        });
+    };
 
     // ========================================
     // HISTORY
@@ -242,7 +377,8 @@ const processScan = async () => {
                     time:
                         existingCheckInTime,
                     status:
-                        "Duplicate"
+                        "Duplicate",
+                    ...getGiveawayFields(attendee)
                 };
 
                 setScanResult(
@@ -307,7 +443,8 @@ const processScan = async () => {
                 time:
                     checkInTime,
                 status:
-                    "Success"
+                    "Success",
+                ...getGiveawayFields(attendee)
             };
 
             setScanResult(
@@ -412,7 +549,9 @@ const processScan = async () => {
             // from the API.
             companions: companions,
 
-            pendingCompanions: []
+            pendingCompanions: [],
+
+            ...getGiveawayFields(attendee)
         });
 
         setSelectedCompanions([]);
@@ -484,7 +623,9 @@ const processScan = async () => {
         // data with the latest API data.
         companions: companions,
 
-        pendingCompanions: pendingCompanions
+        pendingCompanions: pendingCompanions,
+
+        ...getGiveawayFields(attendee)
     });
 
     setSelectedCompanions([]);
@@ -758,6 +899,98 @@ const processScan = async () => {
     };
 
     // ========================================
+    // DISTRIBUTE GIVEAWAY
+    // ========================================
+    // Marks a single giveaway (loot bag / souvenir / door prize) as
+    // distributed for the attendee currently shown in the scan
+    // result panel, then refreshes that panel from the backend.
+
+    const handleDistributeGiveaway = async (giveaway) => {
+
+        if (!scanResult?.id) {
+            return;
+        }
+
+        const localKey = `${scanResult.id}:${giveaway.key}`;
+
+        try {
+
+            setDistributingGiveaway(giveaway.key);
+
+            await giveaway.action(scanResult.id);
+
+            markGiveawayDistributedLocally(localKey);
+
+            const updatedResponse =
+                await getAttendeeById(scanResult.id);
+
+            const updatedAttendee =
+                updatedResponse?.data || updatedResponse;
+
+            // Updates the on-screen result immediately — no page
+            // refresh needed to see the giveaway marked as received.
+            setScanResult((prev) => ({
+                ...prev,
+                ...getGiveawayFields(updatedAttendee)
+            }));
+
+            alert(`${giveaway.label} received successfully!`);
+
+        } catch (error) {
+
+            console.error(
+                `Distribute ${giveaway.label} error:`,
+                error.response?.data || error
+            );
+
+            const serverMessage = error.response?.data?.message;
+
+            // The backend rejected our PATCH because it was already
+            // marked (e.g. a double-tap, or the attendee was marked
+            // from the attendee list a moment ago). Treat that as
+            // "already distributed" rather than a hard failure, and
+            // refresh so the card catches up to the real state instead
+            // of staying stale until the next manual reload.
+            if (
+                error.response?.status === 400 &&
+                typeof serverMessage === "string" &&
+                serverMessage.toLowerCase().includes("already")
+            ) {
+                markGiveawayDistributedLocally(localKey);
+
+                try {
+                    const refreshedResponse =
+                        await getAttendeeById(scanResult.id);
+
+                    const refreshedAttendee =
+                        refreshedResponse?.data || refreshedResponse;
+
+                    setScanResult((prev) => ({
+                        ...prev,
+                        ...getGiveawayFields(refreshedAttendee)
+                    }));
+                } catch (refreshError) {
+                    console.warn(
+                        "Unable to refresh attendee after 'already distributed' response.",
+                        refreshError
+                    );
+                }
+
+                alert(serverMessage);
+            } else {
+                alert(
+                    serverMessage ||
+                    `Failed to mark ${giveaway.label} as distributed.`
+                );
+            }
+
+        } finally {
+
+            setDistributingGiveaway(null);
+        }
+    };
+
+    // ========================================
     // SELECT ALL
     // ========================================
 
@@ -953,6 +1186,14 @@ const processScan = async () => {
             availableCompanions.length;
 
     // ========================================
+    // GIVEAWAYS CONFIGURED FOR THIS EVENT
+    // ========================================
+
+    const activeGiveaways = GIVEAWAY_TYPES.filter(
+        (giveaway) => event?.[giveaway.eventFlag]
+    );
+
+    // ========================================
     // RENDER
     // ========================================
 
@@ -1136,10 +1377,10 @@ const processScan = async () => {
 
                             <h3>
                                {/* Scan Failed : {scanResult.message} */}
-                               Scan Failed : Invalid QR Code. 
+                               Scan Failed : Invalid QR Code.
                             </h3>
 
-                           
+
                         </div>
 
                     ) : (
@@ -1376,6 +1617,90 @@ const processScan = async () => {
                                 </p>
 
                             </div>
+
+                            {/* ========================================
+                                GIVEAWAY DISTRIBUTION
+                                Only shown for giveaway types this
+                                event was configured with.
+                            ======================================== */}
+
+                            {activeGiveaways.length > 0 && (
+
+                                <div className="giveaway-section">
+
+                                    <div className="companion-section-header">
+
+                                        <HiGift
+                                            size={30}
+                                            color="#d8491e"
+                                        />
+
+                                        <div>
+
+                                            <h1>
+                                                Giveaways
+                                            </h1>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div className="giveaway-grid">
+
+                                        {activeGiveaways.map((giveaway) => {
+
+                                            const distributed =
+                                                Boolean(getGiveawayValue(scanResult, giveaway)) ||
+                                                Boolean(
+                                                    locallyDistributed[
+                                                        `${scanResult.id}:${giveaway.key}`
+                                                    ]
+                                                );
+
+                                            const isSaving =
+                                                distributingGiveaway === giveaway.key;
+
+                                            return (
+
+                                                <div
+                                                    key={giveaway.key}
+                                                    className={`giveaway-card ${
+                                                        distributed ? "distributed" : ""
+                                                    }`}
+                                                >
+
+                                                    <div className="giveaway-card-info">
+
+                                                        <span>
+                                                            {giveaway.label}
+                                                        </span>
+
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        className="giveaway-distribute-btn"
+                                                        disabled={distributed || isSaving}
+                                                        onClick={() =>
+                                                            handleDistributeGiveaway(giveaway)
+                                                        }
+                                                    >
+                                                        {distributed
+                                                            ? "Distributed"
+                                                            : isSaving
+                                                                ? "Marking..."
+                                                                : "Mark Distributed"}
+                                                    </button>
+
+                                                </div>
+                                            );
+                                        })}
+
+                                    </div>
+
+                                </div>
+
+                            )}
 
                             {/* ========================================
                                 COMPANIONS

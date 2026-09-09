@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
@@ -45,6 +44,7 @@ api.interceptors.response.use(
       localStorage.removeItem("accessToken");
       localStorage.removeItem("user");
       localStorage.removeItem("name");
+      localStorage.removeItem("role");
       localStorage.removeItem("isLoggedIn");
 
       // Redirect to login
@@ -58,4 +58,3 @@ api.interceptors.response.use(
 );
 
 export default api;
-
