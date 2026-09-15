@@ -180,21 +180,6 @@ const CreateForm = () => {
     }
   };
 
-  const buildPaidEventFields = () => ({
-    isPaidEvent,
-    currency: isPaidEvent ? currency : null,
-    ticketTiers: isPaidEvent
-      ? ticketTiers
-          .filter((tier) => tier.name && tier.price)
-          .map((tier) => ({
-            name: tier.name,
-            price: Number(tier.price),
-            cutoff: tier.cutoff || null,
-          }))
-      : [],
-    paymentInstructions: isPaidEvent ? paymentInstructions || null : null,
-  });
-
   const formatDateTimeForAPI = (date) => {
     if (!date) return null;
 
@@ -272,8 +257,6 @@ const CreateForm = () => {
       requiresMealPreference: showMenuInForm,
       mealPreferences: showMenuInForm ? menuOptions : [],
 
-      requiresProfilePhoto: requiresProfilePhoto,
-
       isRegistrationRequired: true,
 
       dressCode: attire || null,
@@ -301,10 +284,8 @@ const CreateForm = () => {
 
       registrationEnd: formatDateTimeForAPI(registrationEnd),
 
-      // ================================
-      // PAID EVENT
-      // ================================
-      ...buildPaidEventFields(),
+      // NOTE: requiresProfilePhoto / paid event fields (isPaidEvent, currency,
+      // ticketTiers, paymentInstructions) are omitted until the backend supports them.
     };
 
     try {
@@ -343,8 +324,6 @@ const CreateForm = () => {
       requiresMealPreference: showMenuInForm,
       mealPreferences: showMenuInForm ? menuOptions : [],
 
-      requiresProfilePhoto: requiresProfilePhoto,
-
       isRegistrationRequired: true,
 
       dressCode: attire || null,
@@ -372,10 +351,8 @@ const CreateForm = () => {
 
       registrationEnd: formatDateTimeForAPI(registrationEnd),
 
-      // ================================
-      // PAID EVENT
-      // ================================
-      ...buildPaidEventFields(),
+      // NOTE: requiresProfilePhoto / paid event fields (isPaidEvent, currency,
+      // ticketTiers, paymentInstructions) are omitted until the backend supports them.
     };
 
     try {
@@ -747,9 +724,12 @@ const CreateForm = () => {
                         <input
                           type="checkbox"
                           checked={showMenuInForm}
-                          onChange={(e) =>
-                            setShowMenuInForm(e.target.checked)
-                          }
+                          onChange={(e) => {
+                            setShowMenuInForm(e.target.checked);
+                            if (e.target.checked && menuOptions.length === 0) {
+                              setMenuOptions([""]);
+                            }
+                          }}
                         />
 
                         <span className="slider"></span>
@@ -760,6 +740,16 @@ const CreateForm = () => {
                     {showMenuInForm && (
 
                       <div className="setting-content">
+
+                        {menuOptions.length === 0 && (
+                          <button
+                            type="button"
+                            onClick={addMenuOption}
+                            className="icon-btn add"
+                          >
+                            <Plus size={17}/> Add meal option
+                          </button>
+                        )}
 
                         {menuOptions.map((option, index) => (
 
