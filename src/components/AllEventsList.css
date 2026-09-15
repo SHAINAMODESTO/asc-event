@@ -42,10 +42,12 @@
   color: #64748b;
   font-size: 0.95rem;
 }
+
 .header-title {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .header-title .stat-icon {
@@ -57,14 +59,11 @@
 }
 
 /* =========================
-   SEARCH
+   SEARCH + DATE RANGE
 ========================= */
-/* =========================
-   SEARCH
-========================= */
-
 .all-events-search {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
@@ -73,8 +72,8 @@
 }
 
 .search-input {
-  flex: 1;
-  min-width: 450px;
+  flex: 1 1 260px;
+  min-width: 0;
   max-width: 850px;
   background: #fff;
   border: 1px solid #cbd5e1;
@@ -82,6 +81,7 @@
   padding: 12px 16px;
   color: #0f172a;
   outline: none;
+  box-sizing: border-box;
 }
 
 .search-input:focus {
@@ -95,7 +95,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .date-range-label {
@@ -111,18 +111,22 @@
 }
 
 .date-input {
-  width: 260px;
+  flex: 1 1 140px;
+  min-width: 130px;
+  max-width: 260px;
   padding: 12px 14px;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
   background: #fff;
   outline: none;
+  box-sizing: border-box;
 }
 
 .date-input:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 4px rgba(59,130,246,.12);
 }
+
 /* =========================
    EVENTS GRID
    COLUMN-FIRST ORDER
@@ -130,12 +134,12 @@
 ========================= */
 .events-grid {
   display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap:16px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
 
   max-height: 72vh;
-  overflow-y:auto;
-  padding-right:8px;
+  overflow-y: auto;
+  padding-right: 8px;
 }
 
 /* Custom Scrollbar */
@@ -242,24 +246,28 @@
 ========================= */
 .event-actions {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.5rem;
   flex-wrap: nowrap;
   margin-top: 1rem;
-  margin-right: 1rem;
 }
+
 .event-actions button {
   flex: 1;
   white-space: nowrap;
 }
+
 .event-button,
 .generate-url-button {
   padding: 12px 16px;
   border-radius: 12px;
   font-weight: 700;
+  font-size: 0.9rem;
   border: none;
   cursor: pointer;
   color: #fff;
   transition: 0.2s;
+  min-height: 44px;
+  box-sizing: border-box;
 }
 
 .event-button {
@@ -316,23 +324,82 @@
 /* =========================
    RESPONSIVE
 ========================= */
+
+/* Tablet: 3 fixed columns with a hard-coded scroll-window height was
+   fragile (it assumed every card was exactly the same height). Switch
+   to 2 columns and let the page scroll naturally instead. */
 @media (max-width: 1024px) {
   .events-grid {
-    grid-template-rows: repeat(2, auto);
-    max-height: calc((202px * 2) + 16px);
-  }
-}
-
-@media (max-width: 600px) {
-  .events-grid {
-    grid-template-rows: repeat(1, auto);
-    max-height: 202px;
+    grid-template-columns: repeat(2, 1fr);
+    max-height: none;
+    overflow-y: visible;
+    padding-right: 0;
   }
 
   .all-event-card {
-    min-width: 100%;
+    min-width: 0;
+  }
+
+  .event-button,
+  .generate-url-button {
+    padding: 10px 12px;
+    font-size: 0.85rem;
   }
 }
+
+/* Small tablet / large phone: stack the search bar and date filters
+   so nothing gets clipped or forces horizontal scrolling. */
+@media (max-width: 640px) {
+  .all-events-search {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input {
+    max-width: 100%;
+  }
+
+  .date-range-wrapper {
+    width: 100%;
+  }
+
+  .date-range-label {
+    width: 100%;
+  }
+
+  .date-input {
+    flex: 1 1 45%;
+    max-width: none;
+  }
+
+  .events-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .all-event-card {
+    padding: 1.25rem;
+  }
+}
+
+/* Phone: the 3 action buttons no longer fit comfortably in one row,
+   so stack them full-width with a larger tap target. */
+@media (max-width: 480px) {
+  .event-actions {
+    flex-direction: column;
+  }
+
+  .event-actions button {
+    width: 100%;
+  }
+
+  .event-button,
+  .generate-url-button {
+    font-size: 0.95rem;
+    padding: 14px 16px;
+    min-height: 46px;
+  }
+}
+
 /* =========================
    GENERATE URL MODAL
 ========================= */
@@ -344,18 +411,23 @@
     justify-content:center;
     align-items:center;
     z-index:999;
+    padding: 16px;
+    box-sizing: border-box;
 }
 
 .modal-box{
     background:#fff;
     width:550px;
+    max-width:100%;
     padding:25px;
     border-radius:12px;
     box-shadow:0 10px 30px rgba(0,0,0,.2);
+    box-sizing: border-box;
 }
 
 .url-container{
     display:flex;
+    flex-wrap: wrap;
     align-items:center;
     margin-top:20px;
     gap:10px;
@@ -363,10 +435,12 @@
 
 .url-input{
     flex:1;
+    min-width: 0;
     padding:12px;
     border:1px solid #ccc;
     border-radius:8px;
     background:#f8f8f8;
+    box-sizing: border-box;
 }
 
 .copy-btn{
@@ -380,6 +454,7 @@
     display:flex;
     justify-content:center;
     align-items:center;
+    flex-shrink: 0;
 }
 
 .copy-btn:hover{
@@ -393,18 +468,5 @@
     color:white;
     border-radius:8px;
     cursor:pointer;
-}
-/* =========================
-   Responsive Buttons
-========================= */
-
-@media (max-width: 1024px) {
-  .event-actions {
-    flex-direction: column;
     width: 100%;
-  }
-
-  .event-actions button {
-    width: 100%;
-  }
 }

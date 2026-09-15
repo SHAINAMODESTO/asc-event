@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, Outlet } from "react-router-dom";
 import { getEvents } from "../services/eventService";
-import { getAttendees } from "../services/attendeeListService";
+import { isAdmin } from "../services/authService";
 import "./Sidebar.css";
 
 const sectionItems = {
@@ -12,7 +12,6 @@ const sectionItems = {
   ],
   "User Management": [
     "Admin users",
-    "QR Scanner"
   ],
   Settings: [
     "Profile settings",
@@ -32,6 +31,17 @@ export default function Sidebar() {
   const [upcomingEvents, setUpcomingEvents] = useState(0);
   const [attendeesToday, setAttendeesToday] = useState(0);
 
+  // ========================================
+  // FE-011: ROLE-BASED NAV FILTERING
+  // ========================================
+  // Coordinators only get the Events section (Create Event / Draft
+  // Events / Published Events) plus Reports (opened per-event, not
+  // from here). "User Management" and "Settings" are admin-only, so
+  // those whole sections — headers included — are hidden from the
+  // sidebar for coordinators, not just individual items inside them.
+  const visibleSectionItems = isAdmin()
+    ? sectionItems
+    : { Events: sectionItems.Events };
 
   useEffect(() => {
   loadDashboard();
@@ -39,7 +49,10 @@ export default function Sidebar() {
 
 const loadDashboard = async () => {
   try {
-    const events = await getEvents();
+    // EVENTS
+    const eventResponse = await getEvents();
+
+    const events = eventResponse.data || eventResponse || [];
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -54,6 +67,17 @@ const loadDashboard = async () => {
     });
 
     setUpcomingEvents(upcoming.length);
+
+    // ATTENDEES TODAY
+    // NOTE: `getAttendees()` (attendeeListService.jsx) requires an
+    // `{ eventId, ... }` object — it's a per-event lookup, not a
+    // system-wide one, so it can't be called from this dashboard
+    // (there's no event selected here). Calling it with no argument
+    // was throwing "Cannot destructure property 'eventId' of
+    // undefined" and crashing this page. Until there's a real
+    // system-wide "attendees registered today" endpoint, this stat
+    // stays at its default (0) instead of guessing at data.
+
   } catch (error) {
     console.error(error);
   }
@@ -81,12 +105,9 @@ const loadDashboard = async () => {
     } else if (path.includes("/useradmin-table")) {
       setSelectedSection("User Management");
       setActiveItem("Admin users");
-    } else if (path.includes("/qr-scanner")) {
-      setSelectedSection("User Management");
-      setActiveItem("QR Scanner");
     }
-    
-    
+
+
   }, [location.pathname]);
 
   const handleLogout = () => {
@@ -116,63 +137,9 @@ const loadDashboard = async () => {
         navigate("/useradmin-table");
         break;
 
-      case "QR Scanner":
-      navigate("/qr-scanner");
-      break;  
-
       default:
         break;
     }
-    const [upcomingEvents, setUpcomingEvents] = useState(0);
-const [attendeesToday, setAttendeesToday] = useState(0);
-useEffect(() => {
-  loadDashboard();
-}, []);
-
-const loadDashboard = async () => {
-  try {
-    // EVENTS
-    const eventResponse = await getEvents();
-
-    const events = eventResponse.data || eventResponse || [];
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const upcoming = events.filter((event) => {
-      if (!event.startDate) return false;
-
-      const eventDate = new Date(event.startDate);
-      eventDate.setHours(0, 0, 0, 0);
-
-      return eventDate >= today;
-    });
-
-    setUpcomingEvents(upcoming.length);
-
-    // ATTENDEES
-    const attendeeResponse = await getAttendees();
-
-    const attendees = attendeeResponse.data || attendeeResponse || [];
-
-    const todayAttendees = attendees.filter((attendee) => {
-      if (!attendee.createdAt) return false;
-
-      const created = new Date(attendee.createdAt);
-
-      return (
-        created.getFullYear() === today.getFullYear() &&
-        created.getMonth() === today.getMonth() &&
-        created.getDate() === today.getDate()
-      );
-    });
-
-    setAttendeesToday(todayAttendees.length);
-
-  } catch (error) {
-    console.error(error);
-  }
-};
   };
 
   return (
@@ -182,7 +149,7 @@ const loadDashboard = async () => {
         <div className="sidebar-brand">Event Management</div>
 
         <nav className="sidebar-nav">
-          {Object.keys(sectionItems).map((section) => (
+          {Object.keys(visibleSectionItems).map((section) => (
             <div key={section} className="sidebar-section">
               <button
                 type="button"
@@ -200,7 +167,7 @@ const loadDashboard = async () => {
 
               {selectedSection === section && (
                 <div className="sidebar-submenu">
-                  {sectionItems[section].map((item) => (
+                  {visibleSectionItems[section].map((item) => (
                     <button
                       key={item}
                       type="button"

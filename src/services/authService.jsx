@@ -1,6 +1,5 @@
-
 import axios from "axios";
-import api from "./api";
+import api, { applyRateLimitMessage, applyErrorEnvelopeMessage } from "./api";
 
 const BASE_URL = "https://api.asconlineportal.com/api-event";
 
@@ -8,6 +7,14 @@ const BASE_URL = "https://api.asconlineportal.com/api-event";
 // LOGIN
 // POST /auth/login
 // ========================================
+// Uses raw `axios`, not the shared `api` instance, since there's no
+// access token yet to attach before login succeeds — which also means
+// it doesn't go through api.jsx's response interceptor. FE-012: the
+// backend caps login attempts tighter than everything else (5/min),
+// so this is exactly the endpoint most likely to get rate-limited —
+// `applyRateLimitMessage` re-runs the same 429 handling here so
+// Login.jsx's existing `error.response?.data?.message` read still
+// shows a "try again in Ns" message instead of the generic fallback.
 
 export const loginUser = async (email, password) => {
   try {
@@ -26,6 +33,9 @@ export const loginUser = async (email, password) => {
 
     return response.data;
   } catch (error) {
+    applyErrorEnvelopeMessage(error);
+    applyRateLimitMessage(error);
+
     console.error(
       "Login Error:",
       error.response?.data || error

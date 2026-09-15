@@ -6,87 +6,16 @@
   padding: 10px;
   background: #f8fafc;
 
- 
+
 }
 
-/* ===========================
-   PAGE HEADER
-=========================== */
-
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
-  padding: 24px 30px;
-  background: #fff;
-  border-radius: 20px;
-  border: 1px solid #ececec;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
+/* Scoped to this page (rather than editing the shared .all-events-header
+   rule) since Draft/Published Events get their header-to-body gap from
+   their parent's flex `gap`, not a margin on the header itself. */
+.create-event-page .all-events-header {
+  margin-bottom: 20px;
 }
 
-.page-header-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fde8eb;
-  color: #c8102e;
-  flex-shrink: 0;
-}
-
-.page-header-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.page-header-content h1 {
-  margin: 0;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.page-header-content p {
-  margin-top: 2px;
-  font-size: 15px;
-  color: #6b7280;
-  line-height: 1.6;
-}
-
-/* ===========================
-   RESPONSIVE
-=========================== */
-
-@media (max-width: 768px) {
-  .page-header {
-    padding: 20px;
-    gap: 16px;
-  }
-
-  .page-header-icon {
-    width: 60px;
-    height: 60px;
-  }
-
-  .page-header-content h1 {
-    font-size: 1.5rem;
-  }
-
-  .page-header-content p {
-    font-size: 14px;
-  }
-}
-
-@media (max-width: 576px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-  }
-}
 /* ===========================
    WRAPPER
 =========================== */
@@ -719,15 +648,6 @@
     padding: 18px;
   }
 
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .page-header span {
-    font-size: 24px;
-  }
-
   .two-column,
   .three-column {
     grid-template-columns: 1fr;
@@ -739,6 +659,414 @@
 
   .cancel-btn,
   .save-btn {
+    width: 100%;
+  }
+
+}
+
+/* ===================================
+   REGISTRATION BANNER UPLOAD
+=================================== */
+
+.banner-upload-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  width: 100%;
+  height: 140px;
+
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #f8fafc;
+
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+
+  cursor: pointer;
+  transition: .2s;
+  overflow: hidden;
+}
+
+.banner-upload-box:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.banner-upload-box.has-preview {
+  padding: 0;
+}
+
+.banner-upload-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.banner-upload-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ===================================
+   ATTENDEE PROFILE PHOTO — SAMPLE UPLOAD
+=================================== */
+
+.photo-upload-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.photo-upload-box {
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #f8fafc;
+
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: .2s;
+  overflow: hidden;
+}
+
+.photo-upload-box:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.photo-upload-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-upload-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+.photo-upload-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.photo-upload-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.photo-remove-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+
+  margin-top: 4px;
+  border: none;
+  background: none;
+  padding: 0;
+
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.photo-remove-btn:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+
+  .photo-upload-row {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .photo-upload-info {
+    align-items: center;
+  }
+
+}
+
+/* ===================================
+   PAID EVENT — EDIT CONFIG LINK
+=================================== */
+
+.edit-paid-event-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-top: 10px;
+
+  border: none;
+  background: none;
+  padding: 0;
+
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.edit-paid-event-link:hover {
+  text-decoration: underline;
+}
+
+/* ===================================
+   CONFIGURE PAID EVENT MODAL
+=================================== */
+
+.paid-event-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  padding: 20px;
+}
+
+.paid-event-modal {
+  width: 640px;
+  max-width: 100%;
+  max-height: 90vh;
+
+  background: #fff;
+  border-radius: 18px;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.paid-event-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  padding: 24px 28px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.paid-event-modal-header h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.paid-event-modal-header p {
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.paid-event-close-btn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+
+  border: none;
+  border-radius: 10px;
+  background: #fff;
+
+  color: #6b7280;
+  font-size: 16px;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition: .2s;
+}
+
+.paid-event-close-btn:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.paid-event-modal-body {
+  padding: 24px 28px;
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-group label span.field-hint {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+/* Ticket tiers table */
+
+.ticket-tiers-table {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ticket-tier-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 1.2fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.ticket-tier-row-header span {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.price-input-wrapper {
+  position: relative;
+}
+
+.price-input-wrapper .currency-symbol {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  font-size: 15px;
+  pointer-events: none;
+}
+
+.price-input-wrapper .form-input {
+  padding-left: 30px;
+}
+
+.add-ticket-tier-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+
+  width: 100%;
+  height: 46px;
+
+  border: 1px dashed #93c5fd;
+  border-radius: 12px;
+  background: #eff6ff;
+
+  color: #2563eb;
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: .2s;
+}
+
+.add-ticket-tier-btn:hover {
+  background: #dbeafe;
+}
+
+.paid-event-note {
+  display: flex;
+  gap: 10px;
+
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #eff6ff;
+
+  color: #374151;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.paid-event-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+
+  padding: 20px 28px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.cancel-paid-event-btn,
+.save-paid-event-btn {
+  min-width: 120px;
+  height: 46px;
+
+  border-radius: 12px;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: .2s;
+}
+
+.cancel-paid-event-btn {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.cancel-paid-event-btn:hover {
+  background: #f9fafb;
+}
+
+.save-paid-event-btn {
+  border: none;
+  background: #dc2626;
+  color: #fff;
+}
+
+.save-paid-event-btn:hover {
+  background: #b91c1c;
+}
+
+@media (max-width: 640px) {
+
+  .ticket-tier-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-tier-row-header {
+    display: none;
+  }
+
+  .paid-event-modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .cancel-paid-event-btn,
+  .save-paid-event-btn {
     width: 100%;
   }
 

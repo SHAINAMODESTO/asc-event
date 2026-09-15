@@ -15,6 +15,7 @@ import Login from "./components/Login";
 import UserAdminTable from "./components/UserAdminTable";
 import QRScanner from "./qr-scanner/QRScanner";
 import EventReports from "./components/EventReports";
+import { isAdmin } from "./services/authService";
 
 // ========================================
 // PROTECTED ROUTE
@@ -28,6 +29,28 @@ const ProtectedRoute = ({ children }) => {
   ) : (
     <Navigate to="/login" replace />
   );
+};
+
+// ========================================
+// ADMIN ROUTE
+// ========================================
+// FE-011: User Management is admin-only — coordinators should never land
+// on this page, even by typing/bookmarking the URL directly, so this
+// checks role on top of ProtectedRoute's token check and bounces
+// non-admins back to the dashboard instead of rendering the page.
+
+const AdminRoute = ({ children }) => {
+  const token = localStorage.getItem("accessToken");
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdmin()) {
+    return <Navigate to="/published-events" replace />;
+  }
+
+  return children;
 };
 
 function App() {
@@ -128,10 +151,15 @@ function App() {
         />
 
         {/* User Administration */}
+        {/* FE-011: admin-only — coordinators are redirected away. */}
 
         <Route
           path="useradmin-table"
-          element={<UserAdminTable />}
+          element={
+            <AdminRoute>
+              <UserAdminTable />
+            </AdminRoute>
+          }
         />
 
         {/* Reports */}
@@ -164,4 +192,3 @@ function App() {
 }
 
 export default App;
-

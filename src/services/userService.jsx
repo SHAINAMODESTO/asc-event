@@ -1,5 +1,9 @@
-
 import axios from "axios";
+import {
+  applyRateLimitMessage,
+  applyErrorEnvelopeMessage,
+  handleUnauthorizedResponse,
+} from "./api";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -23,6 +27,13 @@ const getAuthHeaders = () => {
 // POST /users
 // Admin only
 // ========================================
+// Uses raw `axios` (not the shared `api` instance), so it doesn't go
+// through api.jsx's response interceptor. FE-012: `applyRateLimitMessage`
+// re-runs the same 429 handling here so a rate-limited request still
+// surfaces a "try again in Ns" message instead of a generic failure.
+// FE-003: `handleUnauthorizedResponse` re-runs the same expired-token
+// cleanup + redirect here too, since this call is invisible to the
+// interceptor.
 
 export const createUser = async (userData) => {
   try {
@@ -34,6 +45,10 @@ export const createUser = async (userData) => {
 
     return response.data;
   } catch (error) {
+    applyErrorEnvelopeMessage(error);
+    applyRateLimitMessage(error);
+    handleUnauthorizedResponse(error);
+
     console.error(
       "Create User Error:",
       error.response?.data || error
@@ -58,6 +73,10 @@ export const getUsers = async () => {
 
     return response.data;
   } catch (error) {
+    applyErrorEnvelopeMessage(error);
+    applyRateLimitMessage(error);
+    handleUnauthorizedResponse(error);
+
     console.error(
       "Get Users Error:",
       error.response?.data || error
@@ -66,4 +85,3 @@ export const getUsers = async () => {
     throw error;
   }
 };
-

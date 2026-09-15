@@ -184,24 +184,24 @@ TOOLBAR
     background: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 1px;
-    padding: 13px 24px;
+    padding: 12px 18px;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 20px;
-    row-gap: 14px;
+    gap: 12px;
+    row-gap: 10px;
     box-shadow: 0 8px 20px rgba(15,23,42,.05);
 }
 
 /* LEFT SIDE */
 .toolbar-left {
-  flex:1;
+  flex: 1 1 260px;
     display:flex;
     align-items:center;
     flex-wrap: wrap;
-    gap:14px;
-    row-gap: 10px;
-    min-width:220px;
+    gap:10px;
+    row-gap: 8px;
+    min-width:0;
 }
 
 /* RIGHT SIDE */
@@ -210,12 +210,15 @@ TOOLBAR
    Emails, Bulk Confirm, ...) no longer fits beside the search/filters
    on one row. This isn't gated behind a media query on purpose — the
    number of buttons here can grow, so the layout needs to respond to
-   available width, not just a couple of fixed breakpoints. */
+   available width, not just a couple of fixed breakpoints. Tight gaps
+   here (vs. the old 20px/12px) let more buttons share a row before
+   wrapping is needed. */
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
-  row-gap: 10px;
+  flex: 0 1 auto;
+  gap: 8px;
+  row-gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
@@ -227,22 +230,22 @@ TOOLBAR
 .search-box {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex:1 1 auto;
-  min-width:50px;
-  max-width:none;
+  gap: 8px;
+  flex: 2 1 240px;
+  min-width:240px;
+  max-width:520px;
   background: #fff;
   border: 1px solid #dbe3ef;
-  border-radius: 12px;
-  padding: 0 16px;
-  height: 46px;
+  border-radius: 10px;
+  padding: 0 12px;
+  height: 42px;
 }
 .search-box input {
-  width: 90%;
+  width: 100%;
   border: none;
   outline: none;
   background: transparent;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .search-box:focus-within {
@@ -255,15 +258,17 @@ TOOLBAR
 ======================================== */
 
 .toolbar select {
-  width: 150px;
-  height: 46px;
+  flex: 1 1 170px;
+  width: auto;
+  max-width: 220px;
+  height: 42px;
+
   border: 1px solid #dbe3ef;
-  border-radius: 12px;
+  border-radius: 10px;
+
   background: white;
-  padding: 0 14px;
-  font-size: 14px;
-  flex-shrink: 0;
- 
+  padding: 0 10px;
+  font-size: 13px;
 }
 
 /* ========================================
@@ -275,16 +280,16 @@ TOOLBAR
 .orange-btn,
 .green-btn,
 .red-btn{
-  height: 46px;
-  padding: 0 12px;
+  height: 42px;
+  padding: 0 10px;
 
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
 
-  border-radius: 12px;
-  font-size: 14px;
+  border-radius: 10px;
+  font-size: 13px;
   font-weight: 600;
 
   white-space: nowrap;
@@ -360,6 +365,7 @@ TOOLBAR
     .toolbar{
         flex-wrap:wrap;
         align-items:stretch;
+        row-gap: 12px;
     }
 
     .toolbar-left{
@@ -378,19 +384,34 @@ TOOLBAR
         max-width:none;
     }
 
+    /* Let the two dropdowns share the row evenly instead of sitting
+       as small fixed-width boxes with dead space beside them. */
+    .toolbar select{
+        flex:1 1 160px;
+        width:auto;
+    }
+
 }
 
 /* ========================================
-   MOBILE
+   MOBILE / TABLET-PORTRAIT
 ======================================== */
 
 @media (max-width:768px){
+
+    .toolbar{
+        padding: 12px 14px;
+        gap: 10px;
+        row-gap: 10px;
+    }
 
     .toolbar-left,
     .toolbar-right{
         width:100%;
         flex-direction:column;
         align-items:stretch;
+        gap: 10px;
+        row-gap: 10px;
     }
 
     .toolbar select,
@@ -401,6 +422,42 @@ TOOLBAR
     .red-btn,
     .green-btn{
         width:100%;
+        flex: 1 1 auto;
+    }
+
+    /* Bigger touch targets once everything is a full-width stacked
+       column — 42px reads fine side-by-side on desktop, but is tight
+       to tap reliably on a phone. */
+    .toolbar select,
+    .search-box,
+    .blue-btn,
+    .white-btn,
+    .orange-btn,
+    .red-btn,
+    .green-btn{
+        height: 46px;
+    }
+
+}
+
+/* ========================================
+   SMALL PHONES
+======================================== */
+
+@media (max-width:480px){
+
+    .toolbar{
+        padding: 10px 12px;
+    }
+
+    .toolbar select,
+    .search-box input,
+    .blue-btn,
+    .white-btn,
+    .orange-btn,
+    .red-btn,
+    .green-btn{
+        font-size: 13px;
     }
 
 }
@@ -920,6 +977,12 @@ font-size:24px;
     background:#2563eb;
     color:white;
     border:none;
+}
+
+.modal-assign-btn:disabled{
+    background:#d1d5db;
+    color:#6b7280;
+    cursor:not-allowed;
 }
 
 .modal-checkin-btn{
@@ -1773,8 +1836,14 @@ background:#16a34a;
   transition:.2s;
 }
 
-.assign-table-btn:hover{
+.assign-table-btn:hover:not(:disabled){
   background:#1d4ed8;
+}
+
+.assign-table-btn:disabled{
+  background:#d1d5db;
+  color:#6b7280;
+  cursor:not-allowed;
 }
 
 .table-assigned{
@@ -3193,6 +3262,8 @@ background:#16a34a;
 
   align-items: flex-start;
 
+  flex-wrap: wrap;
+
   gap: 10px;
 
   padding: 10px 12px;
@@ -3222,6 +3293,75 @@ background:#16a34a;
   font-size: 12px;
 
   line-height: 1.5;
+
+  flex-basis: 100%;
+}
+
+/* ========================================
+   IMPORT ROW TAG (duplicate / blocked / other)
+   Labels each skipped row so an already-registered
+   or blocked-email skip doesn't read like a data
+   problem the admin needs to go fix.
+======================================== */
+
+.import-row-tag {
+  flex-shrink: 0;
+
+  padding: 2px 8px;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+
+  white-space: nowrap;
+}
+
+.import-row-tag.other {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.import-row-tag.duplicate {
+  background: #fef9c3;
+  color: #a16207;
+}
+
+.import-row-tag.blocked {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Duplicate (already registered) — amber, distinct from the default
+   orange "needs correction" styling. */
+.import-row-error.duplicate {
+  background: #fefce8;
+  border-color: #fde68a;
+}
+
+.import-row-error.duplicate .import-row-number {
+  color: #a16207;
+}
+
+.import-row-error.duplicate .import-row-reason {
+  color: #854d0e;
+}
+
+/* Blocked email — red, since this is an intentional block rather
+   than a data-entry mistake. */
+.import-row-error.blocked {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.import-row-error.blocked .import-row-number {
+  color: #b91c1c;
+}
+
+.import-row-error.blocked .import-row-reason {
+  color: #991b1b;
 }
 
 

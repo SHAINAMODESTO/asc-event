@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 
 import { useNavigate, useParams } from "react-router-dom";
+import * as XLSX from "xlsx";
 import {
   getAttendees,
   assignTable,
@@ -28,6 +29,7 @@ import {
   addBlockedEmail,
   removeBlockedEmail,
 } from "../services/eventService";
+import { isAdmin } from "../services/authService";
 import "./EventAttendees.css";
 import {
   Users,
@@ -110,6 +112,41 @@ const getGiveawayValue = (attendee, giveaway) => {
 };
 
 // ========================================
+// IMPORT ROW ERROR CATEGORIZATION
+// ========================================
+// The backend already skips a row during bulk import when its email
+// is already registered for this event, or is on the event's block
+// list, and sends a per-row reason string back alongside genuine
+// validation problems (bad format, missing fields, etc). All three
+// used to be lumped into one generic "needs correction" style, which
+// made a duplicate/blocked skip look like something the admin needs
+// to go fix — it doesn't, it was skipped on purpose. This reads the
+// reason text to label each row clearly instead.
+const categorizeImportRowError = (reason = "") => {
+  const normalized = reason.toLowerCase();
+
+  if (normalized.includes("block")) {
+    return "blocked";
+  }
+
+  if (
+    normalized.includes("already") ||
+    normalized.includes("duplicate") ||
+    normalized.includes("exist")
+  ) {
+    return "duplicate";
+  }
+
+  return "other";
+};
+
+const IMPORT_ROW_ERROR_LABELS = {
+  duplicate: "Already Registered",
+  blocked: "Blocked Email",
+  other: "Needs Correction",
+};
+
+// ========================================
 // GIVEAWAY "DISTRIBUTED" CACHE (localStorage)
 // ========================================
 // Now that `receivedLootBagAt` / `receivedSouvenirAt` /
@@ -147,6 +184,106 @@ const saveGiveawayCache = (eventId, cache) => {
     // Ignore storage errors (private browsing, quota, etc.) — worst
     // case this just falls back to the in-memory state for this visit.
   }
+};
+
+// ========================================
+// IMPORT ATTENDEES: CLIENT-SIDE DUPLICATE / BLOCKLIST PRE-CHECK
+// ========================================
+// The backend's bulk-create endpoint does not currently check whether
+// an email in the uploaded spreadsheet already belongs to an attendee
+// of this event, or is on the event's block list — it just inserts
+// every row it can parse. Until that's fixed on the backend, this is
+// a best-effort safety net: it reads the file in the browser, checks
+// each row's email against the attendee list and block list already
+// known to this page, and removes matches before the file is ever
+// uploaded.
+//
+// This is NOT a guarantee against duplicates — it only knows about
+// attendees and blocked emails that existed at the moment it checked
+// (fetched fresh right before upload, but still a snapshot), so a
+// race with another admin importing, or a walk-in registering, at the
+// same instant can still slip through. Only a check made by the
+// backend at the moment of insert can fully prevent that.
+
+const normalizeHeaderKey = (key = "") =>
+  key.toString().trim().toLowerCase().replace(/\s+/g, " ");
+
+const normalizeEmail = (email = "") => email.toString().trim().toLowerCase();
+
+// Reads an uploaded .xlsx File in the browser and returns its data
+// rows as plain objects keyed by the *normalized* header (so "Email
+// Address", "email address", or " Email  Address " all map to the
+// same "email address" key), alongside each row's real spreadsheet
+// row number (the header is row 1, so data starts at row 2 — matching
+// how the backend numbers rows in its own error responses).
+const readExcelRows = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onerror = () => reject(reader.error);
+
+    reader.onload = () => {
+      try {
+        const workbook = XLSX.read(reader.result, { type: "array" });
+        const firstSheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[firstSheetName];
+
+        // header: 1 gives back arrays-of-cells so we control the
+        // header normalization ourselves instead of relying on exact
+        // header text matching.
+        const rawRows = XLSX.utils.sheet_to_json(sheet, {
+          header: 1,
+          defval: "",
+        });
+
+        const [headerRow, ...dataRows] = rawRows;
+        const normalizedHeaders = (headerRow || []).map(normalizeHeaderKey);
+
+        const rows = dataRows
+          // Skip fully-blank trailing rows some spreadsheet apps add.
+          .filter((cells) => cells.some((cell) => String(cell).trim() !== ""))
+          .map((cells, index) => {
+            const record = {};
+
+            normalizedHeaders.forEach((header, colIndex) => {
+              record[header] = cells[colIndex] ?? "";
+            });
+
+            return {
+              row: index + 2, // +1 for 0-index, +1 for the header row
+              cells,
+              record,
+            };
+          });
+
+        resolve({ rows, headerRow: headerRow || [], normalizedHeaders });
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  });
+
+// Rebuilds a .xlsx File from only the rows that passed the local
+// check, reusing the original header row, so it uploads exactly like
+// a normal import for the rows that remain.
+const buildFilteredExcelFile = (headerRow, keptRows, fileName) => {
+  const worksheetData = [headerRow, ...keptRows.map((row) => row.cells)];
+
+  const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Attendees");
+
+  const arrayBuffer = XLSX.write(workbook, {
+    type: "array",
+    bookType: "xlsx",
+  });
+
+  return new File([arrayBuffer], fileName, {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
 };
 
 const EventAttendees = () => {
@@ -674,6 +811,18 @@ const handleBulkCheckIn = async () => {
 const handleAssignIndividualTable = async () => {
   if (!selectedCompanion) {
     alert("No companion selected.");
+    return;
+  }
+
+  // FE-005: same rule as the primary attendee — a declined/cancelled
+  // companion shouldn't be assignable to a table either.
+  if (
+    selectedCompanion.status === "DECLINED" ||
+    selectedCompanion.status === "CANCELLED"
+  ) {
+    alert(
+      "This companion's registration was declined or cancelled, so a table can't be assigned."
+    );
     return;
   }
 
@@ -1212,11 +1361,97 @@ const handleFileChange = (event) => {
 };
 
 
+// ========================================
+// LOCAL PRE-CHECK HELPERS
+// ========================================
+// Both fetch a *fresh* snapshot right before upload (rather than
+// reusing whatever happens to already be in state) since the whole
+// point is to catch attendees/blocks that exist right now, not
+// whatever this page loaded on its last render. Still just a
+// snapshot — see the big comment above readExcelRows for why this
+// can't be a full guarantee.
+
+// Pulls every attendee currently on this event (not just the current
+// page/filter the table happens to be showing) so the duplicate check
+// isn't blind to attendees sitting on page 2, 3, etc.
+//
+// The backend caps `limit` at 100 per request (asking for more comes
+// back as a 400 "limit must not be greater than 100" — which is what
+// silently broke this check before: the request failed, the whole
+// pre-check bailed into its catch block, and the file uploaded
+// unfiltered). So this pages through in chunks of 100 instead of
+// asking for everything in one call.
+const fetchExistingAttendeeEmails = async () => {
+  const PAGE_SIZE = 100;
+  // Safety cap so a pagination bug on the backend can't turn this
+  // into an infinite loop — 200 pages is 20,000 attendees, far more
+  // than any real event here.
+  const MAX_PAGES = 200;
+
+  const emails = new Set();
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const response = await getAttendees({
+      eventId,
+      page,
+      limit: PAGE_SIZE,
+      search: "",
+      status: "",
+      role: "",
+    });
+
+    const list = response?.data || [];
+
+    list.forEach((attendee) => {
+      // FE-005: a DECLINED registration doesn't hold its email anymore
+      // — that person is free to submit a brand new registration (or
+      // be re-imported) with the same address. Only count emails that
+      // still belong to a live registration.
+      if (attendee.status === "DECLINED") {
+        return;
+      }
+
+      const email = normalizeEmail(attendee.emailAddress);
+      if (email) {
+        emails.add(email);
+      }
+    });
+
+    totalPages = response?.pagination?.totalPages || 1;
+    page += 1;
+  } while (page <= totalPages && page <= MAX_PAGES);
+
+  return emails;
+};
+
+const fetchBlockedEmailSet = async () => {
+  const response = await getBlockedEmails(eventId);
+
+  const list = Array.isArray(response)
+    ? response
+    : response?.data || response?.blockedEmails || response?.emails || [];
+
+  return new Set(
+    list.map((entry) => normalizeEmail(entry?.email)).filter(Boolean)
+  );
+};
+
 const uploadAttendeeFile = async (file) => {
   if (!eventId) {
     setImportError("Event ID is required.");
     return;
   }
+
+  // Declared outside the try block below (not just outside its own
+  // inner try) so the outer catch — which reports on whatever the
+  // pre-check already found before the backend call ran — can still
+  // see it. `let`/`const` are scoped to the block they're declared in,
+  // and try/catch are each their own block, so declaring these inside
+  // the outer try made them invisible to the outer catch.
+  let fileToUpload = file;
+  let locallySkippedRows = [];
 
   try {
     setUploading(true);
@@ -1227,9 +1462,109 @@ const uploadAttendeeFile = async (file) => {
     console.log("Event ID:", eventId);
     console.log("File:", file.name);
 
+    // ========================================
+    // LOCAL PRE-CHECK: duplicate / blocked emails
+    // ========================================
+    // The backend's bulk-create endpoint doesn't currently skip a row
+    // whose email already belongs to an attendee of this event, or is
+    // on the block list — see the comment above readExcelRows for the
+    // full explanation. This reads the file here in the browser, and
+    // removes any row that matches, before it's ever uploaded.
+
+    try {
+      const [{ rows, headerRow, normalizedHeaders }, existingEmails, blockedEmails] =
+        await Promise.all([
+          readExcelRows(file),
+          fetchExistingAttendeeEmails(),
+          fetchBlockedEmailSet(),
+        ]);
+
+      const emailHeaderKey = normalizedHeaders.find((header) =>
+        header.includes("email")
+      );
+
+      if (emailHeaderKey) {
+        const keptRows = [];
+
+        rows.forEach((row) => {
+          const email = normalizeEmail(row.record[emailHeaderKey]);
+
+          if (!email) {
+            // No email on this row — leave it for the backend's own
+            // "required fields" validation rather than guessing here.
+            keptRows.push(row);
+            return;
+          }
+
+          const rawEmail = String(row.record[emailHeaderKey] ?? "").trim();
+
+          if (blockedEmails.has(email)) {
+            locallySkippedRows.push({
+              row: row.row,
+              reason: `${rawEmail} is in the block list.`,
+            });
+            return;
+          }
+
+          if (existingEmails.has(email)) {
+            locallySkippedRows.push({
+              row: row.row,
+              reason: `${rawEmail} is already existing.`,
+            });
+            return;
+          }
+
+          keptRows.push(row);
+        });
+
+        if (locallySkippedRows.length > 0 && keptRows.length === 0) {
+          // Every row was a duplicate or blocked — nothing left to
+          // upload. Report it the same way the backend would if every
+          // row in a file were invalid, without making a network call
+          // that would only ever come back empty.
+          setImportResult({
+            message: `0 attendee(s) imported; ${locallySkippedRows.length} row(s) were skipped.`,
+            inserted: 0,
+            queued: 0,
+            skipped: locallySkippedRows.length,
+            errors: locallySkippedRows,
+          });
+
+          setSelectedFile(null);
+
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+
+          setUploading(false);
+          return;
+        }
+
+        if (locallySkippedRows.length > 0) {
+          fileToUpload = buildFilteredExcelFile(
+            headerRow,
+            keptRows,
+            file.name
+          );
+        }
+      }
+    } catch (preCheckError) {
+      // If the local pre-check itself fails for any reason (a file
+      // the library can't parse, a network hiccup fetching the
+      // existing lists, etc.) fall back to uploading the original
+      // file untouched rather than blocking the import — the
+      // backend's own row-level validation still runs either way.
+      console.error(
+        "Local duplicate/blocklist pre-check failed:",
+        preCheckError
+      );
+      locallySkippedRows = [];
+      fileToUpload = file;
+    }
+
     const response = await bulkCreateAttendees(
       eventId,
-      file
+      fileToUpload
     );
 
     console.log(
@@ -1237,7 +1572,17 @@ const uploadAttendeeFile = async (file) => {
       response
     );
 
-    setImportResult(response);
+    // Merge the backend's own result with whatever this page skipped
+    // locally, so the admin sees one unified list of skipped rows
+    // regardless of which layer caught the issue.
+    setImportResult({
+      ...response,
+      skipped: (response?.skipped || 0) + locallySkippedRows.length,
+      errors: [
+        ...(response?.errors || []),
+        ...locallySkippedRows,
+      ],
+    });
 
     // Clear selected file after upload
     setSelectedFile(null);
@@ -1246,10 +1591,13 @@ const uploadAttendeeFile = async (file) => {
       fileInputRef.current.value = "";
     }
 
-    // Refresh attendee list if available
-    if (typeof fetchAttendees === "function") {
-      await fetchAttendees();
-    }
+    // Refresh attendee list + dashboard totals immediately so the
+    // newly imported attendees (and the updated counts) show up in
+    // the table right away, without needing a manual page reload.
+    await Promise.all([
+      fetchAttendees(),
+      fetchDashboardSummary(),
+    ]);
 
   } catch (error) {
     console.error(
@@ -1257,86 +1605,44 @@ const uploadAttendeeFile = async (file) => {
       error
     );
 
-    const response =
-      error.response?.data;
+    // FE-013: bulkCreateAttendees (attendeeListService.jsx) already
+    // normalizes a `string[]` validation-message envelope into one
+    // readable string (applyErrorEnvelopeMessage in api.jsx), so this
+    // can just read the message directly instead of hand-rolling its
+    // own Array.isArray check.
+    const backendMessage =
+      error.response?.data?.message ||
+        "Failed to import attendees.";
 
-    if (Array.isArray(response?.message)) {
-      setImportError(
-        response.message.join("\n")
-      );
+    if (locallySkippedRows.length > 0) {
+      // The local pre-check already filtered out duplicate/blocked
+      // rows before this request was ever sent — but the backend still
+      // rejected the row(s) that were left (eg. the only remaining row
+      // was missing required fields). Without this, that backend
+      // failure would completely replace the screen and the admin
+      // would never see that the duplicate/blocklist check *did* catch
+      // something; show both instead.
+      const backendRowMatch = backendMessage.match(/row\s+(\d+)/i);
+
+      setImportResult({
+        message: backendMessage,
+        inserted: 0,
+        queued: 0,
+        skipped: locallySkippedRows.length + (backendRowMatch ? 1 : 0),
+        errors: [
+          ...locallySkippedRows,
+          ...(backendRowMatch
+            ? [
+                {
+                  row: Number(backendRowMatch[1]),
+                  reason: backendMessage,
+                },
+              ]
+            : []),
+        ],
+      });
     } else {
-      setImportError(
-        response?.message ||
-        "Failed to import attendees."
-      );
-    }
-
-  } finally {
-    setUploading(false);
-  }
-};
-
-const handleBulkImport = async () => {
-  if (!selectedFile) {
-    setImportError(
-      "Please select an .xlsx file first."
-    );
-    return;
-  }
-
-  if (!eventId) {
-    setImportError(
-      "Event ID is required."
-    );
-    return;
-  }
-
-  try {
-    setUploading(true);
-    setImportError("");
-    setImportResult(null);
-
-    console.log("Starting attendee import...");
-    console.log("Event ID:", eventId);
-    console.log("File:", selectedFile.name);
-
-    const response = await bulkCreateAttendees(
-      eventId,
-      selectedFile
-    );
-
-    console.log(
-      "Import result:",
-      response
-    );
-
-    setImportResult(response);
-
-    // Clear selected file
-    setSelectedFile(null);
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-
-  } catch (error) {
-    console.error(
-      "Import failed:",
-      error
-    );
-
-    const response =
-      error.response?.data;
-
-    if (Array.isArray(response?.message)) {
-      setImportError(
-        response.message.join("\n")
-      );
-    } else {
-      setImportError(
-        response?.message ||
-          "Failed to import attendees."
-      );
+      setImportError(backendMessage);
     }
 
   } finally {
@@ -1361,6 +1667,20 @@ const handleRemoveSelectedFile = () => {
 const handleBulkAssignTable = async () => {
   if (!selectedAttendee?.id) {
     alert("Please select an attendee.");
+    return;
+  }
+
+  // FE-005: a declined/cancelled registration is no longer attending,
+  // so it shouldn't be assignable to a table. The "Assign Table"
+  // button is disabled for this case already — this is a backstop in
+  // case the modal was opened before the status changed.
+  if (
+    selectedAttendee.status === "DECLINED" ||
+    selectedAttendee.status === "CANCELLED"
+  ) {
+    alert(
+      "This attendee's registration was declined or cancelled, so a table can't be assigned."
+    );
     return;
   }
 
@@ -2169,28 +2489,40 @@ const displayedAttendees = [...attendees]
               <div className="import-errors-list">
 
                 <h4>
-                  Rows that need correction
+                  Rows that were skipped
                 </h4>
 
                 <div className="import-errors-scroll">
 
                   {importResult.errors.map(
-                    (item, index) => (
-                      <div
-                        key={`${item.row}-${index}`}
-                        className="import-row-error"
-                      >
+                    (item, index) => {
+                      const category = categorizeImportRowError(
+                        item.reason
+                      );
 
-                        <span className="import-row-number">
-                          Row {item.row}
-                        </span>
+                      return (
+                        <div
+                          key={`${item.row}-${index}`}
+                          className={`import-row-error ${category}`}
+                        >
 
-                        <span className="import-row-reason">
-                          {item.reason}
-                        </span>
+                          <span className="import-row-number">
+                            Row {item.row}
+                          </span>
 
-                      </div>
-                    )
+                          <span
+                            className={`import-row-tag ${category}`}
+                          >
+                            {IMPORT_ROW_ERROR_LABELS[category]}
+                          </span>
+
+                          <span className="import-row-reason">
+                            {item.reason}
+                          </span>
+
+                        </div>
+                      );
+                    }
                   )}
 
                 </div>
@@ -2630,64 +2962,6 @@ const displayedAttendees = [...attendees]
 </table>
       </div>
     </div>
- {/* Import Attendee Results Modal */}
-    {importResult && (
-  <div className="import-result">
-    <h3>Import Results</h3>
-
-    <p>
-      {importResult.message}
-    </p>
-
-    <div className="import-summary">
-      <div>
-        <strong>
-          {importResult.inserted}
-        </strong>
-        <span>Imported</span>
-      </div>
-
-      <div>
-        <strong>
-          {importResult.queued}
-        </strong>
-        <span>Queued</span>
-      </div>
-
-      <div>
-        <strong>
-          {importResult.skipped}
-        </strong>
-        <span>Skipped</span>
-      </div>
-    </div>
-
-    {importResult.errors?.length > 0 && (
-      <div className="import-errors">
-        <h4>
-          Rows that need correction
-        </h4>
-
-        {importResult.errors.map(
-          (error, index) => (
-            <div
-              key={`${error.row}-${index}`}
-              className="import-error-row"
-            >
-              <strong>
-                Row {error.row}
-              </strong>
-
-              <span>
-                {error.reason}
-              </span>
-            </div>
-          )
-        )}
-      </div>
-    )}
-  </div>
-)}
  {/* Attendee Modal */}
       {selectedAttendee && (
         <div
@@ -2880,16 +3154,33 @@ const displayedAttendees = [...attendees]
                       </span>
 
                       {/* ATTENDEE ACTION BUTTONS BASED ON THE CURRENT STATUS */}
-                        {selectedAttendee.status === "PENDING" && (
+                      {/* FE-011: Confirm/Decline/Cancel are admin-only on
+                          the backend — coordinators get a raw 403 today,
+                          so these are hidden entirely for them instead of
+                          being a dead click followed by an error toast. */}
+                      {/* FE-005: the admin can still change a registration's
+                          mind after the fact, so Confirm/Decline/Cancel all
+                          stay visible for PENDING, CONFIRMED, and CANCELLED
+                          alike — only the button matching the *current*
+                          status is disabled, since re-doing that one action
+                          is a no-op (eg. a CANCELLED attendee can still be
+                          Confirmed or Declined, just not re-Cancelled). */}
+                        {(selectedAttendee.status === "PENDING" ||
+                          selectedAttendee.status === "CONFIRMED" ||
+                          selectedAttendee.status === "CANCELLED") &&
+                          isAdmin() && (
                           <>
                             <label>Actions</label>
 
                             <div className="attendee-actions">
                               <button
                                 className="confirm-attendee-btn"
+                                disabled={selectedAttendee.status === "CONFIRMED"}
                                 onClick={() => handleConfirmAttendee(selectedAttendee.id)}
                               >
-                                Confirm
+                                {selectedAttendee.status === "CONFIRMED"
+                                  ? "Confirmed"
+                                  : "Confirm"}
                               </button>
 
                               <button
@@ -2901,9 +3192,12 @@ const displayedAttendees = [...attendees]
 
                               <button
                                 className="cancel-attendee-btn"
+                                disabled={selectedAttendee.status === "CANCELLED"}
                                 onClick={() => handleCancelAttendee(selectedAttendee.id)}
                               >
-                                Cancel
+                                {selectedAttendee.status === "CANCELLED"
+                                  ? "Cancelled"
+                                  : "Cancel"}
                               </button>
                             </div>
                           </>
@@ -3143,6 +3437,10 @@ const displayedAttendees = [...attendees]
 
                             <button
                               className="assign-table-btn"
+                              disabled={
+                                companion.status === "DECLINED" ||
+                                companion.status === "CANCELLED"
+                              }
                               onClick={(e) => {
                                   e.stopPropagation();
 
@@ -3156,7 +3454,12 @@ const displayedAttendees = [...attendees]
                               }}
                           >
 
-                              {companion.tableNumber ? "Change Table" : "Assign Table"}
+                              {companion.status === "DECLINED" ||
+                              companion.status === "CANCELLED"
+                                ? "Unavailable"
+                                : companion.tableNumber
+                                ? "Change Table"
+                                : "Assign Table"}
                             </button>
 
                             <button
@@ -3810,12 +4113,19 @@ const displayedAttendees = [...attendees]
 
               <button
                 className="modal-assign-btn"
+                disabled={
+                  selectedAttendee?.status === "DECLINED" ||
+                  selectedAttendee?.status === "CANCELLED"
+                }
                 onClick={() => {
                   setTableNumber(selectedAttendee.tableNumber || "");
                   setShowAssignModal(true);
                 }}
               >
-                Assign Table
+                {selectedAttendee?.status === "DECLINED" ||
+                selectedAttendee?.status === "CANCELLED"
+                  ? "Assign Table Unavailable"
+                  : "Assign Table"}
               </button>
 
               {selectedAttendee?.role === "PRIMARY" &&

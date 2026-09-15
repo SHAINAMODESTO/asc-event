@@ -45,7 +45,7 @@ const Login = () => {
 
       // Commented out — this prints the full login response (id,
       // email, name, and the access token itself) to the console on
-      // every login. 
+      // every login.
       // ========================================
       // BACKEND RESPONSE
       //
@@ -62,7 +62,7 @@ const Login = () => {
       //   }
       // }
       //
-      
+
       // ========================================
 
       if (!response || !response.data) {
@@ -111,7 +111,7 @@ const Login = () => {
       // ========================================
       // FETCH + SAVE CURRENT USER'S ROLE
       // ========================================
-     
+
       try {
         const meResponse = await getCurrentUser();
 
@@ -158,16 +158,15 @@ const Login = () => {
         error
       );
 
-      const message =
-        error.response?.data?.message;
-
-      if (Array.isArray(message)) {
-        setError(message.join("\n"));
-      } else {
-        setError(
-          message || "Login failed. Please check your email and password."
-        );
-      }
+      // FE-013: authService.jsx's loginUser already normalizes a
+      // `string[]` validation-message envelope into one readable
+      // string (applyErrorEnvelopeMessage in api.jsx), so this can
+      // just read the message directly instead of hand-rolling its
+      // own Array.isArray check.
+      setError(
+        error.response?.data?.message ||
+          "Login failed. Please check your email and password."
+      );
 
     } finally {
       setLoading(false);

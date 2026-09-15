@@ -70,10 +70,14 @@ const Register = () => {
     } catch (error) {
       console.error("FULL ERROR:", error.response?.data);
 
+      // FE-013: createAttendee goes through the shared `api` instance,
+      // whose response interceptor already normalizes a `string[]`
+      // validation-message envelope into one readable string
+      // (applyErrorEnvelopeMessage in api.jsx), so this can just read
+      // the message directly instead of hand-rolling its own
+      // Array.isArray check.
       alert(
-        Array.isArray(error.response?.data?.message)
-          ? error.response.data.message.join("\n")
-          : error.response?.data?.message || "Failed to submit registration",
+        error.response?.data?.message || "Failed to submit registration",
       );
     }
   };

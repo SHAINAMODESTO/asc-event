@@ -1,4 +1,8 @@
-import api from "./api";
+import api, {
+  applyRateLimitMessage,
+  applyErrorEnvelopeMessage,
+  handleUnauthorizedResponse,
+} from "./api";
 import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
@@ -57,10 +61,10 @@ export const bulkAssignTable = async (attendeeId, tableNumber) => {
     throw error;
   }
 };
-//Check in 
+//Check in
 export const checkInAttendee = async (attendeeId) => {
   try {
-    
+
     const response = await api.patch(
       `${BASE_URL}/attendee/${attendeeId}/check-in`
     );
@@ -371,6 +375,14 @@ export const bulkConfirmAttendees = async (attendeeIds) => {
 // Admin only
 // multipart/form-data
 // ========================================
+// Uses raw `axios` (not the shared `api` instance) since it attaches
+// its own multipart headers, so it doesn't go through api.jsx's
+// response interceptor. FE-012: `applyRateLimitMessage` re-runs the
+// same 429 handling here so a rate-limited import still surfaces a
+// "try again in Ns" message instead of a generic failure. FE-003:
+// `handleUnauthorizedResponse` re-runs the same expired-token cleanup
+// + redirect here too, since this call is invisible to the
+// interceptor.
 
 export const bulkCreateAttendees = async (eventId, file) => {
   try {
@@ -391,6 +403,10 @@ export const bulkCreateAttendees = async (eventId, file) => {
 
     return response.data;
   } catch (error) {
+    applyErrorEnvelopeMessage(error);
+    applyRateLimitMessage(error);
+    handleUnauthorizedResponse(error);
+
     console.error(
       "Bulk Create Attendees Error:",
       error.response?.data || error
