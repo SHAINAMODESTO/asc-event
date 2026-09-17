@@ -6,6 +6,7 @@ import {
   publishEvent,
   deleteEvent,
 } from "../services/eventService";
+import { isAdmin } from "../services/authService";
 import "./AllEventsList.css";
 
 const formatDateRange = (start, end) => {
@@ -99,13 +100,21 @@ navigate("/published-events");
     return matchesSearch && matchesFromDate && matchesToDate;
   });
 
-    const deleteTemplate = async (id) => {
+    const deleteTemplate = async (event) => {
+  if (!isAdmin()) return;
+
+  const confirmed = window.confirm(
+    `Are you sure you want to archive ${event.title || "this event"}?`
+  );
+
+  if (!confirmed) return;
+
   try {
-    const response = await deleteEvent(id);
+    const response = await deleteEvent(event.id);
 
     if (response.success) {
       fetchEvents();
-      setStatusMessage("Event deleted successfully.");
+      alert("Event deleted successfully.");
     }
   } catch (error) {
     console.error("Delete failed:", error);
@@ -228,13 +237,24 @@ navigate("/published-events");
                   Publish Form 
                 </button>
 
-                <button
-                  type="button"
-                  className="event-button event-button-delete"
-                  onClick={() => deleteTemplate(event.id)}
-                >
-                  Archive
-                </button>
+                <span className="tooltip-wrapper">
+                  <button
+                    type="button"
+                    className={`event-button event-button-delete${
+                      isAdmin() ? "" : " event-button-disabled"
+                    }`}
+                    aria-disabled={!isAdmin()}
+                    onClick={() => deleteTemplate(event)}
+                  >
+                    Archive
+                  </button>
+
+                  {!isAdmin() && (
+                    <span className="tooltip-text">
+                      You do not have permission to this action.
+                    </span>
+                  )}
+                </span>
               </div>
 
               <div className="event-section"></div>

@@ -9,9 +9,11 @@ const sectionItems = {
     "Create Event",
     "Draft Events List",
     "Published Events List",
+    "Archived Events List",
   ],
   "User Management": [
     "Admin users",
+    "Deactivated Users",
   ],
   Settings: [
     "Profile settings",
@@ -39,9 +41,16 @@ export default function Sidebar() {
   // from here). "User Management" and "Settings" are admin-only, so
   // those whole sections — headers included — are hidden from the
   // sidebar for coordinators, not just individual items inside them.
+  // Archived Events List is admin-only too (archive/restore requires
+  // the ADMIN role on the backend), so it's filtered out of Events
+  // for coordinators rather than hiding the whole section.
   const visibleSectionItems = isAdmin()
     ? sectionItems
-    : { Events: sectionItems.Events };
+    : {
+        Events: sectionItems.Events.filter(
+          (item) => item !== "Archived Events List"
+        ),
+      };
 
   useEffect(() => {
   loadDashboard();
@@ -102,9 +111,15 @@ const loadDashboard = async () => {
     } else if (path.includes("/published-events")) {
       setSelectedSection("Events");
       setActiveItem("Published Events List");
+    } else if (path.includes("/archived-events")) {
+      setSelectedSection("Events");
+      setActiveItem("Archived Events List");
     } else if (path.includes("/useradmin-table")) {
       setSelectedSection("User Management");
       setActiveItem("Admin users");
+    } else if (path.includes("/deactivated-users")) {
+      setSelectedSection("User Management");
+      setActiveItem("Deactivated Users");
     }
 
 
@@ -133,8 +148,16 @@ const loadDashboard = async () => {
         navigate("/published-events");
         break;
 
+      case "Archived Events List":
+        navigate("/archived-events");
+        break;
+
       case "Admin users":
         navigate("/useradmin-table");
+        break;
+
+      case "Deactivated Users":
+        navigate("/deactivated-users");
         break;
 
       default:

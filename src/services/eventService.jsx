@@ -81,18 +81,43 @@ export const deleteEvent = async (eventId) => {
   }
 };
 
+// Get Archived (Soft-Deleted) Events
+export const getArchivedEvents = async (params = {}) => {
+  try {
+    const response = await api.get(`${BASE_URL}/event/archive`, { params });
+
+    return response.data.data;
+  } catch (error) {
+    console.error(
+      "Get Archived Events Error:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+// Restore Event
+export const restoreEvent = async (eventId) => {
+  try {
+    const response = await api.patch(`${BASE_URL}/event/${eventId}/restore`);
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Restore Event Error:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
 // ========================================
 // BLOCKED EMAILS (per event)
 // ========================================
 // Lets an admin block a specific email address from registering for a
-// given event, and view the current block list.
-//
-// NOTE: unlike the rest of this file (which uses the singular `/event/...`
-// prefix), these paths use the plural `/events/...` because that's what
-// the FE-008 issue specifies verbatim, and the singular form 404'd
-// ("Cannot GET /api-event/event/:eventId/blocked-emails") against the
-// live backend. If this route ever moves, this is the one place to
-// change it.
+// given event, and view the current block list. Unlike the rest of this
+// file (which uses the singular `/event/...` prefix), these paths use
+// the plural `/events/...` — that's the confirmed route on the backend.
 
 // Get Blocked Emails for an Event
 export const getBlockedEmails = async (eventId) => {
@@ -112,11 +137,11 @@ export const getBlockedEmails = async (eventId) => {
 };
 
 // Add a Blocked Email to an Event
-export const addBlockedEmail = async (eventId, email) => {
+export const addBlockedEmail = async (eventId, email, reason) => {
   try {
     const response = await api.post(
       `${BASE_URL}/events/${eventId}/blocked-emails`,
-      { email }
+      reason ? { email, reason } : { email }
     );
 
     return response.data;
@@ -130,15 +155,8 @@ export const addBlockedEmail = async (eventId, email) => {
 };
 
 // Remove a Blocked Email from an Event
-// NOTE: FE-008 only specifies POST/GET endpoints, not a delete/unblock
-// endpoint. This assumes a REST-conventional
-// `DELETE /events/:eventId/blocked-emails/:blockedEmailId`. `blockedEmailId`
-// is whatever unique identifier the GET response provides per entry
-// (falls back to the raw email address if the backend doesn't return a
-// separate id) — confirm this against the real API once it's reachable,
-// and adjust if the backend expects something different (e.g. the email
-// in the request body instead of the path, or a different path shape
-// entirely, same as GET/POST above needed correcting).
+// `blockedEmailId` is the block record's own id (from create or list),
+// not the email address itself.
 export const removeBlockedEmail = async (eventId, blockedEmailId) => {
   try {
     const response = await api.delete(

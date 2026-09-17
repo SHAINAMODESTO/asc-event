@@ -1925,30 +1925,20 @@ const [blockedEmails, setBlockedEmails] = useState([]);
 const [blockedEmailsLoading, setBlockedEmailsLoading] = useState(false);
 const [blockedEmailsError, setBlockedEmailsError] = useState("");
 const [newBlockedEmail, setNewBlockedEmail] = useState("");
+const [newBlockedEmailReason, setNewBlockedEmailReason] = useState("");
 const [addingBlockedEmail, setAddingBlockedEmail] = useState(false);
 const [addBlockedEmailError, setAddBlockedEmailError] = useState("");
 const [removingBlockedEmailId, setRemovingBlockedEmailId] = useState(null);
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// The shape of each entry in the GET response isn't confirmed yet — it
-// may be a plain string (just the email) or an object with an id. This
-// normalizes either shape so the rest of the UI has a consistent
-// { id, email } to work with. If the backend returns objects, `id`
-// falls back to the email itself when no separate identifier is present.
-const normalizeBlockedEmail = (entry) => {
-  if (typeof entry === "string") {
-    return { id: entry, email: entry };
-  }
-
-  const email =
-    entry?.email || entry?.emailAddress || entry?.address || "";
-
-  return {
-    id: entry?.id || entry?._id || email,
-    email,
-  };
-};
+const normalizeBlockedEmail = (entry) => ({
+  id: entry.id,
+  email: entry.email,
+  reason: entry.reason || "",
+  createdAt: entry.createdAt,
+  blockedBy: entry.blockedBy?.name || entry.blockedBy?.email || "",
+});
 
 const fetchBlockedEmails = async () => {
   try {
@@ -1956,12 +1946,7 @@ const fetchBlockedEmails = async () => {
     setBlockedEmailsError("");
 
     const response = await getBlockedEmails(eventId);
-
-    // Defensive: accept an array directly, or an array nested under a
-    // common wrapper key, depending on what the backend actually sends.
-    const list = Array.isArray(response)
-      ? response
-      : response?.data || response?.blockedEmails || response?.emails || [];
+    const list = response?.data || [];
 
     setBlockedEmails(list.map(normalizeBlockedEmail));
   } catch (error) {
@@ -1978,6 +1963,7 @@ const fetchBlockedEmails = async () => {
 const handleOpenBlockedEmailsModal = () => {
   setShowBlockedEmailsModal(true);
   setNewBlockedEmail("");
+  setNewBlockedEmailReason("");
   setAddBlockedEmailError("");
   fetchBlockedEmails();
 };
@@ -2014,9 +2000,10 @@ const handleAddBlockedEmail = async (e) => {
     setAddingBlockedEmail(true);
     setAddBlockedEmailError("");
 
-    await addBlockedEmail(eventId, email);
+    await addBlockedEmail(eventId, email, newBlockedEmailReason.trim());
 
     setNewBlockedEmail("");
+    setNewBlockedEmailReason("");
     await fetchBlockedEmails();
   } catch (error) {
     console.error("Add Blocked Email Error:", error);
@@ -2029,6 +2016,12 @@ const handleAddBlockedEmail = async (e) => {
 };
 
 const handleRemoveBlockedEmail = async (entry) => {
+  const confirmed = window.confirm(
+    `Are you sure you want to unblock ${entry.email}? They will be able to register for this event again.`
+  );
+
+  if (!confirmed) return;
+
   try {
     setRemovingBlockedEmailId(entry.id);
 
@@ -2037,6 +2030,8 @@ const handleRemoveBlockedEmail = async (entry) => {
     setBlockedEmails((prev) =>
       prev.filter((item) => item.id !== entry.id)
     );
+
+    alert(`${entry.email} has been unblocked.`);
   } catch (error) {
     console.error("Remove Blocked Email Error:", error);
     alert(
@@ -2626,6 +2621,14 @@ const displayedAttendees = [...attendees]
             disabled={addingBlockedEmail}
           />
 
+          <input
+            type="text"
+            placeholder="Reason (optional)"
+            value={newBlockedEmailReason}
+            onChange={(e) => setNewBlockedEmailReason(e.target.value)}
+            disabled={addingBlockedEmail}
+          />
+
           <button
             type="submit"
             className="red-btn"
@@ -2674,7 +2677,16 @@ const displayedAttendees = [...attendees]
               <ul className="blocked-email-list">
                 {blockedEmails.map((entry) => (
                   <li key={entry.id} className="blocked-email-item">
-                    <span>{entry.email}</span>
+                    <div className="blocked-email-info">
+                      <span>{entry.email}</span>
+
+                      {(entry.reason || entry.blockedBy) && (
+                        <span className="blocked-email-meta">
+                          {entry.reason && `${entry.reason} · `}
+                          Blocked by {entry.blockedBy || "Admin"}
+                        </span>
+                      )}
+                    </div>
 
                     <button
                       type="button"

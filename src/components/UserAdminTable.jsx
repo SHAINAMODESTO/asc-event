@@ -10,7 +10,11 @@ import {
 
 import "./UserAdminTable.css";
 import { useEffect, useState } from "react";
-import { createUser, getUsers } from "../services/userService";
+import {
+  createUser,
+  getUsers,
+  deactivateUser,
+} from "../services/userService";
 
 export default function UserAdminTable() {
   const [page, setPage] = useState(1);
@@ -89,6 +93,36 @@ export default function UserAdminTable() {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  // =========================================================
+  // DEACTIVATE USER
+  // =========================================================
+  const handleDeactivateUser = async (user) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to deactivate ${user.name || "this user"}? They will no longer be able to log in, and can be reactivated later from the Deactivated Users page.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await deactivateUser(user.id);
+
+      if (response.success) {
+        alert("User deactivated successfully.");
+        fetchUsers();
+      }
+    } catch (error) {
+      console.error("Failed to deactivate user:", error);
+
+      const message = error.response?.data?.message;
+
+      if (Array.isArray(message)) {
+        alert(message.join("\n"));
+      } else {
+        alert(message || "Failed to deactivate user.");
+      }
+    }
+  };
 
   // =========================================================
   // INPUT CHANGE
@@ -231,11 +265,10 @@ export default function UserAdminTable() {
         roleFilter.toUpperCase();
 
     /*
-     * Your backend User entity currently does not have
-     * a status field.
-     *
-     * Keep the existing behavior so the design does not
-     * change.
+     * GET /users already excludes deactivated accounts (soft-deleted
+     * users are only returned by GET /users/deactivated), so every
+     * row loaded here is Active. "Inactive" intentionally matches
+     * nothing on this page — see the Deactivated Users page instead.
      */
     const matchesStatus =
       !statusFilter ||
@@ -264,11 +297,7 @@ export default function UserAdminTable() {
       "COORDINATOR"
   ).length;
 
-  /*
-   * There is currently no status column in the
-   * backend User entity, so all loaded users are
-   * treated as active for the existing UI.
-   */
+  // GET /users only ever returns active (non-deactivated) accounts.
   const activeUsers = users.length;
 
   // =========================================================
@@ -479,6 +508,7 @@ export default function UserAdminTable() {
               <th>Name</th>
               <th>Email</th>
               <th>Role</th>
+              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -488,7 +518,7 @@ export default function UserAdminTable() {
             {loading ? (
               <tr>
 
-                <td colSpan="4">
+                <td colSpan="5">
                   Loading...
                 </td>
               </tr>
@@ -497,7 +527,7 @@ export default function UserAdminTable() {
 
               <tr>
 
-                <td colSpan="4">
+                <td colSpan="5">
                   No users found.
                 </td>
 
@@ -565,6 +595,15 @@ export default function UserAdminTable() {
                     </td>
 
 
+                    {/* STATUS */}
+
+                    <td>
+                      <span className="status active">
+                        Active
+                      </span>
+                    </td>
+
+
                     {/* ACTIONS */}
 
                     <td>
@@ -596,6 +635,10 @@ export default function UserAdminTable() {
                         <button
                           className="icon-btn danger"
                           type="button"
+                          title="Deactivate user"
+                          onClick={() =>
+                            handleDeactivateUser(user)
+                          }
                         >
                           <Trash
                             size={20}

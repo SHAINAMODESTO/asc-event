@@ -8,11 +8,13 @@ import AttendeesList from "./components/AttendeesList";
 import EventAttendees from "./components/EventAttendees";
 import CreateForm from "./components/CreateForm";
 import PublishedEvents from "./components/PublishedEvents";
+import ArchivedEvents from "./components/ArchivedEvents";
 import AllEventsList from "./components/AllEventsList";
 import NotFound from "./pages/NotFound";
 import EventSummary from "./components/register/EventSummary";
 import Login from "./components/Login";
 import UserAdminTable from "./components/UserAdminTable";
+import DeactivatedUsers from "./components/DeactivatedUsers";
 import QRScanner from "./qr-scanner/QRScanner";
 import EventReports from "./components/EventReports";
 import { isAdmin } from "./services/authService";
@@ -131,6 +133,15 @@ function App() {
           element={<PublishedEvents />}
         />
 
+        <Route
+          path="archived-events"
+          element={
+            <AdminRoute>
+              <ArchivedEvents />
+            </AdminRoute>
+          }
+        />
+
         {/* Attendees */}
 
         <Route
@@ -158,6 +169,15 @@ function App() {
           element={
             <AdminRoute>
               <UserAdminTable />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="deactivated-users"
+          element={
+            <AdminRoute>
+              <DeactivatedUsers />
             </AdminRoute>
           }
         />

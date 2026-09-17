@@ -311,6 +311,55 @@
 }
 
 /* =========================
+   ROLE-RESTRICTED ACTIONS
+   (disabled button + tooltip that works
+   on both mouse hover and keyboard focus)
+========================= */
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  flex: 1;
+}
+
+.tooltip-wrapper button {
+  flex: 1;
+  width: 100%;
+}
+
+.event-button-disabled {
+  background: #94a3b8 !important;
+  cursor: not-allowed !important;
+}
+
+.event-button-disabled:hover {
+  background: #94a3b8 !important;
+}
+
+.tooltip-text {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.tooltip-wrapper:hover .tooltip-text,
+.tooltip-wrapper:focus-within .tooltip-text {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* =========================
    EMPTY STATE
 ========================= */
 .event-list-empty {
@@ -388,7 +437,8 @@
     flex-direction: column;
   }
 
-  .event-actions button {
+  .event-actions button,
+  .event-actions .tooltip-wrapper {
     width: 100%;
   }
 

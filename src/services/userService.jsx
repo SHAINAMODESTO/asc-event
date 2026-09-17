@@ -85,3 +85,89 @@ export const getUsers = async () => {
     throw error;
   }
 };
+
+// ========================================
+// GET DEACTIVATED USERS
+// GET /users/deactivated
+// Admin only
+// ========================================
+
+export const getDeactivatedUsers = async (params = {}) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/users/deactivated`, {
+      ...getAuthHeaders(),
+      params,
+    });
+
+    return response.data;
+  } catch (error) {
+    applyErrorEnvelopeMessage(error);
+    applyRateLimitMessage(error);
+    handleUnauthorizedResponse(error);
+
+    console.error(
+      "Get Deactivated Users Error:",
+      error.response?.data || error
+    );
+
+    throw error;
+  }
+};
+
+// ========================================
+// DEACTIVATE USER
+// PATCH /users/:id/deactivate
+// Admin only
+// ========================================
+
+export const deactivateUser = async (userId) => {
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/users/${userId}/deactivate`,
+      {},
+      getAuthHeaders()
+    );
+
+    return response.data;
+  } catch (error) {
+    applyErrorEnvelopeMessage(error);
+    applyRateLimitMessage(error);
+    handleUnauthorizedResponse(error);
+
+    console.error(
+      "Deactivate User Error:",
+      error.response?.data || error
+    );
+
+    throw error;
+  }
+};
+
+// ========================================
+// REACTIVATE USER
+// PATCH /users/:id/reactivate
+// Admin only
+// ========================================
+
+export const reactivateUser = async (userId) => {
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/users/${userId}/reactivate`,
+      {},
+      getAuthHeaders()
+    );
+
+    return response.data;
+  } catch (error) {
+    applyErrorEnvelopeMessage(error);
+    applyRateLimitMessage(error);
+    handleUnauthorizedResponse(error);
+
+    console.error(
+      "Reactivate User Error:",
+      error.response?.data || error
+    );
+
+    throw error;
+  }
+};

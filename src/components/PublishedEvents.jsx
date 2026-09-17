@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Copy, NotebookTabs } from "lucide-react";
 
-import { getEvents} from "../services/eventService";
+import { getEvents, deleteEvent } from "../services/eventService";
+import { isAdmin } from "../services/authService";
 import "./AllEventsList.css";
 
 const formatDateRange = (start, end) => {
@@ -45,12 +46,37 @@ const [generatedUrl, setGeneratedUrl] = useState("");
       console.error("Failed to fetch published events:", error);
     }
   };
+
    const viewAttendees = (event) => {
   navigate(`/attendees/${event.id}`);
-}; 
+};
+
+  const archiveTemplate = async (event) => {
+    if (!isAdmin()) return;
+
+    const confirmed = window.confirm(
+      `Archive "${event.title}"? It will move to the Archived Events list and can be restored later.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await deleteEvent(event.id);
+
+      if (response.success) {
+        setStatusMessage("Event archived successfully.");
+        fetchEvents();
+      }
+    } catch (error) {
+      console.error("Archive failed:", error);
+      setStatusMessage(
+        error.response?.data?.message || "Failed to archive event."
+      );
+    }
+  };
 
   // Search + Date Filter
-  const filteredEvents = events.filter((event) => {
+  const matchesFilters = (event) => {
     const query = searchTerm.toLowerCase();
 
     const matchesSearch =
@@ -68,7 +94,9 @@ const [generatedUrl, setGeneratedUrl] = useState("");
       : true;
 
     return matchesSearch && matchesFromDate && matchesToDate;
-  });
+  };
+
+  const filteredEvents = events.filter(matchesFilters);
 
  
 
@@ -187,18 +215,30 @@ const copyToClipboard = async () => {
                   Generate URL
                 </button>
 
-                <button
-                  type="button"
-                  className="event-button event-button-delete"
-                  onClick={() => deleteTemplate(event.id)}
-                >
-                  Archive
-                </button>
+                <span className="tooltip-wrapper">
+                  <button
+                    type="button"
+                    className={`event-button event-button-delete${
+                      isAdmin() ? "" : " event-button-disabled"
+                    }`}
+                    aria-disabled={!isAdmin()}
+                    onClick={() => archiveTemplate(event)}
+                  >
+                    Archive
+                  </button>
+
+                  {!isAdmin() && (
+                    <span className="tooltip-text">
+                      You do not have permission to this action.
+                    </span>
+                  )}
+                </span>
               </div>
             </div>
           ))}
         </div>
       )}
+
       {showUrlModal && (
   <div
     className="modal-overlay"

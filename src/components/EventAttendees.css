@@ -3640,13 +3640,14 @@ background:#16a34a;
 
 .blocked-email-form {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 
   margin-bottom: 18px;
 }
 
 .blocked-email-form input {
-  flex: 1;
+  flex: 1 1 160px;
 
   height: 44px;
   padding: 0 14px;
@@ -3673,8 +3674,10 @@ background:#16a34a;
 .blocked-email-form button {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
 
+  flex: 1 1 100%;
   white-space: nowrap;
 }
 
@@ -3727,6 +3730,19 @@ background:#16a34a;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.blocked-email-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.blocked-email-meta {
+  font-size: 12px !important;
+  color: #9ca3af !important;
 }
 
 .icon-btn.danger {
