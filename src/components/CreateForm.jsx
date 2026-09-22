@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Plus, Trash2, SquarePen, Users, CalendarDays, Clock, Settings, NotebookPen, ImagePlus} from "lucide-react";
@@ -150,6 +149,100 @@ const CreateForm = () => {
   const handleSavePaidEventConfig = () => {
     setIsPaidEventConfigured(true);
     setShowPaidEventModal(false);
+  };
+
+  // ================================
+  // COMPANY SLOT ALLOCATION
+  // ================================
+  // Groups companies that should share the same maximum number of
+  // (primary) attendees for this event — e.g. a "Maximum Number: 5"
+  // group listing Company A and Company B, and a separate
+  // "Maximum Number: 1" group for smaller companies.
+  const [isCompanySlotAllocation, setIsCompanySlotAllocation] = useState(false);
+  const [isCompanySlotConfigured, setIsCompanySlotConfigured] = useState(false);
+  const [showCompanySlotModal, setShowCompanySlotModal] = useState(false);
+  const [companySlotGroups, setCompanySlotGroups] = useState([
+    { maxNumber: "", companies: [], companyInput: "" },
+  ]);
+  const [defaultSlotLimit, setDefaultSlotLimit] = useState("");
+
+  const handleCompanySlotToggle = (checked) => {
+    setIsCompanySlotAllocation(checked);
+
+    if (checked) {
+      setShowCompanySlotModal(true);
+    }
+  };
+
+  const addCompanySlotGroup = () =>
+    setCompanySlotGroups([
+      ...companySlotGroups,
+      { maxNumber: "", companies: [], companyInput: "" },
+    ]);
+
+  const removeCompanySlotGroup = (index) =>
+    setCompanySlotGroups(companySlotGroups.filter((_, i) => i !== index));
+
+  const updateCompanySlotGroupField = (index, key, value) => {
+    const updated = [...companySlotGroups];
+    updated[index] = { ...updated[index], [key]: value };
+    setCompanySlotGroups(updated);
+  };
+
+  // Splits the group's pasted/typed text on newlines so a coordinator can
+  // paste a whole list of company names at once, or type one and click
+  // Add — either way it's appended to that group's company list (skipping
+  // duplicates already in the list, case-insensitively).
+  const addCompaniesToGroup = (index) => {
+    const group = companySlotGroups[index];
+    const raw = group?.companyInput || "";
+
+    const namesToAdd = raw
+      .split("\n")
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0);
+
+    if (namesToAdd.length === 0) return;
+
+    const merged = [...group.companies];
+
+    namesToAdd.forEach((name) => {
+      const alreadyThere = merged.some(
+        (existing) => existing.toLowerCase() === name.toLowerCase()
+      );
+
+      if (!alreadyThere) {
+        merged.push(name);
+      }
+    });
+
+    const updated = [...companySlotGroups];
+    updated[index] = { ...updated[index], companies: merged, companyInput: "" };
+    setCompanySlotGroups(updated);
+  };
+
+  const removeCompanyFromGroup = (groupIndex, companyIndex) => {
+    const updated = [...companySlotGroups];
+    updated[groupIndex] = {
+      ...updated[groupIndex],
+      companies: updated[groupIndex].companies.filter(
+        (_, i) => i !== companyIndex
+      ),
+    };
+    setCompanySlotGroups(updated);
+  };
+
+  const handleCancelCompanySlotModal = () => {
+    if (!isCompanySlotConfigured) {
+      setIsCompanySlotAllocation(false);
+    }
+
+    setShowCompanySlotModal(false);
+  };
+
+  const handleSaveCompanySlotConfig = () => {
+    setIsCompanySlotConfigured(true);
+    setShowCompanySlotModal(false);
   };
 
   const handleBannerFileSelect = (e) => {
@@ -883,7 +976,7 @@ const CreateForm = () => {
 
                         </div>
 
-                       
+
 
                       </div>
 
@@ -1119,6 +1212,47 @@ const CreateForm = () => {
 
                   </div>
 
+                  {/* ================= Company Slot Allocation ================= */}
+
+                  <div className="setting-block">
+
+                    <div className="setting-item">
+
+                      <div className="setting-info">
+                        <h4>Company Slot Allocation</h4>
+                        <p>
+                         Allocate a maximum number of attendees per company.
+                        </p>
+                        {isCompanySlotAllocation && isCompanySlotConfigured && (
+                          <button
+                            type="button"
+                            className="edit-setting-link"
+                            onClick={() => setShowCompanySlotModal(true)}
+                          >
+                            <SquarePen size={14} />
+                            Edit slot configuration
+                          </button>
+                        )}
+                      </div>
+
+                      <label className="switch">
+
+                        <input
+                          type="checkbox"
+                          checked={isCompanySlotAllocation}
+                          onChange={(e) =>
+                            handleCompanySlotToggle(e.target.checked)
+                          }
+                        />
+
+                        <span className="slider"></span>
+
+                      </label>
+
+                    </div>
+
+                  </div>
+
                 </div>
 
               </div>
@@ -1319,9 +1453,173 @@ const CreateForm = () => {
           </div>
         </div>
       )}
+
+      {/* ========================================
+          CONFIGURE COMPANY SLOTS MODAL
+      ======================================== */}
+
+      {showCompanySlotModal && (
+        <div
+          className="company-slot-modal-overlay"
+          onClick={handleCancelCompanySlotModal}
+        >
+          <div
+            className="company-slot-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="company-slot-modal-header">
+              <div>
+                <h2>Configure Company Slots</h2>
+                <p>Set a maximum number of attendees per company.</p>
+              </div>
+
+              <button
+                type="button"
+                className="company-slot-close-btn"
+                onClick={handleCancelCompanySlotModal}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="company-slot-modal-body">
+
+              {companySlotGroups.map((group, groupIndex) => (
+                <div key={groupIndex} className="config-card">
+
+                  <div className="config-card-header">
+                    <h5>Configuration {groupIndex + 1}</h5>
+
+                    <button
+                      type="button"
+                      className="config-remove-btn"
+                      onClick={() => removeCompanySlotGroup(groupIndex)}
+                      disabled={companySlotGroups.length === 1}
+                    >
+                      <Trash2 size={14} />
+                      Remove
+                    </button>
+                  </div>
+
+                  {/* Maximum Number */}
+                  <div className="form-group max-number-field">
+                    <label>Maximum Number</label>
+
+                    <input
+                      type="number"
+                      className="form-input"
+                      min="1"
+                      value={group.maxNumber}
+                      onChange={(e) =>
+                        updateCompanySlotGroupField(
+                          groupIndex,
+                          "maxNumber",
+                          e.target.value
+                        )
+                      }
+                      placeholder="Example: 5"
+                    />
+
+                  
+                  </div>
+
+                  {/* Companies */}
+                  <div className="form-group">
+                    <label>Companies</label>
+
+                    <div className="company-listbox">
+                      {group.companies.length === 0 ? (
+                        <div className="company-listbox-empty">
+                          No companies added yet.
+                        </div>
+                      ) : (
+                        group.companies.map((company, companyIndex) => (
+                          <div key={companyIndex} className="company-listbox-row">
+                            <span>{company}</span>
+
+                            <button
+                              type="button"
+                              className="remove-x"
+                              onClick={() =>
+                                removeCompanyFromGroup(groupIndex, companyIndex)
+                              }
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <div className="company-add-row">
+                      <textarea
+                        className="form-textarea"
+                        value={group.companyInput}
+                        onChange={(e) =>
+                          updateCompanySlotGroupField(
+                            groupIndex,
+                            "companyInput",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Paste company names here, one per line…"
+                      />
+
+                      <button
+                        type="button"
+                        className="add-to-list-btn"
+                        onClick={() => addCompaniesToGroup(groupIndex)}
+                      >
+                        <Plus size={16} />
+                        Add
+                      </button>
+                    </div>
+
+                    <span className="field-hint-block">
+                      Paste a list (one company per line) or type one name and click Add.
+                    </span>
+                  </div>
+
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="add-config-btn"
+                onClick={addCompanySlotGroup}
+              >
+                <Plus size={16} />
+                Create Another Maximum Number Configuration
+              </button>
+
+              
+
+              
+
+            </div>
+
+            <div className="company-slot-modal-footer">
+              <button
+                type="button"
+                className="cancel-company-slot-btn"
+                onClick={handleCancelCompanySlotModal}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="save-company-slot-btn"
+                onClick={handleSaveCompanySlotConfig}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default CreateForm;
-
