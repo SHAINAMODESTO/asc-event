@@ -1,5 +1,15 @@
 ﻿import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, Outlet } from "react-router-dom";
+import {
+  LayoutDashboard,
+  CalendarDays,
+  CalendarRange,
+  Users,
+  FilePlus2,
+  UserCog,
+  FileBarChart2,
+  ArrowRight,
+} from "lucide-react";
 import { getEvents } from "../services/eventService";
 import { isAdmin } from "../services/authService";
 import "./Sidebar.css";
@@ -32,6 +42,7 @@ export default function Sidebar() {
 
   const [upcomingEvents, setUpcomingEvents] = useState(0);
   const [attendeesToday, setAttendeesToday] = useState(0);
+  const [totalEvents, setTotalEvents] = useState(0);
 
   // ========================================
   // FE-011: ROLE-BASED NAV FILTERING
@@ -62,6 +73,8 @@ const loadDashboard = async () => {
     const eventResponse = await getEvents();
 
     const events = eventResponse.data || eventResponse || [];
+
+    setTotalEvents(events.length);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -179,11 +192,16 @@ const loadDashboard = async () => {
                 className={`sidebar-link ${
                   selectedSection === section ? "active" : ""
                 }`}
-                onClick={() =>
+                onClick={() => {
                   setSelectedSection((prev) =>
                     prev === section ? "" : section
-                  )
-                }
+                  );
+
+                  if (section === "Events") {
+                    setActiveItem("");
+                    navigate("/");
+                  }
+                }}
               >
                 {section}
               </button>
@@ -225,26 +243,88 @@ const loadDashboard = async () => {
         {location.pathname === "/" ? (
           <>
             <section className="topbar">
-              <div>
-                <h2>Welcome back, {userName || "Admin"}!</h2>
-                <p>Here's the Event Management overview for today.</p>
+              <div className="topbar-title">
+                <div className="topbar-icon">
+                  <LayoutDashboard size={26} />
+                </div>
+                <div>
+                  <h2>Welcome back, {userName || "Admin"}!</h2>
+                  <p>Here's the Event Management overview for today.</p>
+                </div>
               </div>
             </section>
 
             <section className="dashboard-grid">
               <article className="content-card">
-                <h3>Upcoming Events</h3>
-                <p>{upcomingEvents}</p>
+                <div className="content-card-icon blue">
+                  <CalendarDays size={22} />
+                </div>
+                <div>
+                  <h3>Upcoming Events</h3>
+                  <p>{upcomingEvents}</p>
+                </div>
               </article>
 
               <article className="content-card">
-                <h3>Attendees Today</h3>
-                <p>{attendeesToday}</p>
+                <div className="content-card-icon green">
+                  <Users size={22} />
+                </div>
+                <div>
+                  <h3>Attendees Today</h3>
+                  <p>{attendeesToday}</p>
+                </div>
               </article>
 
               <article className="content-card">
+                <div className="content-card-icon orange">
+                  <CalendarRange size={22} />
+                </div>
+                <div>
+                  <h3>Total Events</h3>
+                  <p>{totalEvents}</p>
+                </div>
+              </article>
+
+              <article className="content-card quick-actions-card">
                 <h3>Quick Actions</h3>
-                <span>Create event, Manage attendees, Export reports.</span>
+
+                <div className="quick-actions-list">
+                  <button
+                    type="button"
+                    className="quick-action-link"
+                    onClick={() => handleNavigation("Create Event")}
+                  >
+                    <span className="quick-action-icon blue">
+                      <FilePlus2 size={18} />
+                    </span>
+                    <span className="quick-action-text">Create Event</span>
+                    <ArrowRight size={16} className="quick-action-arrow" />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="quick-action-link"
+                    onClick={() => navigate("/attendees")}
+                  >
+                    <span className="quick-action-icon green">
+                      <UserCog size={18} />
+                    </span>
+                    <span className="quick-action-text">Manage Attendees</span>
+                    <ArrowRight size={16} className="quick-action-arrow" />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="quick-action-link"
+                    onClick={() => navigate("/attendees")}
+                  >
+                    <span className="quick-action-icon orange">
+                      <FileBarChart2 size={18} />
+                    </span>
+                    <span className="quick-action-text">Export Reports</span>
+                    <ArrowRight size={16} className="quick-action-arrow" />
+                  </button>
+                </div>
               </article>
             </section>
           </>

@@ -10,9 +10,29 @@ HEADER
 =========================== */
 
 .user-header{
+    position:relative;
+    box-sizing:border-box;
     display:flex;
     justify-content:space-between;
     align-items:center;
+    padding:22px 25px;
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    border-radius:15px;
+    box-shadow:0 2px 10px rgba(17, 24, 39, 0.05);
+}
+
+/* Accent divider marking the end of the header band */
+.user-header::after{
+    content:"";
+    position:absolute;
+    left:25px;
+    right:25px;
+    bottom:-14px;
+    height:3px;
+    border-radius:3px;
+    background:linear-gradient(90deg, #2563eb 0%, rgba(37, 99, 235, 0) 100%);
+    opacity:0.5;
 }
 
 .header-left{
@@ -33,15 +53,18 @@ HEADER
 }
 
 .header-left h1{
-    font-size:32px;
+    margin:0;
+    font-size:25px;
     font-weight:700;
     color:#111827;
+    line-height:1.2;
 }
 
 .header-left p{
-    margin-top:4px;
+    margin:4px 0 0;
     color:#6b7280;
-    font-size:15px;
+    font-size:14px;
+    line-height:1.4;
 }
 
 /* ===========================
@@ -129,7 +152,16 @@ grid-template-columns:1fr;
 }
 
 .header-left h1{
-font-size:26px;
+font-size:21px;
+}
+
+.user-header{
+padding:16px;
+}
+
+.user-header::after{
+left:16px;
+right:16px;
 }
 
 }

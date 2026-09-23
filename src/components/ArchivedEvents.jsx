@@ -74,6 +74,9 @@ const ArchivedEvents = () => {
           </div>
           <div>
             <h1 className="all-events-title">Archived Events List</h1>
+            <p className="all-events-subtitle">
+              Events that have been archived and are no longer active.
+            </p>
           </div>
         </div>
         <div className="all-events-stat">

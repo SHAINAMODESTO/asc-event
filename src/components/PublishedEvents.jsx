@@ -129,7 +129,10 @@ const copyToClipboard = async () => {
                     <NotebookTabs size={24}/>
           </div>
           <div>
-            <h1 className="all-events-title"> Published Events List</h1>
+            <h1 className="all-events-title">Published Events List</h1>
+            <p className="all-events-subtitle">
+              Events that are live and open for registration.
+            </p>
           </div>
         </div>
         <div className="all-events-stat">

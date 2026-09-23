@@ -196,9 +196,7 @@ const handleExportExcel = async () => {
     console.error("Data:", error.response?.data);
 
     alert(
-        `Unable to generate the attendee report.\n\nStatus: ${
-            error.response?.status || "Unknown"
-        }`
+        `Unable to generate the attendee report. You are not authorized for this action. Please contact the administrator for assistance.`
     );
 
 } finally {

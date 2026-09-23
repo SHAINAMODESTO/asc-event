@@ -150,7 +150,10 @@ navigate("/published-events");
                     <NotebookTabs size={24}/>
           </div>
           <div>
-            <h1 className="all-events-title"> Drafted Events List</h1>
+            <h1 className="all-events-title">Drafted Events List</h1>
+            <p className="all-events-subtitle">
+              Events saved as drafts, ready to review or publish.
+            </p>
           </div>
         </div>
         <div className="all-events-stat">

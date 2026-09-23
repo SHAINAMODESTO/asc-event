@@ -571,6 +571,11 @@ const CreateForm = () => {
                 ? "Edit Event Form"
                 : "Create Event Registration Form"}
             </h1>
+            <p className="all-events-subtitle">
+              {isEdit
+                ? "Update the details of this event form."
+                : "Fill in the details to create a new event registration form."}
+            </p>
           </div>
         </div>
       </div>
