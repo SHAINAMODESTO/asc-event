@@ -159,6 +159,20 @@ export const applyErrorEnvelopeMessage = (error) => {
 };
 
 // ========================================
+// PUBLIC (ATTENDEE-FACING) PAGES
+// ========================================
+// Attendees open the registration link without ever logging in, so
+// these pages must never send a (possibly stale) admin token or get
+// bounced to /login on a 401 — the link should keep working no matter
+// what's sitting in this browser's localStorage.
+const PUBLIC_PATH_PREFIXES = ["/registration", "/thankyou", "/not-found"];
+
+export const isPublicPage = () =>
+  PUBLIC_PATH_PREFIXES.some((prefix) =>
+    window.location.pathname.startsWith(prefix)
+  );
+
+// ========================================
 // FE-003: EXPIRED / MISSING TOKEN HELPER
 // ========================================
 // Any 401 means the token is gone or no longer valid as far as the
@@ -177,7 +191,7 @@ export const applyErrorEnvelopeMessage = (error) => {
 // userService.jsx, and `bulkCreateAttendees` in
 // attendeeListService.jsx.
 export const handleUnauthorizedResponse = (error) => {
-  if (error?.response?.status !== 401) {
+  if (error?.response?.status !== 401 || isPublicPage()) {
     return error;
   }
 
@@ -205,7 +219,7 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("accessToken");
 
-    if (token) {
+    if (token && !isPublicPage()) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
